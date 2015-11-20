@@ -1,0 +1,22 @@
+{
+    "extends": "airbnb",
+    "globals": {
+      "chrome": true,
+      "$": true,
+      "__DEVELOPMENT__": true
+    },
+    "env": {
+       "browser": true,
+       "node": false,
+       "es6": false
+    },
+    "ecmaFeatures": {
+       "modules": false
+    },
+    "rules": {
+        "no-console": 0,
+        "strict": [2, "global"],
+        "guard-for-in": 0,
+        "no-eval": 0
+    }
+}

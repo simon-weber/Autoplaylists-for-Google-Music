@@ -1,0 +1,35 @@
+{
+    "manifest_version": 2,
+
+    "name": "Autoplaylists for Google Music™",
+    "version": "0.1",
+
+    "description": "Create Google Music™ playlists that automatically update from user-defined criteria.",
+
+    "page_action": {
+        "default_title": "Autoplaylists for Google Music™"
+    },
+
+    "background": {
+        "scripts": ["js/vendor/jquery-1.9.1.min.js", "js-built/background.js"],
+        "persistent": true
+    },
+    "content_scripts": [
+        {
+            "matches": ["https://play.google.com/music/listen*"],
+            "js": ["js-built/content.js"],
+            "run_at": "document_idle"
+        }
+    ],
+    "web_accessible_resources": [
+    ],
+
+    "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
+
+    "permissions": [
+        "*://play.google.com/music/*",
+        "cookies",
+        "storage",
+        "tabs"
+    ]
+}
