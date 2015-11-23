@@ -45,17 +45,25 @@ exports.deleteTracks = function deleteTracks(db, userId, trackIds, callback) {
     catch(console.error);
 };
 
-exports.queryTracks = function queryTracks(db, userId, playlistDefinition, callback) {
-  const track = db.getSchema().table('Track');
-  let clauses = [];
+function buildClause(track, rule) {
+  let clause = null;
 
-  for (let i = 0; i < playlistDefinition.all.length; i++) {
-    const rule = playlistDefinition.all[i];
-    clauses.push(track[rule.name][rule.operator](rule.value));
+  if ('any' in rule) {
+    clause = Lf.op.or.apply(Lf.op, rule.any.map(buildClause.bind(undefined, track)));
+  } else if ('all' in rule) {
+    clause = Lf.op.and.apply(Lf.op, rule.all.map(buildClause.bind(undefined, track)));
+  } else {
+    clause = track[rule.name][rule.operator](rule.value);
   }
 
-  clauses = Lf.op.and.apply(Lf.op, clauses);
-  db.select().from(track).where(clauses).exec().
+  return clause;
+}
+
+exports.queryTracks = function queryTracks(db, userId, playlistDefinition, callback) {
+  const track = db.getSchema().table('Track');
+
+  const clause = buildClause(track, playlistDefinition);
+  db.select().from(track).where(clause).exec().
     then(callback).
     catch(console.error);
 };
