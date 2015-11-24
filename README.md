@@ -16,6 +16,14 @@ I'll announce when it's available in the Chrome Web Store.
 ## Usage
 
 ### Installation
+
+* download the most recent crx from https://github.com/simon-weber/Autoplaylists-for-Google-Music/releases
+* open a tag to chrome://extensions
+* navigate to the folder containing the downloaded crx
+* drag and drop the crx onto the Chrome extensions tab. You should see a popup to install the extension.
+* reload any Google Music tabs
+
+#### from source
 * download and extract this repo (or clone it), then `cd` to it
 * run `npm install`
 * run `./build.sh`
