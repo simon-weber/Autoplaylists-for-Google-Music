@@ -173,7 +173,7 @@ function main() {
     Chrometools.focusOrCreateTab(managerUrl);
   });
 
-  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => { // eslint-disable-line no-unused-vars
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // respond to manager / content script requests.
 
     if (request.action === 'forceUpdate') {
@@ -214,6 +214,11 @@ function main() {
       users[request.userId] = {userIndex: request.userIndex, tabId: sender.tab.id};
       console.log('see user', request.userId, users);
       chrome.pageAction.show(sender.tab.id);
+    } else if (request.action === 'query') {
+      Trackcache.queryTracks(dbs[request.userId], request.userId, request.rules, tracks => {
+        sendResponse({tracks: tracks});
+      });
+      return true; // wait for async response
     } else {
       console.warn('received unknown request', request);
     }

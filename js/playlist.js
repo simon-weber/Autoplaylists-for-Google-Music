@@ -92,6 +92,15 @@ function initializeForm(userId, playlistId) {
     });
   });
 
+  $('#test').click(function deletePlaylist(e) {
+    e.preventDefault();
+    const playlistRules = conditions.conditionsBuilder('data');
+
+    chrome.runtime.sendMessage({action: 'query', userId: userId, rules: playlistRules}, response => {
+      $('#query-result').text('query found ' + response.tracks.length + ' first was\n' + JSON.stringify(response.tracks[0], null, 2));
+    });
+  });
+
   $('#delete').click(function deletePlaylist(e) {
     e.preventDefault();
     Storage.deletePlaylist(userId, localId, () => {
