@@ -1,6 +1,7 @@
 'use strict';
 
 const Lf = require('lovefield');
+require('sugar'); // monkeypatches Date
 
 const Track = require('./track.js');
 
@@ -53,7 +54,11 @@ function buildClause(track, rule) {
   } else if ('all' in rule) {
     clause = Lf.op.and.apply(Lf.op, rule.all.map(buildClause.bind(undefined, track)));
   } else {
-    clause = track[rule.name][rule.operator](rule.value);
+    let value = rule.value;
+    if (Track.fieldsByName[rule.name].is_datetime) {
+      value = Date.create(rule.value).getTime() * 1000;
+    }
+    clause = track[rule.name][rule.operator](value);
   }
 
   return clause;

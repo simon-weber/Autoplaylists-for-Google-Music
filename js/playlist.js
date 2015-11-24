@@ -20,6 +20,10 @@ const operators = {
     {name: 'neq', label: 'does not equal', input_type: 'text'},
     {name: 'match', label: 'matches regex', input_type: 'text'},
   ],
+  datetime: [
+    {name: 'lt', label: 'before', input_type: 'text'},
+    {name: 'gt', label: 'after', input_type: 'text'},
+  ],
 };
 
 // jscs:enable requireCamelCaseOrUpperCaseIdentifiers
@@ -30,7 +34,7 @@ function getRulesData() {
     variables.push({
       name: field.name,
       label: field.label,
-      field_type: Track.lfToBusinessTypes[field.type],  // jscs:ignore requireCamelCaseOrUpperCaseIdentifiers
+      field_type: field.is_datetime ? 'datetime' : Track.lfToBusinessTypes[field.type],  // jscs:ignore requireCamelCaseOrUpperCaseIdentifiers
       options: [],
     });
   });

@@ -115,7 +115,7 @@ function syncPlaylist(playlist, attempt) {
     const db = dbs[playlist.userId];
     Trackcache.queryTracks(db, playlist.userId, playlist.rules, tracks => {
       // TODO how to handle large playlists? google truncates at 1k
-      console.log('found', tracks.length);
+      console.log(playlist.title, 'found', tracks.length);
       if (tracks.length > 0) {
         console.log('first is', tracks[0]);
       }
