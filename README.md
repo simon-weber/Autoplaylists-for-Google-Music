@@ -16,7 +16,7 @@ I'll announce when it's available in the Chrome Web Store.
 ## Usage
 
 ### Installation
-* download and extract this repo (or clone it)
+* download and extract this repo (or clone it), then `cd` to it
 * run `npm install`
 * run `./build.sh`
 * go to [chrome://extensions/](chrome://extensions/)
