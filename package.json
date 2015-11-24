@@ -1,5 +1,6 @@
 {
     "dependencies": {
+        "browserify": "11.2.0",
         "lovefield": "2.1.1",
         "qs": "6.0.0",
         "sugar": "1.4.1"
