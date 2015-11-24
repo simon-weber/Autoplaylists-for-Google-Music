@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-for f in js/*.js; do
-    browserify "$f" -d -o "js-built/$(basename $f)"
+for f in src/js/*.js; do
+    browserify "$f" -d -o "src/js-built/$(basename $f)"
     printf '.'
 done
 

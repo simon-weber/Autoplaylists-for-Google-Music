@@ -1,2 +1,5 @@
+*.crx
+*.pem
 node_modules/
-js-built/*.js
+src/js-built/*.js
+build
