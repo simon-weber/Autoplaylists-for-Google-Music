@@ -23,14 +23,6 @@ I'll announce when it's available in the Chrome Web Store.
 * drag and drop the crx onto the Chrome extensions tab. You should see a popup to install the extension.
 * reload any Google Music tabs
 
-#### from source
-* download and extract this repo (or clone it), then `cd` to it
-* run `npm install`
-* run `./build.sh`
-* go to [chrome://extensions/](chrome://extensions/)
-* click "developer mode"
-* click "Load unpacked extension" and provide the downloaded repo
-
 ### Use
 * open a tab to https://play.google.com/music/listen
 * click the extension's "page action": the tiny icon in the far right of the url bar, to the left of the bookmark star
@@ -43,14 +35,17 @@ I'll announce when it's available in the Chrome Web Store.
 * playlist definitions are stored in chrome.storage.sync
 
 ## Development
-* follow "Installation from source" directions
+* run `npm install`
 * run `./watch.sh` somewhere and leave it running -- this will build whenever files change
-* after updating any javascript, hit "reload" in [chrome://extensions/](chrome://extensions/)
-* log locations:
+* go to chrome://extensions/
+* click "developer mode"
+* click "Load unpacked extension" and provide the repo/src directory
+* after updating any javascript, hit "reload" in chrome://extensions/
+* you can find the logs in different places depending on the code that's running:
 
     * content script: music.google.com console
     * background script: click the "background page" link by the "Inspect views" section on chrome://extensions/
-    * manager/playlist: on their pages
+    * manager/playlist: on their pages' consoles
 
 ---
 Google Music is a trademark of Google Inc. Use of this trademark is subject to Google Permissions.
