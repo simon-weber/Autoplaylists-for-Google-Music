@@ -49,38 +49,58 @@ function goToManager(userId) {
 
 function initializeForm(userId, playlistId) {
   const initConditions = getRulesData();
-  let playlist = {};
-  let localId = playlistId;
-  const conditions = $('#conditions');
+  let initialPlaylist = null;
+  const $conditions = $('#conditions');
 
-  console.log(userId, localId);
+  console.log(userId, playlistId);
 
-  if (localId) {
-    Storage.getPlaylist(userId, localId, loadedPlaylist => {
-      playlist = loadedPlaylist;
-      $('#playlist-title').val(playlist.title);
+  const $sortBy = $('#sort-by');
 
-      console.log('loading playlist', playlist);
-      initConditions.data = playlist.rules;
-      conditions.conditionsBuilder(initConditions);
+
+  Track.fields.forEach(field => {
+    $('<option>').val(field.name).text(field.label).appendTo($sortBy);
+  });
+
+  if (playlistId) {
+    Storage.getPlaylist(userId, playlistId, loadedPlaylist => {
+      initialPlaylist = loadedPlaylist;
+      $('#playlist-title').val(loadedPlaylist.title);
+
+      console.log('loading playlist', loadedPlaylist);
+      initConditions.data = loadedPlaylist.rules;
+      $conditions.conditionsBuilder(initConditions);
+
+      $sortBy.val(loadedPlaylist.sortBy);
+      $('#sort-by-order').val(loadedPlaylist.sortByOrder);
+      $('#limit-to').val(loadedPlaylist.limit);
     });
   } else {
     console.log('creating empty form');
-    conditions.conditionsBuilder(initConditions);
+    $conditions.conditionsBuilder(initConditions);
   }
 
-  $('#submit').click(function submit(e) {
-    e.preventDefault();
-    const playlistRules = conditions.conditionsBuilder('data');
+  function readForm() {
+    const playlist = initialPlaylist || {};
+    const playlistRules = $('#conditions').conditionsBuilder('data');
 
-    if (!localId) {
-      localId = '' + new Date().getTime();
-      playlist.localId = localId;
+    if (!('localId' in playlist)) {
+      playlist.localId = '' + new Date().getTime();
     }
 
     playlist.title = $('#playlist-title').val();
     playlist.rules = playlistRules;
     playlist.userId = userId;
+    playlist.sortBy = $('#sort-by').val();
+    playlist.sortByOrder = $('#sort-by-order').val();
+    playlist.limit = Math.min(1000, parseInt($('#limit-to').val(), 10));
+
+    return playlist;
+  }
+
+
+  $('#submit').click(function submit(e) {
+    e.preventDefault();
+    const playlist = readForm();
 
     console.log('writing', playlist);
 
@@ -91,16 +111,17 @@ function initializeForm(userId, playlistId) {
 
   $('#test').click(function deletePlaylist(e) {
     e.preventDefault();
-    const playlistRules = conditions.conditionsBuilder('data');
 
-    chrome.runtime.sendMessage({action: 'query', userId: userId, rules: playlistRules}, response => {
+    const playlist = readForm();
+
+    chrome.runtime.sendMessage({action: 'query', playlist: playlist}, response => {
       $('#query-result').text('query found ' + response.tracks.length + ' first was\n' + JSON.stringify(response.tracks[0], null, 2));
     });
   });
 
   $('#delete').click(function deletePlaylist(e) {
     e.preventDefault();
-    Storage.deletePlaylist(userId, localId, () => {
+    Storage.deletePlaylist(userId, playlistId, () => {
       goToManager(userId);
     });
   });

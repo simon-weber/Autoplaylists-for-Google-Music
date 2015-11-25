@@ -64,11 +64,17 @@ function buildClause(track, rule) {
   return clause;
 }
 
-exports.queryTracks = function queryTracks(db, userId, playlistDefinition, callback) {
+exports.queryTracks = function queryTracks(db, playlist, callback) {
   const track = db.getSchema().table('Track');
 
-  const clause = buildClause(track, playlistDefinition);
-  db.select().from(track).where(clause).exec().
+  const clause = buildClause(track, playlist.rules);
+  const query = db.select().from(track).where(clause);
+
+  const orderBy = track[playlist.sortBy];
+  const order = Lf.Order[playlist.sortByOrder];
+  query.orderBy(orderBy, order).
+    limit(playlist.limit).
+    exec().
     then(callback).
     catch(console.error);
 };

@@ -113,7 +113,7 @@ function syncPlaylist(playlist, attempt) {
   } else {
     // refresh tracks and write out playlist
     const db = dbs[playlist.userId];
-    Trackcache.queryTracks(db, playlist.userId, playlist.rules, tracks => {
+    Trackcache.queryTracks(db, playlist, tracks => {
       // TODO how to handle large playlists? google truncates at 1k
       console.log(playlist.title, 'found', tracks.length);
       if (tracks.length > 0) {
@@ -233,7 +233,7 @@ function main() {
       console.log('see user', request.userId, users);
       chrome.pageAction.show(sender.tab.id);
     } else if (request.action === 'query') {
-      Trackcache.queryTracks(dbs[request.userId], request.userId, request.rules, tracks => {
+      Trackcache.queryTracks(dbs[request.playlist.userId], request.playlist, tracks => {
         sendResponse({tracks: tracks});
       });
       return true; // wait for async response

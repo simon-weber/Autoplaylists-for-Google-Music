@@ -14,6 +14,18 @@
     <h3>Meet these conditions</h3>
     <div id="conditions"></div>
 
+    <label for="sort-by">sort by</label>
+    <select id="sort-by"></select>
+    <select id="sort-by-order">
+        <option value="ASC">ascending</option>
+        <option value="DESC">descending</option>
+    </select>
+    <br/>
+
+    <label for="limit-to">limit to</label>
+    <input type="text" id="limit-to" value="1000" /> (Google limits playlists to 1000)
+    <br/>
+
     <button id="submit" type="button">save</button>
     <button id="delete" type="button">delete</button>
     <button id="test" type="button">test</button>
