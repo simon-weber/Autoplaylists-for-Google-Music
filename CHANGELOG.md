@@ -1,3 +1,9 @@
+## 0.1.1 ()
+
+Features:
+
+  - support periodic updates: https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/1
+
 ## 0.0.1 (November 24, 2015)
 
 First packaged release!

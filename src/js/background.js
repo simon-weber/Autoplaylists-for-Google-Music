@@ -146,6 +146,26 @@ function renameAndSync(playlist) {
   });
 }
 
+function forceUpdate(userId) {
+  getPollTimestamp(userId, timestamp => {
+    if (!(dbIsInit[userId])) {
+      console.warn('refusing forceUpdate because db is not init');
+      return;
+    } else if (!timestamp) {
+      console.warn('db was init, but no timestamp found');
+      return;
+    }
+
+    diffUpdateLibrary(userId, timestamp, () => {
+      Storage.getPlaylistsForUser(userId, playlists => {
+        for (let i = 0; i < playlists.length; i++) {
+          renameAndSync(playlists[i]);
+        }
+      });
+    });
+  });
+}
+
 function main() {
   Storage.addPlaylistChangeListener(change => {
     const hasOld = 'oldValue' in change;
@@ -173,28 +193,26 @@ function main() {
     Chrometools.focusOrCreateTab(managerUrl);
   });
 
+  // Update periodically.
+  setInterval(() => {
+    // TODO probably need to lock on playlist id to avoid race conditions
+    console.log('starting periodic update');
+    for (const userId in users) {
+      forceUpdate(userId);
+    }
+  }, 60 * 1000);
+
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // respond to manager / content script requests.
 
     if (request.action === 'forceUpdate') {
-      getPollTimestamp(request.userId, timestamp => {
-        if (!(dbIsInit[request.userId])) {
-          console.warn('refusing forceUpdate because db is not init');
-          return;
-        } else if (!timestamp) {
-          console.warn('db was init, but no timestamp found');
-          return;
-        }
-
-        diffUpdateLibrary(request.userId, timestamp, () => {
-          Storage.getPlaylistsForUser(request.userId, playlists => {
-            for (let i = 0; i < playlists.length; i++) {
-              renameAndSync(playlists[i]);
-            }
-          });
-        });
-      });
+      forceUpdate(request.userId);
     } else if (request.action === 'showPageAction') {
+      if (!(request.userId)) {
+        console.warn('received falsey user id from page action');
+        return false;
+      }
+
       if (!(request.userId in dbs)) {
         // init the db.
         Trackcache.openDb(request.userId, db => {
