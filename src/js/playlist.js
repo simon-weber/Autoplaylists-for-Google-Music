@@ -5,7 +5,6 @@ const Qs = require('qs');
 const Storage = require('./storage.js');
 const Track = require('./track.js');
 
-// jscs:disable requireCamelCaseOrUpperCaseIdentifiers
 const operators = {
   numeric: [
     {name: 'eq', label: 'equals', input_type: 'numeric'},
@@ -26,15 +25,13 @@ const operators = {
   ],
 };
 
-// jscs:enable requireCamelCaseOrUpperCaseIdentifiers
-
 function getRulesData() {
   const variables = [];
   Track.fields.forEach(field => {
     variables.push({
       name: field.name,
       label: field.label,
-      field_type: field.is_datetime ? 'datetime' : Track.lfToBusinessTypes[field.type],  // jscs:ignore requireCamelCaseOrUpperCaseIdentifiers
+      field_type: field.is_datetime ? 'datetime' : Track.lfToBusinessTypes[field.type],
       options: [],
     });
   });
@@ -42,7 +39,7 @@ function getRulesData() {
   return {
     variables: variables,
     actions: [],
-    variable_type_operators: operators,  // jscs:ignore requireCamelCaseOrUpperCaseIdentifiers
+    variable_type_operators: operators,
   };
 }
 
