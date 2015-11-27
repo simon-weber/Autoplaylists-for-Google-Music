@@ -91,7 +91,7 @@ function initializeForm(userId, playlistId) {
       playlist.localId = '' + new Date().getTime();
     }
 
-    playlist.title = $('#playlist-title').val();
+    playlist.title = $('#playlist-title').val() || '[untitled autoplaylist]';
     playlist.rules = playlistRules;
     playlist.userId = userId;
     playlist.sortBy = $('#sort-by').val();
