@@ -14,6 +14,12 @@ function f(requiredItems, optionalItems) {
   field.explanation = opt.explanation || '';
   field.is_datetime = opt.is_datetime || false;
 
+  if (opt.coerce) {
+    field.coerce = opt.coerce;
+  } else {
+    field.coerce = val => {return val;};
+  }
+
   return field;
 }
 
@@ -38,7 +44,10 @@ exports.fields = [
   f([22, 'playCount', Lf.Type.INTEGER], {
     label: 'play count'}),
   f([23, 'rating', Lf.Type.INTEGER], {
-    explanation: '0: no thumb, 1: down thumb, 5: up thumb.'}),
+    explanation: '0: no thumb, 1: down thumb, 5: up thumb.',
+    // coerce nulls to 0; see https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/15.
+    coerce: val => {return val || 0;},
+  }),
 
   // Lf.Type.DATE_TIME introduces a TypeError on indexing,
   // and lots of serialization headaches without any benefit.
@@ -74,7 +83,7 @@ exports.lfToBusinessTypes = lToB;
 exports.fromJsproto = function fromJsproto(jsproto) {
   const track = {};
   exports.fields.forEach(field => {
-    track[field.name] = jsproto[field.protoNum];
+    track[field.name] = field.coerce(jsproto[field.protoNum]);
   });
 
   return track;
