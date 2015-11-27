@@ -1,3 +1,11 @@
+## 0.1.2 (November 27, 2015)
+
+Bugfixes:
+
+  - fix user detection on manual url changes [#3](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/3)
+  - fix for playlists containing All Access tracks [#10](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/10)
+  - coerce null ratings to 0 [#15](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/15)
+
 ## 0.1.1 (November 26, 2015)
 
 Features:
