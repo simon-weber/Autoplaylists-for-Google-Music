@@ -55,10 +55,14 @@ function initializeForm(userId, playlistId) {
   console.log(userId, playlistId);
 
   const $sortBy = $('#sort-by');
+  const $explanations = $('#explanations');
 
 
   Track.fields.forEach(field => {
     $('<option>').val(field.name).text(field.label).appendTo($sortBy);
+    if (field.explanation) {
+      $('<li>').text(field.label + ': ' + field.explanation).appendTo($explanations);
+    }
   });
 
   if (playlistId) {

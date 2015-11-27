@@ -2,14 +2,19 @@
 
 const Lf = require('lovefield');
 
-function f(fieldItems) {
-  return {
-    protoNum: fieldItems[0],
-    name: fieldItems[1],
-    type: fieldItems[2],
-    label: fieldItems[3] || fieldItems[1],
-    is_datetime: fieldItems[4] || false,
+function f(requiredItems, optionalItems) {
+  const field = {
+    protoNum: requiredItems[0],
+    name: requiredItems[1],
+    type: requiredItems[2],
   };
+
+  const opt = optionalItems || {};
+  field.label = opt.label || field.name;
+  field.explanation = opt.explanation || '';
+  field.is_datetime = opt.is_datetime || false;
+
+  return field;
 }
 
 exports.fields = [
@@ -17,24 +22,38 @@ exports.fields = [
   f([1, 'title', Lf.Type.STRING]),
   f([3, 'artist', Lf.Type.STRING]),
   f([4, 'album', Lf.Type.STRING]),
-  f([5, 'albumArtist', Lf.Type.STRING, 'album artist']),
+  f([5, 'albumArtist', Lf.Type.STRING], {
+    label: 'album artist'}),
   f([10, 'composer', Lf.Type.STRING]),
   f([11, 'genre', Lf.Type.STRING]),
-  f([13, 'durationMillis', Lf.Type.INTEGER, 'duration milliseconds']),
+  f([13, 'durationMillis', Lf.Type.INTEGER], {
+    label: 'duration milliseconds'}),
   f([14, 'track', Lf.Type.INTEGER]),
-  f([15, 'totalTracks', Lf.Type.INTEGER, 'total tracks']),
+  f([15, 'totalTracks', Lf.Type.INTEGER], {
+    label: 'total tracks'}),
   f([16, 'disc', Lf.Type.INTEGER]),
-  f([17, 'totalDiscs', Lf.Type.INTEGER, 'total discs']),
+  f([17, 'totalDiscs', Lf.Type.INTEGER], {
+    label: 'total discs'}),
   f([18, 'year', Lf.Type.INTEGER]),
-  f([22, 'playCount', Lf.Type.INTEGER, 'play count']),
-  f([23, 'rating', Lf.Type.INTEGER]),
+  f([22, 'playCount', Lf.Type.INTEGER], {
+    label: 'play count'}),
+  f([23, 'rating', Lf.Type.INTEGER], {
+    explanation: '0: no thumb, 1: down thumb, 5: up thumb.'}),
+
   // Lf.Type.DATE_TIME introduces a TypeError on indexing,
   // and lots of serialization headaches without any benefit.
   // It's easier to treat it as an int internally,
   // though it does add some special-casing for datetimes in the view.
-  f([24, 'creationDate', Lf.Type.INTEGER, 'creation date', true]),
-  f([25, 'lastPlayed', Lf.Type.INTEGER, 'last played', true]),
-  f([29, 'type', Lf.Type.INTEGER]),
+  f([24, 'creationDate', Lf.Type.INTEGER], {
+    label: 'creation date',
+    explanation: 'when the track was added to the library, eg "two weeks ago".',
+    is_datetime: true}),
+  f([25, 'lastPlayed', Lf.Type.INTEGER], {
+    label: 'last played',
+    explanation: 'when the track was last played, eg "30 days ago" or "yesterday". Sometimes inaccurate.',
+    is_datetime: true}),
+  f([29, 'type', Lf.Type.INTEGER], {
+    explanation: '1: free/purchased, 2: uploaded but not matched, 6: uploaded and matched.'}),
   f([30, 'comment', Lf.Type.STRING]),
   f([34, 'bitrate', Lf.Type.INTEGER]),
 ];
