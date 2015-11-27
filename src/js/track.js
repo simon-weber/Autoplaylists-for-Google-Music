@@ -52,8 +52,10 @@ exports.fields = [
     label: 'last played',
     explanation: 'when the track was last played, eg "30 days ago" or "yesterday". Sometimes inaccurate.',
     is_datetime: true}),
+  f([27, 'storeId', Lf.Type.STRING], {
+    label: 'store id'}),
   f([29, 'type', Lf.Type.INTEGER], {
-    explanation: '1: free/purchased, 2: uploaded but not matched, 6: uploaded and matched.'}),
+    explanation: '1: free/purchased, 2: uploaded but not matched, 6: uploaded and matched, 7: All Access'}),
   f([30, 'comment', Lf.Type.STRING]),
   f([34, 'bitrate', Lf.Type.INTEGER]),
 ];
@@ -76,4 +78,16 @@ exports.fromJsproto = function fromJsproto(jsproto) {
   });
 
   return track;
+};
+
+exports.getPlaylistAddId = function getPlaylistAddId(track) {
+  // Return the id for this track when interacting with Google.
+  // For some reason Google doesn't accept AA playlist adds with library ids.
+  let id = track.id;
+
+  if (track.type === 7) {
+    id = track.storeId;
+  }
+
+  return id;
 };

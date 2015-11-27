@@ -161,10 +161,10 @@ function addTracks(userIndex, playlistId, tracks, callback) {
 
   console.log('adding', tracks.length);
 
-  // [["<sessionid>",1],["<listid>",[["<songid>",2]]]]
+  // [["<sessionid>",1],["<listid>",[["<store id or songid>",tracktype]]]]
   const payload = [['', 1],
     [
-      playlistId, tracks.map(track => {return [track.id, track.type];}),
+      playlistId, tracks.map(t => {return [Track.getPlaylistAddId(t), t.type];}),
     ],
   ];
   authedGMRequest('addtrackstoplaylist', payload, userIndex, 'post', response => {
@@ -189,17 +189,19 @@ exports.setPlaylistTo = function setPlaylistTo(userIndex, playlistId, tracks, ca
       const idsToAdd = {};
       for (let i = 0; i < tracks.length; i++) {
         const track = tracks[i];
-        idsToAdd[track.id] = track;
+        idsToAdd[Track.getPlaylistAddId(track)] = track;
       }
 
       const entriesToDelete = [];
       for (let i = 0; i < gentries.length; i++) {
         const gentry = gentries[i];
-        const entry = {id: gentry[0], entryId: gentry[43]};
-        if (!(entry.id in idsToAdd)) {
-          entriesToDelete.push(entry);
+        const remoteTrack = Track.fromJsproto(gentry);
+
+        if (!(Track.getPlaylistAddId(remoteTrack) in idsToAdd)) {
+          // tracks that can only be added with store ids can be deleted with library ids.
+          entriesToDelete.push({id: remoteTrack.id, entryId: gentry[43]});
         } else {
-          delete idsToAdd[entry.id];
+          delete idsToAdd[Track.getPlaylistAddId(remoteTrack)];
         }
       }
 
