@@ -229,6 +229,15 @@ function main() {
         });
       }
 
+      // In the case that an existing tab/index was changed to a new user,
+      // remove the old entry.
+      for (const userId in users) {
+        if (users[userId].tabId === sender.tab.id ||
+            users[userId].userIndex === request.userIndex) {
+          delete users[userId];
+        }
+      }
+
       users[request.userId] = {userIndex: request.userIndex, tabId: sender.tab.id};
       console.log('see user', request.userId, users);
       chrome.pageAction.show(sender.tab.id);
