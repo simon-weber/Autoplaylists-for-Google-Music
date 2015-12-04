@@ -47,6 +47,27 @@ function authedGMRequest(endpoint, data, userIndex, method, callback) {
   }));
 }
 
+function playlistToString(playlist) {
+  return ruleToString(playlist.rules) + ' sort by ' + playlist.sortBy +
+      (playlist.sortByOrder == 'ASC' ? ' ascending' : playlist.sortByOrder == 'DESC' ? ' descending' : '');
+}
+
+function ruleToString(rule) {
+  // Return a string representation of a rule, parenthesised if necessary
+  if (rule.name) {
+    const operators = {'eq': '=', 'neq': '≠', 'lt': '<', 'lte': '≤', 'gt': '>', 'gte': '≥', 'match': 'matches'};
+    return rule.name + ' ' + (operators[rule.operator] || rule.operator) + ' ' + rule.value;
+  } else if (rule.all || rule.any) {
+    var subRules = rule.all || rule.any;
+    if (subRules.length === 1) {
+      return ruleToString(subRules[0]);
+    } else if (subRules.length > 1) {
+      return '(' + subRules.map(r => ruleToString(r)).filter(s => s.length).join(rule.any ? ' or ' : ' and ') + ')';
+    }
+  }
+  return '';
+}
+
 exports.getTrackChanges = function getTrackChanges(userIndex, sinceTimestamp, callback) {
   // Callback {newTimestamp: 1234, upsertedTracks: [{}], deletedIds: ['']}
   // timestamps are in microseconds.
@@ -114,9 +135,10 @@ exports.getTrackChanges = function getTrackChanges(userIndex, sinceTimestamp, ca
   });
 };
 
-exports.updatePlaylist = function updatePlaylist(userIndex, id, title, callback) {
+exports.updatePlaylist = function updatePlaylist(userIndex, id, title, playlist, callback) {
   // Callback no args after updating an existing playlist.
-  const payload = [['', 1], [id, null, title, 'automatically managed by Autoplaylists for Google Music™']];
+  const description = 'Automatically managed by Autoplaylists for Google Music™ ' + playlistToString(playlist);
+  const payload = [['', 1], [id, null, title, description]];
   authedGMRequest('editplaylist', payload, userIndex, 'post', response => {
     console.log(response);
     callback();

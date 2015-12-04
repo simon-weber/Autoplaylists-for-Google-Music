@@ -141,7 +141,7 @@ function syncPlaylist(playlist, attempt) {
 
 function renameAndSync(playlist) {
   console.log('renaming to', playlist.title);
-  Gm.updatePlaylist(userIndexForId(playlist.userId), playlist.remoteId, playlist.title, () => {
+  Gm.updatePlaylist(userIndexForId(playlist.userId), playlist.remoteId, playlist.title, playlist, () => {
     syncPlaylist(playlist);
   });
 }
