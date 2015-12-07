@@ -17,6 +17,7 @@
         "no-console": 0,
         "strict": [2, "global"],
         "guard-for-in": 0,
-        "no-eval": 0
+        "no-eval": 0,
+        "object-curly-spacing": 0
     }
 }
