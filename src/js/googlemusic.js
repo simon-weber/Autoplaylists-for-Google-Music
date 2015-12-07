@@ -47,18 +47,13 @@ function authedGMRequest(endpoint, data, userIndex, method, callback) {
   }));
 }
 
-function playlistToString(playlist) {
-  return ruleToString(playlist.rules) + ' sort by ' + playlist.sortBy +
-      (playlist.sortByOrder == 'ASC' ? ' ascending' : playlist.sortByOrder == 'DESC' ? ' descending' : '');
-}
-
 function ruleToString(rule) {
   // Return a string representation of a rule, parenthesised if necessary
   if (rule.name) {
     const operators = {'eq': '=', 'neq': '≠', 'lt': '<', 'lte': '≤', 'gt': '>', 'gte': '≥', 'match': 'matches'};
     return rule.name + ' ' + (operators[rule.operator] || rule.operator) + ' ' + rule.value;
   } else if (rule.all || rule.any) {
-    var subRules = rule.all || rule.any;
+    const subRules = rule.all || rule.any;
     if (subRules.length === 1) {
       return ruleToString(subRules[0]);
     } else if (subRules.length > 1) {
@@ -66,6 +61,19 @@ function ruleToString(rule) {
     }
   }
   return '';
+}
+
+function lfOrderToString(lfOrder) {
+  let str = 'ascending';
+  if (lfOrder === 'DESC') {
+    str = 'descending';
+  }
+
+  return str;
+}
+
+function playlistToString(playlist) {
+  return ruleToString(playlist.rules) + ' sort by ' + playlist.sortBy + lfOrderToString(playlist.sortByOrder);
 }
 
 exports.getTrackChanges = function getTrackChanges(userIndex, sinceTimestamp, callback) {

@@ -36,7 +36,7 @@ function timestampKey(userId) {
 function setPollTimestamp(userId, timestamp) {
   const storageItems = {};
   storageItems[timestampKey(userId)] = timestamp;
-  chrome.storage.local.set(storageItems, Chrometools.unlessError( () => {
+  chrome.storage.local.set(storageItems, Chrometools.unlessError(() => {
     console.log('set poll for', userId, timestamp);
   }));
 }
