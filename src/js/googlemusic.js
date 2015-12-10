@@ -4,6 +4,7 @@ const Qs = require('qs');
 
 const Chrometools = require('./chrometools.js');
 const Track = require('./track.js');
+const Playlist = require('./playlist.js');
 
 const GM_BASE_URL = 'https://play.google.com/music/';
 const GM_SERVICE_URL = GM_BASE_URL + 'services/';
@@ -45,35 +46,6 @@ function authedGMRequest(endpoint, data, userIndex, method, callback) {
       .fail(res => { console.error('request failed:', url, data, res); });
     }
   }));
-}
-
-function ruleToString(rule) {
-  // Return a string representation of a rule, parenthesised if necessary
-  if (rule.name) {
-    const operators = {'eq': '=', 'neq': '≠', 'lt': '<', 'lte': '≤', 'gt': '>', 'gte': '≥', 'match': 'matches'};
-    return rule.name + ' ' + (operators[rule.operator] || rule.operator) + ' ' + rule.value;
-  } else if (rule.all || rule.any) {
-    const subRules = rule.all || rule.any;
-    if (subRules.length === 1) {
-      return ruleToString(subRules[0]);
-    } else if (subRules.length > 1) {
-      return '(' + subRules.map(r => ruleToString(r)).filter(s => s.length).join(rule.any ? ' or ' : ' and ') + ')';
-    }
-  }
-  return '';
-}
-
-function lfOrderToString(lfOrder) {
-  let str = 'ascending';
-  if (lfOrder === 'DESC') {
-    str = 'descending';
-  }
-
-  return str;
-}
-
-function playlistToString(playlist) {
-  return ruleToString(playlist.rules) + ' sort by ' + playlist.sortBy + lfOrderToString(playlist.sortByOrder);
 }
 
 exports.getTrackChanges = function getTrackChanges(userIndex, sinceTimestamp, callback) {
@@ -145,7 +117,7 @@ exports.getTrackChanges = function getTrackChanges(userIndex, sinceTimestamp, ca
 
 exports.updatePlaylist = function updatePlaylist(userIndex, id, title, playlist, callback) {
   // Callback no args after updating an existing playlist.
-  const description = 'Automatically managed by Autoplaylists for Google Music™ ' + playlistToString(playlist);
+  const description = 'Managed by Autoplaylists for Google Music™ to contain: ' + Playlist.toString(playlist);
   const payload = [['', 1], [id, null, title, description]];
   authedGMRequest('editplaylist', payload, userIndex, 'post', response => {
     console.log(response);

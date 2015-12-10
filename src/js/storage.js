@@ -1,12 +1,5 @@
 'use strict';
 
-// {
-//     localId: int,
-//     userId: string,
-//     remoteId: int (optional),
-//     rules: object
-// }
-
 function playlistKey(userId, playlistLid) {
   return JSON.stringify(['playlist', userId, playlistLid]);
 }
