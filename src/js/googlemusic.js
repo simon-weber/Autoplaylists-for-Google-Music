@@ -119,6 +119,9 @@ exports.updatePlaylist = function updatePlaylist(userIndex, id, title, playlist,
   // Callback no args after updating an existing playlist.
   const description = 'Managed by Autoplaylists for Google Music™ to contain: ' + Playlist.toString(playlist);
   const payload = [['', 1], [id, null, title, description]];
+
+  console.log('updatePlaylist', playlist);
+
   authedGMRequest('editplaylist', payload, userIndex, 'post', response => {
     console.log(response);
     callback();
@@ -128,6 +131,8 @@ exports.updatePlaylist = function updatePlaylist(userIndex, id, title, playlist,
 exports.createRemotePlaylist = function createRemotePlaylist(userIndex, title, callback) {
   // Callback a playlist id for a new, empty playlist.
   const payload = [['', 1], [false, title, null, []]];
+
+  console.log('createRemotePlaylist', title);
 
   // response:
   // [[0,2,0] ,["id","some long base64 string",null,timestamp]]
@@ -147,6 +152,8 @@ exports.deleteRemotePlaylist = function deleteRemotePlaylist(userIndex, remoteId
     sessionId: '',
   };
 
+  console.log('deleteRemotePlaylist', remoteId);
+
   authedGMRequest('deleteplaylist', payload, userIndex, 'post', response => {
     console.log('delete playlist response', response);
     callback();
@@ -161,7 +168,7 @@ function addTracks(userIndex, playlistId, tracks, callback) {
     return callback(null);
   }
 
-  console.log('adding', tracks.length);
+  console.log('adding', tracks.length, 'tracks. first 10 are', tracks.slice(0, 10));
 
   // [["<sessionid>",1],["<listid>",[["<store id or songid>",tracktype]]]]
   const payload = [['', 1],
@@ -213,7 +220,7 @@ exports.setPlaylistTo = function setPlaylistTo(userIndex, playlistId, tracks, ca
       }
 
       if (entriesToDelete.length > 0) {
-        console.log('deleting', entriesToDelete.length);
+        console.log('deleting', entriesToDelete.length, 'entries. first 10 are', entriesToDelete.slice(0, 10));
         const payload2 = {
           songIds: entriesToDelete.map(entry => {return entry.id;}),
 
