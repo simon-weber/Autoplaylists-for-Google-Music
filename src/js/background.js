@@ -16,6 +16,9 @@ const dbs = {};
 // {userId: <bool>}
 const dbIsInit = {};
 
+// {playlistId: <bool>}, locks playlists during some updates
+const playlistIsUpdating = {};
+
 function userIdForTabId(tabId) {
   for (const userId in users) {
     if (users[userId].tabId === tabId) {
@@ -111,6 +114,8 @@ function syncPlaylist(playlist, attempt) {
       });
     });
   } else {
+    playlistIsUpdating[playlist.remoteId] = true;
+
     // refresh tracks and write out playlist
     const db = dbs[playlist.userId];
     Trackcache.queryTracks(db, playlist, tracks => {
@@ -125,14 +130,17 @@ function syncPlaylist(playlist, attempt) {
 
       Gm.setPlaylistTo(userIndex, playlist.remoteId, tracks.slice(0, 1000), response => {
         if (response !== null) {
-          // TODO large updates seem to only apply partway sometimes.
+          // large updates seem to only apply partway sometimes.
           // retrying like this seems to make even 1k playlists eventually consistent.
           if (_attempt < 10) {
             console.log('not a 0-track add; retrying syncPlaylist', response);
             setTimeout(syncPlaylist, 1000 * _attempt + 1000, playlist, _attempt + 1);
           } else {
             console.warn('giving up on syncPlaylist!', response);
+            playlistIsUpdating[playlist.remoteId] = false;
           }
+        } else {
+          playlistIsUpdating[playlist.remoteId] = false;
         }
       });
     });
@@ -159,7 +167,15 @@ function forceUpdate(userId) {
     diffUpdateLibrary(userId, timestamp, () => {
       Storage.getPlaylistsForUser(userId, playlists => {
         for (let i = 0; i < playlists.length; i++) {
-          renameAndSync(playlists[i]);
+          // This locking prevents two things:
+          //   * slow periodic syncs from stepping on later periodic syncs
+          //   * periodic syncs from stepping on manual syncs
+          // which is why it's done at this level (and not around eg syncPlaylist).
+          if (playlistIsUpdating[playlists[i].remoteId]) {
+            console.warn('skipping forceUpdate since playlist is being updated:', playlists[i].remoteId);
+          } else {
+            renameAndSync(playlists[i]);
+          }
         }
       });
     });
@@ -195,9 +211,8 @@ function main() {
 
   // Update periodically.
   setInterval(() => {
-    // TODO probably need to lock on playlist id to avoid race conditions
-    console.log('starting periodic update');
     for (const userId in users) {
+      console.log('periodic update for', userId);
       forceUpdate(userId);
     }
   }, 60 * 1000);
@@ -217,7 +232,7 @@ function main() {
         // init the db.
         Trackcache.openDb(request.userId, db => {
           // TODO there's a race condition here between poll timestamp reads and
-          // writes if users manager to forceUpdate before this write finishes.
+          // writes if users manage to forceUpdate before this write finishes.
           // that seems super unlikely so i haven't addressed it yet.
           setPollTimestamp(request.userId, new Date().getTime() * 1000);
           console.log('opened');
