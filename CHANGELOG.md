@@ -1,3 +1,9 @@
+## 0.2.1 (December 13, 2015)
+
+Bugfixes:
+
+  - playlist queries with a nested, multi-column `or` now work: [#21](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/21)
+
 ## 0.2.0 (December 12, 2015)
 
 Features:
