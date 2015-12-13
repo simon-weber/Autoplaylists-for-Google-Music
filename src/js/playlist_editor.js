@@ -118,6 +118,7 @@ function initializeForm(userId, playlistId) {
 
     const playlist = readForm();
 
+    $('#query-result').text('');
     chrome.runtime.sendMessage({action: 'query', playlist: playlist}, response => {
       $('#query-result').text('query found ' + response.tracks.length + ' first was\n' + JSON.stringify(response.tracks[0], null, 2));
     });
