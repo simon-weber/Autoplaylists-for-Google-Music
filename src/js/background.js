@@ -132,7 +132,7 @@ function syncPlaylist(playlist, attempt) {
         if (response !== null) {
           // large updates seem to only apply partway sometimes.
           // retrying like this seems to make even 1k playlists eventually consistent.
-          if (_attempt < 10) {
+          if (_attempt < 5) {
             console.log('not a 0-track add; retrying syncPlaylist', response);
             setTimeout(syncPlaylist, 1000 * _attempt + 1000, playlist, _attempt + 1);
           } else {
@@ -215,7 +215,7 @@ function main() {
       console.log('periodic update for', userId);
       forceUpdate(userId);
     }
-  }, 60 * 1000);
+  }, 60 * 1000 * 5);
 
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // respond to manager / content script requests.
