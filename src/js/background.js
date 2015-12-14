@@ -119,7 +119,6 @@ function syncPlaylist(playlist, attempt) {
     // refresh tracks and write out playlist
     const db = dbs[playlist.userId];
     Trackcache.queryTracks(db, playlist, tracks => {
-      // TODO how to handle large playlists? google truncates at 1k
       console.log(playlist.title, 'found', tracks.length);
       if (tracks.length > 0) {
         console.log('first is', tracks[0]);
@@ -128,7 +127,7 @@ function syncPlaylist(playlist, attempt) {
         console.warn('attempting to sync over 1000 tracks; only first 1k will sync');
       }
 
-      Gm.setPlaylistTo(userIndex, playlist.remoteId, tracks.slice(0, 1000), response => {
+      Gm.setPlaylistTo(db, userIndex, playlist.remoteId, tracks.slice(0, 1000), response => {
         if (response !== null) {
           // large updates seem to only apply partway sometimes.
           // retrying like this seems to make even 1k playlists eventually consistent.
