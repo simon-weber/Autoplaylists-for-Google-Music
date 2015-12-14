@@ -215,7 +215,7 @@ function main() {
       console.log('periodic update for', userId);
       forceUpdate(userId);
     }
-  }, 60 * 1000 * 5);
+  }, 60 * 1000);
 
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // respond to manager / content script requests.
