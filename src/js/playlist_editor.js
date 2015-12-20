@@ -81,6 +81,7 @@ function initializeForm(userId, playlistId) {
   } else {
     console.log('creating empty form');
     $conditions.conditionsBuilder(initConditions);
+    $('#playlist-title').focus();
   }
 
   function readForm() {
