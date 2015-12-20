@@ -31,7 +31,7 @@
 .container {
   position: relative;
   width: 100%;
-  max-width: 960px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 20px;
   box-sizing: border-box; }
@@ -109,9 +109,51 @@
 
   .offset-by-one-half.column,
   .offset-by-one-half.columns     { margin-left: 52%; }
-
 }
 
+/* For wide screens. 
+ * http://stackoverflow.com/a/13282310
+ */
+@media only screen and (min-width: 1400px) {
+    .container                                  { width: 1400px; } /*whatever you want - can even be fixed if you prefer*/
+    .container .column,
+    .container .columns                         { margin-left: 0.78125%; margin-right: 0.78125%;  }
+    .container .one.column,
+    .container .one.columns                     { width: 4.6875%; }
+    .container .two.columns                     { width: 10.9375%; }
+    .container .three.columns                   { width: 17.1875%; }
+    .container .four.columns                    { width: 23.4375%; }
+    .container .five.columns                    { width: 29.6875%; }
+    .container .six.columns                     { width: 35.9375%; }
+    .container .seven.columns                   { width: 42.1875%; }
+    .container .eight.columns                   { width: 48.4375%; }
+    .container .nine.columns                    { width: 54.6875%; }
+    .container .ten.columns                     { width: 60.9375%; }
+    .container .eleven.columns                  { width: 67.1875%; }
+    .container .twelve.columns                  { width: 73.4375%; }
+    .container .thirteen.columns                { width: 79.6875%; }
+    .container .fourteen.columns                { width: 85.9375%; }
+    .container .fifteen.columns                 { width: 92.1875%; }
+    .container .sixteen.columns                 { width: 98.4375%; }
+    .container .one-third.column                { width: 31.7708%; }
+    .container .two-thirds.column               { width: 65.1041%; }
+    /* Offsets */
+    .container .offset-by-one                   { padding-left: 6.25%; }
+    .container .offset-by-two                   { padding-left: 12.5%; }
+    .container .offset-by-three                 { padding-left: 18.75%; }
+    .container .offset-by-four                  { padding-left: 25%; }
+    .container .offset-by-five                  { padding-left: 31.25%; }
+    .container .offset-by-six                   { padding-left: 37.5%; }
+    .container .offset-by-seven                 { padding-left: 43.75%; }
+    .container .offset-by-eight                 { padding-left: 50%; }
+    .container .offset-by-nine                  { padding-left: 56.25%; }
+    .container .offset-by-ten                   { padding-left: 62.5%; }
+    .container .offset-by-eleven                { padding-left: 68.75%; }
+    .container .offset-by-twelve                { padding-left: 75%; }
+    .container .offset-by-thirteen              { padding-left: 81.25%; }
+    .container .offset-by-fourteen              { padding-left: 87.5%; }
+    .container .offset-by-fifteen               { padding-left: 93.75%; }
+}
 
 /* Base Styles
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
