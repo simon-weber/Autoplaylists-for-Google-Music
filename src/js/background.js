@@ -203,7 +203,7 @@ function main() {
   });
 
   chrome.pageAction.onClicked.addListener(tab => {
-    let managerUrl = chrome.extension.getURL('html/manager.html');
+    let managerUrl = chrome.extension.getURL('html/playlists.html');
     managerUrl = managerUrl + '?' + Qs.stringify({userId: userIdForTabId(tab.id)});
     Chrometools.focusOrCreateTab(managerUrl);
   });

@@ -55,7 +55,7 @@ function getRulesData() {
 }
 
 function goToManager(userId) {
-  window.location.href = '/html/manager.html?' + Qs.stringify({userId});
+  window.location.href = '/html/playlists.html?' + Qs.stringify({userId});
 }
 
 function initializeForm(userId, playlistId) {
