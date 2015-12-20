@@ -76,7 +76,7 @@ function diffUpdateLibrary(userId, timestamp, callback) {
 function initLibrary(userId) {
   // Initialize our cache from Google's indexeddb, or fall back to a differential update from time 0.
 
-  const message = {action: 'getLocalTracks', userId: userId};
+  const message = {action: 'getLocalTracks', userId};
   chrome.tabs.sendMessage(users[userId].tabId, message, Chrometools.unlessError(response => {
     if (response.tracks === null) {
       // problem with indexeddb, fall back to update from 0.
@@ -119,7 +119,6 @@ function syncPlaylist(playlist, attempt) {
     // refresh tracks and write out playlist
     const db = dbs[playlist.userId];
     Trackcache.queryTracks(db, playlist, tracks => {
-      // TODO how to handle large playlists? google truncates at 1k
       console.log(playlist.title, 'found', tracks.length);
       if (tracks.length > 0) {
         console.log('first is', tracks[0]);
@@ -128,7 +127,7 @@ function syncPlaylist(playlist, attempt) {
         console.warn('attempting to sync over 1000 tracks; only first 1k will sync');
       }
 
-      Gm.setPlaylistTo(userIndex, playlist.remoteId, tracks.slice(0, 1000), response => {
+      Gm.setPlaylistTo(db, userIndex, playlist.remoteId, tracks.slice(0, 1000), response => {
         if (response !== null) {
           // large updates seem to only apply partway sometimes.
           // retrying like this seems to make even 1k playlists eventually consistent.
@@ -215,7 +214,7 @@ function main() {
       console.log('periodic update for', userId);
       forceUpdate(userId);
     }
-  }, 60 * 1000 * 5);
+  }, 60 * 1000);
 
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // respond to manager / content script requests.
@@ -258,7 +257,7 @@ function main() {
       chrome.pageAction.show(sender.tab.id);
     } else if (request.action === 'query') {
       Trackcache.queryTracks(dbs[request.playlist.userId], request.playlist, tracks => {
-        sendResponse({tracks: tracks});
+        sendResponse({tracks});
       });
       return true; // wait for async response
     } else {

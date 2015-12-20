@@ -1,5 +1,6 @@
 'use strict';
 
+const Lf = require('lovefield');
 const Qs = require('qs');
 
 const Chrometools = require('./chrometools.js');
@@ -182,7 +183,24 @@ function addTracks(userIndex, playlistId, tracks, callback) {
   });
 }
 
-exports.setPlaylistTo = function setPlaylistTo(userIndex, playlistId, tracks, callback) {
+function deleteEntries(userIndex, playlistId, entries, callback) {
+  // Delete entries with id and entryId keys; callback the api response.
+  console.log('deleting', entries.length, 'entries. first 10 are', entries.slice(0, 10));
+  const payload = {
+    songIds: entries.map(entry => {return entry.id;}),
+
+    entryIds: entries.map(entry => {return entry.entryId;}),
+
+    listId: playlistId,
+    sessionId: '',
+  };
+  authedGMRequest('deletesong', payload, userIndex, 'post', response => {
+    console.log('delete response', response);
+    callback(response);
+  });
+}
+
+exports.setPlaylistTo = function setPlaylistTo(db, userIndex, playlistId, tracks, callback) {
   // Update a remote playlist to contain only the given ordering of tracks.
 
   // inefficient three step process:
@@ -201,14 +219,13 @@ exports.setPlaylistTo = function setPlaylistTo(userIndex, playlistId, tracks, ca
         idsToAdd[Track.getPlaylistAddId(track)] = track;
       }
 
-      const entriesToDelete = [];
+      const deleteCandidates = {};
       for (let i = 0; i < gentries.length; i++) {
         const gentry = gentries[i];
         const remoteTrack = Track.fromJsproto(gentry);
 
         if (!(Track.getPlaylistAddId(remoteTrack) in idsToAdd)) {
-          // tracks that can only be added with store ids can be deleted with library ids.
-          entriesToDelete.push({id: remoteTrack.id, entryId: gentry[43]});
+          deleteCandidates[remoteTrack.id] = gentry[43];
         } else {
           delete idsToAdd[Track.getPlaylistAddId(remoteTrack)];
         }
@@ -219,22 +236,50 @@ exports.setPlaylistTo = function setPlaylistTo(userIndex, playlistId, tracks, ca
         tracksToAdd.push(idsToAdd[id]);
       }
 
-      if (entriesToDelete.length > 0) {
-        console.log('deleting', entriesToDelete.length, 'entries. first 10 are', entriesToDelete.slice(0, 10));
-        const payload2 = {
-          songIds: entriesToDelete.map(entry => {return entry.id;}),
+      const entriesToDelete = [];
+      const deleteCandidateIds = Object.keys(deleteCandidates);
+      if (deleteCandidateIds.length > 0) {
+        // Don't delete tracks that may be currently playing.
+        // This requires a query against the track cache, since the lastPlayed
+        // for remote tracks is set to 0 for any recent plays!?
+        const track = db.getSchema().table('Track');
+        db.select().from(track).where(
+          // We don't know if these entries name a library or store id.
+          Lf.op.or(track.id.in(deleteCandidateIds),
+                   track.storeId.in(deleteCandidateIds))
+        ).exec().then(rows => {
+          const nowMillis = new Date().getTime();
+          const delayMillis = 0;
 
-          entryIds: entriesToDelete.map(entry => {return entry.entryId;}),
+          rows.forEach(row => {
+            if (delayMillis + row.lastPlayed / 1000 > nowMillis - row.durationMillis) {
+              console.info('not deleting', row, 'since it may be playing.',
+                           delayMillis + row.lastPlayed / 1000, nowMillis - row.durationMillis
+                          );
+              if (row.id in deleteCandidates) {
+                delete deleteCandidates[row.id];
+              } else {
+                delete deleteCandidates[row.storeId];
+              }
+            }
+          });
 
-          listId: playlistId,
-          sessionId: '',
-        };
-        authedGMRequest('deletesong', payload2, userIndex, 'post', response2 => {
-          console.log('delete response', response2);
-          addTracks(userIndex, playlistId, tracksToAdd, callback);
-        });
+          for (const deleteId in deleteCandidates) {
+            entriesToDelete.push({id: deleteId, entryId: deleteCandidates[deleteId]});
+          }
+
+          if (entriesToDelete.length > 0) {
+            deleteEntries(userIndex, playlistId, entriesToDelete, deleteResponse => {
+              console.log('delete response', deleteResponse);
+              addTracks(userIndex, playlistId, tracksToAdd, callback);
+            });
+          } else {
+            console.log('no need to delete post-filter; adding');
+            addTracks(userIndex, playlistId, tracksToAdd, callback);
+          }
+        }).catch(console.error);
       } else {
-        console.log('no need to delete; adding');
+        console.log('no need to delete pre-filter; adding');
         addTracks(userIndex, playlistId, tracksToAdd, callback);
       }
     } else {

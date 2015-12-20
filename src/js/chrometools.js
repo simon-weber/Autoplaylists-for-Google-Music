@@ -32,7 +32,7 @@ exports.focusOrCreateTab = function focusOrCreateTab(url) {
     if (existingTab) {
       chrome.tabs.update(existingTab.id, {selected: true});
     } else {
-      chrome.tabs.create({url: url, selected: true});
+      chrome.tabs.create({url, selected: true});
     }
   });
 };
