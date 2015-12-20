@@ -82,7 +82,7 @@
       select.append($("<option>", {"value": "all", "text": "All", "selected": kind == "all"}));
       select.append($("<option>", {"value": "any", "text": "Any", "selected": kind == "any"}));
       selectWrapper.append(select);
-      selectWrapper.append($("<h4>", {text: "of the following conditions:"}));
+      selectWrapper.append($("<span>", {text: "of the following conditions:"}));
       div.append(selectWrapper);
 
       var addRuleLink = $("<a>", {"href": "#", "class": "add-rule", "text": "Add Condition"});
@@ -213,11 +213,11 @@
         $this.after($("<input>", {"type": "hidden", "class": "value"}));
         break;
       case "text":
-        $this.after($("<label class='errorMessage'></label>"));
+        // $this.after($("<label class='errorMessage'></label>"));
         $this.after($("<input>", {"type": "text", "class": "value textInput"}));
         break;
       case "numeric":
-        $this.after($("<label class='errorMessage'></label>"));
+        // $this.after($("<label class='errorMessage'></label>"));
         $this.after($("<input>", {"type": "text", "class": "value numberInput"}));
         break;
       case "select":

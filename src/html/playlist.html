@@ -1,38 +1,50 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Autoplaylist Definition</title>
-    <script src="/js/vendor/jquery-1.9.1.min.js" type="text/javascript"></script>
-    <script src="/js/vendor/business-rules/conditions-builder.js" type="text/javascript"></script>
-    <script src="/js/vendor/business-rules/actions-builder.js" type="text/javascript"></script>
-    <script src="/js-built/playlist_editor.js" type="text/javascript"></script>
-    <link rel="stylesheet" href="/css/base.css" />
-  </head>
-  <body>
-    title: <input type="text" id="playlist-title"/>
+    <head>
+        <title>Autoplaylist Definition</title>
+        <script src="/js/vendor/jquery-1.9.1.min.js" type="text/javascript"></script>
+        <script src="/js/vendor/business-rules/conditions-builder.js" type="text/javascript"></script>
+        <script src="/js/vendor/business-rules/actions-builder.js" type="text/javascript"></script>
+        <script src="/js-built/playlist_editor.js" type="text/javascript"></script>
 
+        <link rel="stylesheet" href="/css/normalize.css" />
+        <link rel="stylesheet" href="/css/skeleton.css" />
+        <link rel="stylesheet" href="/css/base.css" />
 
-    <h3>Meet these conditions</h3>
-    <div id="conditions"></div>
+    </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div class="two-thirds column">
+                    <b>title:</b> <input type="text" id="playlist-title"/>
 
-    <label for="sort-by">sort by</label>
-    <select id="sort-by"></select>
-    <select id="sort-by-order">
-        <option value="ASC">ascending</option>
-        <option value="DESC">descending</option>
-    </select>
-    <br/>
+                    <h4>Include tracks matching:</h4>
 
-    <label for="limit-to">limit to</label>
-    <input type="text" id="limit-to" value="1000" /> (Google <a href="https://support.google.com/googleplay/answer/1250213?hl=en" target="_blank">limits playlists to 1000 tracks</a>)
-    <br/>
+                    <div id="conditions"></div>
 
-    <h4>Explanations of fields</h4>
-    <ul id="explanations"></ul>
+                    <label for="sort-by">sort by</label>
+                    <select id="sort-by"></select>
+                    <select id="sort-by-order">
+                        <option value="ASC">ascending</option>
+                        <option value="DESC">descending</option>
+                    </select>
+                    <br/>
 
-    <button id="submit" type="button">save</button>
-    <button id="delete" type="button">delete</button>
-    <button id="test" type="button">test</button>
-    <pre id="query-result"></pre>
-  </body>
+                    <label for="limit-to">limit to</label>
+                    <input type="text" id="limit-to" value="1000" /> (Google <a href="https://support.google.com/googleplay/answer/1250213?hl=en" target="_blank">limits playlists to 1000 tracks</a>)
+                    <br/>
+
+                    <h4>Explanations of fields</h4>
+                    <ul id="explanations"></ul>
+
+                    <button id="submit" class="button-primary">save</button>
+                    <button id="test">test</button>
+                    <button id="delete">delete</button>
+                </div>
+                <div class="one-third column">
+                    <pre id="query-result"></pre>
+                </div>
+            </div>
+        </div>
+    </body>
 </html>

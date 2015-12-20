@@ -25,9 +25,18 @@ const operators = {
   ],
 };
 
+
+const sortedFields = [...Track.fields];
+function compareByLabel(a, b) {
+  const aName = a.label.toLowerCase();
+  const bName = b.label.toLowerCase();
+  return ((aName < bName) ? -1 : ((aName > bName) ? 1 : 0)); // eslint-disable-line no-nested-ternary
+}
+sortedFields.sort(compareByLabel);
+
 function getRulesData() {
   const variables = [];
-  Track.fields.forEach(field => {
+  sortedFields.forEach(field => {
     variables.push({
       name: field.name,
       label: field.label,
@@ -35,6 +44,8 @@ function getRulesData() {
       options: [],
     });
   });
+
+  variables.sort(compareByLabel);
 
   return {
     variables,
@@ -44,7 +55,7 @@ function getRulesData() {
 }
 
 function goToManager(userId) {
-  window.location.href = '/html/manager.html?' + Qs.stringify({userId});
+  window.location.href = '/html/playlists.html?' + Qs.stringify({userId});
 }
 
 function initializeForm(userId, playlistId) {
@@ -58,7 +69,7 @@ function initializeForm(userId, playlistId) {
   const $explanations = $('#explanations');
 
 
-  Track.fields.forEach(field => {
+  sortedFields.forEach(field => {
     $('<option>').val(field.name).text(field.label).appendTo($sortBy);
     if (field.explanation) {
       $('<li>').text(field.label + ': ' + field.explanation).appendTo($explanations);
@@ -81,6 +92,8 @@ function initializeForm(userId, playlistId) {
   } else {
     console.log('creating empty form');
     $conditions.conditionsBuilder(initConditions);
+    $('#playlist-title').val('[auto] new playlist').focus();
+    $('#delete').hide();
   }
 
   function readForm() {
@@ -120,7 +133,7 @@ function initializeForm(userId, playlistId) {
 
     $('#query-result').text('');
     chrome.runtime.sendMessage({action: 'query', playlist}, response => {
-      $('#query-result').text('query found ' + response.tracks.length + ' first was\n' + JSON.stringify(response.tracks[0], null, 2));
+      $('#query-result').text('Matched ' + response.tracks.length + ' tracks. The first was\n' + JSON.stringify(response.tracks[0], null, 2));
     });
   });
 
