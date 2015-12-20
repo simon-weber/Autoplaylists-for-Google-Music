@@ -15,11 +15,11 @@
     <body>
         <div class="container">
             <div class="row">
-                <div class="column">
-                    title: <input type="text" id="playlist-title"/>
+                <div class="two-thirds column">
+                    <b>title:</b> <input type="text" id="playlist-title"/>
 
+                    <h4>Include tracks matching:</h4>
 
-                    <h3>Meet these conditions</h3>
                     <div id="conditions"></div>
 
                     <label for="sort-by">sort by</label>
@@ -40,6 +40,8 @@
                     <button id="submit" class="button-primary">save</button>
                     <button id="test">test</button>
                     <button id="delete">delete</button>
+                </div>
+                <div class="one-third column">
                     <pre id="query-result"></pre>
                 </div>
             </div>
