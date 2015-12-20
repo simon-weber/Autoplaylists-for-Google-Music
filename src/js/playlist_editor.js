@@ -25,9 +25,18 @@ const operators = {
   ],
 };
 
+
+const sortedFields = [...Track.fields];
+function compareByLabel(a, b) {
+  const aName = a.label.toLowerCase();
+  const bName = b.label.toLowerCase();
+  return ((aName < bName) ? -1 : ((aName > bName) ? 1 : 0)); // eslint-disable-line no-nested-ternary
+}
+sortedFields.sort(compareByLabel);
+
 function getRulesData() {
   const variables = [];
-  Track.fields.forEach(field => {
+  sortedFields.forEach(field => {
     variables.push({
       name: field.name,
       label: field.label,
@@ -35,6 +44,8 @@ function getRulesData() {
       options: [],
     });
   });
+
+  variables.sort(compareByLabel);
 
   return {
     variables,
@@ -58,7 +69,7 @@ function initializeForm(userId, playlistId) {
   const $explanations = $('#explanations');
 
 
-  Track.fields.forEach(field => {
+  sortedFields.forEach(field => {
     $('<option>').val(field.name).text(field.label).appendTo($sortBy);
     if (field.explanation) {
       $('<li>').text(field.label + ': ' + field.explanation).appendTo($explanations);
