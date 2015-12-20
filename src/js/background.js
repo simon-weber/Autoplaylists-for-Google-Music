@@ -76,7 +76,7 @@ function diffUpdateLibrary(userId, timestamp, callback) {
 function initLibrary(userId) {
   // Initialize our cache from Google's indexeddb, or fall back to a differential update from time 0.
 
-  const message = {action: 'getLocalTracks', userId: userId};
+  const message = {action: 'getLocalTracks', userId};
   chrome.tabs.sendMessage(users[userId].tabId, message, Chrometools.unlessError(response => {
     if (response.tracks === null) {
       // problem with indexeddb, fall back to update from 0.
@@ -257,7 +257,7 @@ function main() {
       chrome.pageAction.show(sender.tab.id);
     } else if (request.action === 'query') {
       Trackcache.queryTracks(dbs[request.playlist.userId], request.playlist, tracks => {
-        sendResponse({tracks: tracks});
+        sendResponse({tracks});
       });
       return true; // wait for async response
     } else {
