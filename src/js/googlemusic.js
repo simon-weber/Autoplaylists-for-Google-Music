@@ -270,6 +270,7 @@ exports.setPlaylistTo = function setPlaylistTo(db, userIndex, playlistId, tracks
 
           if (entriesToDelete.length > 0) {
             deleteEntries(userIndex, playlistId, entriesToDelete, deleteResponse => {
+              console.log('delete response', deleteResponse);
               addTracks(userIndex, playlistId, tracksToAdd, callback);
             });
           } else {
