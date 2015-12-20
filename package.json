@@ -1,4 +1,5 @@
 {
+    "private": true,
     "dependencies": {
         "browserify": "11.2.0",
         "lovefield": "2.1.3",
