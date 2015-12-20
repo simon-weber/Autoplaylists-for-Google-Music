@@ -269,8 +269,8 @@ exports.setPlaylistTo = function setPlaylistTo(db, userIndex, playlistId, tracks
           }
 
           if (entriesToDelete.length > 0) {
-            deleteEntries(userIndex, playlistId, entriesToDelete, deleteResponse => {
-              console.log('delete response', deleteResponse);
+            deleteEntries(userIndex, playlistId, entriesToDelete, deleteResponse => { // eslint-disable-line no-unused-vars
+              // We log the delete response inside deleteEntries and have no other need for it here.
               addTracks(userIndex, playlistId, tracksToAdd, callback);
             });
           } else {
