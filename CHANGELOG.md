@@ -1,3 +1,13 @@
+## 0.3.0 (December 20, 2015)
+
+Features:
+
+  - various ui improvements
+
+Bugfixes:
+
+  - playlists involving 'last played' will avoid cutting off currently-playing tracks: [#18](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/18)
+
 ## 0.2.1 (December 13, 2015)
 
 Bugfixes:
