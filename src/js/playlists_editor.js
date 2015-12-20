@@ -10,15 +10,16 @@ function initializeForm(userId, playlists) {
     chrome.runtime.sendMessage({action: 'forceUpdate', userId});
   });
 
-  const playlistsDom = $('#playlists');
+  const $playlists = $('#playlists');
   for (let i = 0; i < playlists.length; i++) {
     const playlist = playlists[i];
     console.log(playlist);
-    playlistsDom
+    $playlists.append(
+      $('<li>')
       .append($('<a>', {
         text: playlist.title,
         href: '/html/playlist.html?' + Qs.stringify({id: playlist.localId, userId})}))
-      .append($('<br/>'));
+    );
   }
 }
 
