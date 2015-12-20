@@ -213,11 +213,11 @@
         $this.after($("<input>", {"type": "hidden", "class": "value"}));
         break;
       case "text":
-        $this.after($("<label class='errorMessage'></label>"));
+        // $this.after($("<label class='errorMessage'></label>"));
         $this.after($("<input>", {"type": "text", "class": "value textInput"}));
         break;
       case "numeric":
-        $this.after($("<label class='errorMessage'></label>"));
+        // $this.after($("<label class='errorMessage'></label>"));
         $this.after($("<input>", {"type": "text", "class": "value numberInput"}));
         break;
       case "select":
