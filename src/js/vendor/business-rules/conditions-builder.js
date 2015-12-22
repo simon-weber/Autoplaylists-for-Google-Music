@@ -104,7 +104,7 @@
       });
       div.append(addConditionLink);
 
-      var removeLink = $("<a>", {"class": "remove", "href": "#", "text": "Remove This Sub-Condition"});
+      var removeLink = $("<a>", {"class": "remove", "href": "#", "text": "Remove"});
       removeLink.click(function(e) {
         e.preventDefault();
         div.remove();

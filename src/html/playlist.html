@@ -16,9 +16,10 @@
         <div class="container">
             <div class="row">
                 <div class="two-thirds column">
-                    <b>title:</b> <input type="text" id="playlist-title"/>
+                    <h5>Playlist definition</h5>
+                    <label for="playlist-title">Title</label>
+                    <input type="text" id="playlist-title"/>
 
-                    <h4>Include tracks matching:</h4>
 
                     <div id="conditions"></div>
 
@@ -28,18 +29,17 @@
                         <option value="ASC">ascending</option>
                         <option value="DESC">descending</option>
                     </select>
-                    <br/>
 
                     <label for="limit-to">limit to</label>
                     <input type="text" id="limit-to" value="1000" /> (Google <a href="https://support.google.com/googleplay/answer/1250213?hl=en" target="_blank">limits playlists to 1000 tracks</a>)
+
                     <br/>
-
-                    <h4>Explanations of fields</h4>
-                    <ul id="explanations"></ul>
-
                     <button id="submit" class="button-primary">save</button>
                     <button id="test">test</button>
                     <button id="delete">delete</button>
+
+                    <h5>Explanations of fields</h5>
+                    <ul id="explanations"></ul>
                 </div>
                 <div class="one-third column">
                     <pre id="query-result"></pre>

@@ -55,11 +55,11 @@ exports.fields = [
   // though it does add some special-casing for datetimes in the view.
   f([24, 'creationDate', Lf.Type.INTEGER], {
     label: 'creation date',
-    explanation: 'when the track was added to the library, eg "two weeks ago".',
+    explanation: 'eg "two weeks ago".',
     is_datetime: true}),
   f([25, 'lastPlayed', Lf.Type.INTEGER], {
     label: 'last played',
-    explanation: 'when the track was last played, eg "30 days ago" or "yesterday". Sometimes inaccurate.',
+    explanation: 'eg "30 days ago" or "yesterday".',
     is_datetime: true}),
   f([27, 'storeId', Lf.Type.STRING], {
     label: 'store id'}),
