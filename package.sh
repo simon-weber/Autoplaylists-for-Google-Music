@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 #
+# package.sh [--just-zip]
+#
 # Create a crx.
+# With --just-zip, don't create a crx, just create an archive for the web store.
+
 # modified from https://developer.chrome.com/extensions/crx#bash
 
 ./build.sh
@@ -12,11 +16,17 @@ crx="$name.crx"
 pub="$name.pub"
 sig="$name.sig"
 zip="$name.zip"
-trap 'rm -f "$pub" "$sig" "$zip"' EXIT
 
 # zip up the crx dir
 cwd=$(pwd -P)
 (cd "$dir" && zip -qr -9 -X "$cwd/$zip" .)
+
+if [[ "$1" == '--just-zip' ]]; then
+    echo "Wrote $zip"
+    exit 0
+fi
+
+trap 'rm -f "$pub" "$sig" "$zip"' EXIT
 
 # signature
 openssl sha1 -sha1 -binary -sign "$key" < "$zip" > "$sig"
