@@ -114,6 +114,7 @@ function syncPlaylist(playlist, attempt) {
       });
     });
   } else {
+    console.log('lock', playlist.title);
     playlistIsUpdating[playlist.remoteId] = true;
 
     // refresh tracks and write out playlist
@@ -136,9 +137,11 @@ function syncPlaylist(playlist, attempt) {
             setTimeout(syncPlaylist, 1000 * _attempt + 1000, playlist, _attempt + 1);
           } else {
             console.warn('giving up on syncPlaylist!', response);
+            console.log('unlock', playlist.title);
             playlistIsUpdating[playlist.remoteId] = false;
           }
         } else {
+          console.log('unlock', playlist.title);
           playlistIsUpdating[playlist.remoteId] = false;
         }
       });
@@ -171,7 +174,7 @@ function forceUpdate(userId) {
           //   * periodic syncs from stepping on manual syncs
           // which is why it's done at this level (and not around eg syncPlaylist).
           if (playlistIsUpdating[playlists[i].remoteId]) {
-            console.warn('skipping forceUpdate since playlist is being updated:', playlists[i].remoteId);
+            console.warn('skipping forceUpdate since playlist is being updated:', playlists[i].title);
           } else {
             renameAndSync(playlists[i]);
           }
