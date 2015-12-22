@@ -10,9 +10,9 @@ const operators = {
     {name: 'eq', label: 'equals', input_type: 'numeric'},
     {name: 'neq', label: 'does not equal', input_type: 'numeric'},
     {name: 'lt', label: 'less than', input_type: 'numeric'},
-    {name: 'lte', label: 'less than or equal to', input_type: 'numeric'},
+    {name: 'lte', label: 'less than or equal', input_type: 'numeric'},
     {name: 'gt', label: 'greater than', input_type: 'numeric'},
-    {name: 'gte', label: 'greater than or equal to', input_type: 'numeric'},
+    {name: 'gte', label: 'greater than or equal', input_type: 'numeric'},
   ],
   string: [
     {name: 'eq', label: 'equals', input_type: 'text'},

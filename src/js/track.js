@@ -33,7 +33,7 @@ exports.fields = [
   f([10, 'composer', Lf.Type.STRING]),
   f([11, 'genre', Lf.Type.STRING]),
   f([13, 'durationMillis', Lf.Type.INTEGER], {
-    label: 'duration milliseconds'}),
+    label: 'duration (ms)'}),
   f([14, 'track', Lf.Type.INTEGER]),
   f([15, 'totalTracks', Lf.Type.INTEGER], {
     label: 'total tracks'}),
