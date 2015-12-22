@@ -18,11 +18,10 @@ sig="$name.sig"
 zip="$name.zip"
 
 # zip up the crx dir
-cwd=$(pwd -P)
-(cd "$dir" && zip -qr -9 -X "$cwd/$zip" .)
+git archive --format=zip --output="${zip}" "HEAD:${dir}"
 
 if [[ "$1" == '--just-zip' ]]; then
-    echo "Wrote $zip"
+    echo "Wrote ${zip}"
     exit 0
 fi
 
