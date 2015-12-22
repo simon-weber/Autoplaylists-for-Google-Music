@@ -26,5 +26,6 @@
         "cookies",
         "storage",
         "tabs"
-    ]
+    ],
+    "short_name": "Autoplaylists"
 }
