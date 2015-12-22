@@ -24,8 +24,7 @@
     "permissions": [
         "*://play.google.com/music/*",
         "cookies",
-        "storage",
-        "tabs"
+        "storage"
     ],
     "short_name": "Autoplaylists"
 }

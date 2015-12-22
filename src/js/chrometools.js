@@ -15,22 +15,10 @@ function unlessError(func) {
 // FIXME unlessError should be used everywhere
 exports.unlessError = unlessError;
 
-exports.focusOrCreateTab = function focusOrCreateTab(url) {
-  chrome.windows.getAll({populate: true}, windows => {
-    let existingTab = null;
-    for (const i in windows) {
-      const tabs = windows[i].tabs;
-      for (const j in tabs) {
-        const tab = tabs[j];
-        if (tab.url === url) {
-          existingTab = tab;
-          break;
-        }
-      }
-    }
-
-    if (existingTab) {
-      chrome.tabs.update(existingTab.id, {selected: true});
+exports.focusOrCreateExtensionTab = function focusOrCreateExtensionTab(url) {
+  chrome.tabs.query({url}, tabs => {
+    if (tabs.length) {
+      chrome.tabs.update(tabs[0].id, {selected: true});
     } else {
       chrome.tabs.create({url, selected: true});
     }
