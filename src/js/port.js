@@ -7,12 +7,40 @@ const Storage = require('./storage.js');
 let userId = null;
 let eventPlaylists = null;
 
+// FIXME duplicated with playlist_editor
+function goToManager() {
+  window.location.href = '/html/playlists.html?' + Qs.stringify({userId});
+}
+
 function onDrag(event) {
   event.dataTransfer.setData('application/json', JSON.stringify(eventPlaylists));
 }
 
 function onDrop(event) {
-  console.log(event.dataTransfer.getData('application/json'));
+  const playlists = JSON.parse(event.dataTransfer.getData('application/json'));
+  console.log(playlists);
+
+  const playlistNames = playlists.map(p => p.title).join('\n');
+  const msg = 'Overwrite current playlists with these ' + playlists.length + '?\n' + playlistNames;
+
+  if (confirm(msg)) {  // eslint-disable-line no-alert
+    // Convert the playlists for this user.
+    for (let i = 0; i < playlists.length; i++) {
+      const playlist = playlists[i];
+
+      // This is faster than getTime granularity, so use i to avoid duplicate ids.
+      playlist.localId = '' + new Date().getTime() + i;
+      playlist.userId = userId;
+      delete playlist.remoteId;
+    }
+
+    document.write('working');
+    Storage.importPlaylistsForUser(userId, playlists, () => {
+      goToManager();
+    });
+  } else {
+    console.log('did not confirm');
+  }
 }
 
 function main() {

@@ -57,3 +57,21 @@ exports.getPlaylistsForUser = function getPlaylistsForUser(userId, callback) {
     callback(playlists);
   });
 };
+
+exports.importPlaylistsForUser = function importPlaylistsForUser(userId, playlists, callback) {
+  exports.getPlaylistsForUser(userId, currentPlaylists => {
+    // FIXME we should wait on all callbacks before calling back.
+    for (let i = 0; i < currentPlaylists.length; i++) {
+      exports.deletePlaylist(userId, currentPlaylists[i].localId, () => {});
+    }
+
+    for (let i = 0; i < playlists.length; i++) {
+      console.log('saving', playlists[i]);
+      if (i === playlists.length - 1) {
+        exports.savePlaylist(playlists[i], callback);
+      } else {
+        exports.savePlaylist(playlists[i], () => {});
+      }
+    }
+  });
+};
