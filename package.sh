@@ -17,8 +17,13 @@ pub="$name.pub"
 sig="$name.sig"
 zip="$name.zip"
 
-# zip up the crx dir
+rm -f "${zip}"
+
+# zip up all tracked source
 git archive --format=zip --output="${zip}" "HEAD:${dir}"
+
+# add in built js
+(cd src; zip "../${zip}" js-built/*.js)
 
 if [[ "$1" == '--just-zip' ]]; then
     echo "Wrote ${zip}"
