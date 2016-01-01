@@ -1,3 +1,11 @@
+## 0.4.0 (January 1, 2016)
+
+Features:
+
+  - add drag and drop exporting across extensions and users
+  - remove need for 'tabs' permission
+  - various ui improvements
+
 ## 0.3.0 (December 20, 2015)
 
 Features:
