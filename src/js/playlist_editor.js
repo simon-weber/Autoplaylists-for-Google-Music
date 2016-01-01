@@ -2,6 +2,7 @@
 
 const Qs = require('qs');
 
+const Chrometools = require('./chrometools.js');
 const Storage = require('./storage.js');
 const Track = require('./track.js');
 
@@ -52,10 +53,6 @@ function getRulesData() {
     actions: [],
     variable_type_operators: operators,
   };
-}
-
-function goToManager(userId) {
-  window.location.href = '/html/playlists.html?' + Qs.stringify({userId});
 }
 
 function initializeForm(userId, playlistId) {
@@ -122,7 +119,7 @@ function initializeForm(userId, playlistId) {
     console.log('writing', playlist);
 
     Storage.savePlaylist(playlist, () => {
-      goToManager(userId);
+      Chrometools.goToManager(userId);
     });
   });
 
@@ -140,7 +137,7 @@ function initializeForm(userId, playlistId) {
   $('#delete').click(function deletePlaylist(e) {
     e.preventDefault();
     Storage.deletePlaylist(userId, playlistId, () => {
-      goToManager(userId);
+      Chrometools.goToManager(userId);
     });
   });
 }

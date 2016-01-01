@@ -1,5 +1,7 @@
 'use strict';
 
+const Qs = require('qs');
+
 function unlessError(func) {
   // Decorate chrome callbacks to notice errors.
   return function unlessErrorWrapper() {
@@ -23,4 +25,8 @@ exports.focusOrCreateExtensionTab = function focusOrCreateExtensionTab(url) {
       chrome.tabs.create({url, selected: true});
     }
   });
+};
+
+exports.goToManager = function goToManager(userId) {
+  window.location.href = '/html/playlists.html?' + Qs.stringify({userId});
 };

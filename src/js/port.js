@@ -2,15 +2,11 @@
 
 const Qs = require('qs');
 
+const Chrometools = require('./chrometools.js');
 const Storage = require('./storage.js');
 
 let userId = null;
 let eventPlaylists = null;
-
-// FIXME duplicated with playlist_editor
-function goToManager() {
-  window.location.href = '/html/playlists.html?' + Qs.stringify({userId});
-}
 
 function onDrag(event) {
   event.dataTransfer.setData('application/json', JSON.stringify(eventPlaylists));
@@ -34,9 +30,8 @@ function onDrop(event) {
       delete playlist.remoteId;
     }
 
-    document.write('working');
     Storage.importPlaylistsForUser(userId, playlists, () => {
-      goToManager();
+      Chrometools.goToManager(userId);
     });
   } else {
     console.log('did not confirm');
