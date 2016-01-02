@@ -2,34 +2,27 @@
 
 This is a Chrome extension that allows for user-defined autoplaylists in Google Music (iTunes calls these "Smart Playlists").
 
-![autoplaylist example](http://i.imgur.com/sHuKvk7.png?1)
+![autoplaylist screenshot](http://i.imgur.com/sHuKvk7.png?1)
 
 **This extension is not supported nor endorsed by Google.**
 
 Here's an out of date video: [dropbox video link](https://www.dropbox.com/s/jff4yd7zepvfrdg/google%20music%20autoplaylists.mov?dl=0).
 
-It's very early in development and not yet available in the Chrome Web Store.
-If you're interested in using it once it's more polished, sign up for the mailing list at
- https://groups.google.com/forum/#!forum/autoplaylists-for-google-music.
-I'll announce when it's available in the Web Store.
+A private beta is available on the Chrome Web Store.
+To install it:
+* join [the autoplaylists mailing list](https://groups.google.com/forum/#!forum/autoplaylists-for-google-music)
+* install [the autoplaylists extension](https://chrome.google.com/webstore/detail/autoplaylists-for-google/blbompphddfibggfmmfcgjjoadebinem).
+ 
+Mailing list members are "trusted testers" of the extension; you'll need to be a member for the link to work.
 
 ## Usage
 
-### Installation
-
-* download the most recent crx from https://github.com/simon-weber/Autoplaylists-for-Google-Music/releases
-* open a tab to chrome://extensions
-* navigate to the folder containing the downloaded crx
-* drag and drop the crx onto the Chrome extensions tab. You should see a popup to install the extension.
-* reload any Google Music tabs
-
-### Use
 * open a tab to https://play.google.com/music/listen
 * click the extension's "page action": the tiny icon in the far right of the url bar, to the left of the bookmark star
 * playlists are updated whenever their definition changes and automatically once a minute
 
 ### How it works
-* your library is pulled from a Google Music IndexedDB (or Google's servers as a fallback)
+* your library is pulled from a local Google Music IndexedDB (or Google's servers as a fallback)
 * your tracks are indexed in an in-memory [lovefield](https://github.com/google/lovefield) database
 * differential updates are polled for periodically
 * playlist definitions are stored in chrome.storage.sync
