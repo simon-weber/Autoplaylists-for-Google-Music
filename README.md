@@ -6,10 +6,8 @@ This is a Chrome extension that allows for user-defined autoplaylists in Google 
 
 **This extension is not supported nor endorsed by Google.**
 
-Here's an out of date video: [dropbox video link](https://www.dropbox.com/s/jff4yd7zepvfrdg/google%20music%20autoplaylists.mov?dl=0).
-
-A private beta is available on the Chrome Web Store.
-To install it:
+## Installation
+An unlisted beta can be installed from the Chrome Web Store:
 * join [the autoplaylists mailing list](https://groups.google.com/forum/#!forum/autoplaylists-for-google-music)
 * install [the autoplaylists extension](https://chrome.google.com/webstore/detail/autoplaylists-for-google/blbompphddfibggfmmfcgjjoadebinem).
  
