@@ -70,7 +70,7 @@ exports.fields = [
 ];
 
 exports.fieldsByName = exports.fields.reduce((obj, x) => {
-  obj[x.name] = x;
+  obj[x.name] = x;  // eslint-disable-line no-param-reassign
   return obj;
 }, {});
 

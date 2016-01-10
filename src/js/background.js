@@ -106,9 +106,10 @@ function syncPlaylist(playlist, attempt) {
     // Create a remote playlist.
     Gm.createRemotePlaylist(userIndex, playlist.title, remoteId => {
       console.log('created remote playlist', remoteId);
-      playlist.remoteId = remoteId;
+      const playlistToSave = JSON.parse(JSON.stringify(playlist));
+      playlistToSave.remoteId = remoteId;
 
-      Storage.savePlaylist(playlist, () => {
+      Storage.savePlaylist(playlistToSave, () => {
         // nothing else to do. listener will see the change and recall.
         console.log('wrote remote id');
       });

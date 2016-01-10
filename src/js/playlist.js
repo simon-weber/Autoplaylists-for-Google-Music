@@ -13,7 +13,7 @@
 function ruleToString(rule) {
   // Return a string representation of a rule, parenthesised if necessary
   if (rule.name) {
-    const operators = {'eq': '=', 'neq': '≠', 'lt': '<', 'lte': '≤', 'gt': '>', 'gte': '≥', 'match': 'matches'};
+    const operators = {eq: '=', neq: '≠', lt: '<', lte: '≤', gt: '>', gte: '≥', match: 'matches'};
     return rule.name + ' ' + (operators[rule.operator] || rule.operator) + ' ' + rule.value;
   } else if (rule.all || rule.any) {
     const subRules = rule.all || rule.any;

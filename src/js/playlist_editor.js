@@ -130,7 +130,9 @@ function initializeForm(userId, playlistId) {
 
     $('#query-result').text('');
     chrome.runtime.sendMessage({action: 'query', playlist}, response => {
-      $('#query-result').text('Matched ' + response.tracks.length + ' tracks. The first was\n' + JSON.stringify(response.tracks[0], null, 2));
+      $('#query-result').text(
+        'Matched ' + response.tracks.length + ' tracks.' +
+        ' The first was\n' + JSON.stringify(response.tracks[0], null, 2));
     });
   });
 
