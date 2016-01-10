@@ -168,7 +168,7 @@ exports.deleteRemotePlaylist = function deleteRemotePlaylist(userIndex, remoteId
   });
 };
 
-function addTracks(userIndex, playlistId, tracks, callback) {
+function addTracks(userIndex, playlistId, tracks, callback, onError) {
   // Append these tracks and callback the api response, or null if adding 0 tracks.
 
   if (tracks.length === 0) {
@@ -187,10 +187,10 @@ function addTracks(userIndex, playlistId, tracks, callback) {
   authedGMRequest('addtrackstoplaylist', payload, userIndex, 'post', response => {
     console.log('add response', response);
     callback(response);
-  });
+  }, onError);
 }
 
-function deleteEntries(userIndex, playlistId, entries, callback) {
+function deleteEntries(userIndex, playlistId, entries, callback, onError) {
   // Delete entries with id and entryId keys; callback the api response.
   console.log('deleting', entries.length, 'entries. first 10 are', entries.slice(0, 10));
   const payload = {
@@ -204,10 +204,10 @@ function deleteEntries(userIndex, playlistId, entries, callback) {
   authedGMRequest('deletesong', payload, userIndex, 'post', response => {
     console.log('delete response', response);
     callback(response);
-  });
+  }, onError);
 }
 
-exports.setPlaylistTo = function setPlaylistTo(db, userIndex, playlistId, tracks, callback) {
+exports.setPlaylistTo = function setPlaylistTo(db, userIndex, playlistId, tracks, callback, onError) {
   // Update a remote playlist to contain only the given ordering of tracks.
 
   // inefficient three step process:
@@ -279,19 +279,19 @@ exports.setPlaylistTo = function setPlaylistTo(db, userIndex, playlistId, tracks
             deleteEntries(userIndex, playlistId, entriesToDelete, deleteResponse => { // eslint-disable-line no-unused-vars
               // We log the delete response inside deleteEntries and have no other need for it here.
               addTracks(userIndex, playlistId, tracksToAdd, callback);
-            });
+            }, onError);
           } else {
             console.log('no need to delete post-filter; adding');
-            addTracks(userIndex, playlistId, tracksToAdd, callback);
+            addTracks(userIndex, playlistId, tracksToAdd, callback, onError);
           }
         }).catch(console.error);
       } else {
         console.log('no need to delete pre-filter; adding');
-        addTracks(userIndex, playlistId, tracksToAdd, callback);
+        addTracks(userIndex, playlistId, tracksToAdd, callback, onError);
       }
     } else {
       console.log('adding to empty');
-      addTracks(userIndex, playlistId, tracks, callback);
+      addTracks(userIndex, playlistId, tracks, callback, onError);
     }
-  });
+  }, onError);
 };

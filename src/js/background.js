@@ -144,6 +144,10 @@ function syncPlaylist(playlist, attempt) {
           console.log('unlock', playlist.title);
           playlistIsUpdating[playlist.remoteId] = false;
         }
+      }, err => {
+        console.error('failed to sync playlist', playlist.title, err);
+        console.log('unlock', playlist.title);
+        playlistIsUpdating[playlist.remoteId] = false;
       });
     });
   }
