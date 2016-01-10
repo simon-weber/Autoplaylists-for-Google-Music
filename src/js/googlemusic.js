@@ -10,8 +10,9 @@ const Playlist = require('./playlist.js');
 const GM_BASE_URL = 'https://play.google.com/music/';
 const GM_SERVICE_URL = GM_BASE_URL + 'services/';
 
-function authedGMRequest(endpoint, data, userIndex, method, callback) {
+function authedGMRequest(endpoint, data, userIndex, method, callback, onError) {
   // Call an endpoint and callback with it's parsed response.
+
   chrome.cookies.get({name: 'xt', url: 'https://play.google.com/music'}, Chrometools.unlessError(cookie => {
     if (cookie === null) {
       // TODO alert user somehow
@@ -34,6 +35,12 @@ function authedGMRequest(endpoint, data, userIndex, method, callback) {
         dataType = 'html';
       }
 
+      if (typeof onError === 'undefined') {
+        onError = res => {  // eslint-disable-line no-param-reassign
+          console.error('request failed:', url, data, res);
+        };
+      }
+
       // TODO jquery should be injected with browserify?
       $[method](
         url,
@@ -44,7 +51,7 @@ function authedGMRequest(endpoint, data, userIndex, method, callback) {
 
         dataType
       )
-      .fail(res => { console.error('request failed:', url, data, res); });
+      .fail(onError);
     }
   }));
 }
