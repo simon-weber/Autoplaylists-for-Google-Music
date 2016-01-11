@@ -1,3 +1,13 @@
+## 0.5.0 (January 10, 2016)
+
+Features:
+
+  - add last sync datetime to playlist description
+
+Bugfixes:
+
+  - fix a bug preventing periodic updates after an error: [#24](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/24)
+
 ## 0.4.1 (January 1, 2016)
 
 Features:
