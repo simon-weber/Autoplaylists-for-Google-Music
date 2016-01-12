@@ -1,3 +1,9 @@
+## 0.6.0 (January 12, 2016)
+
+Features:
+
+  - show matching track count pre-limit
+
 ## 0.5.0 (January 10, 2016)
 
 Features:
