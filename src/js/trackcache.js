@@ -68,13 +68,17 @@ exports.queryTracks = function queryTracks(db, playlist, callback) {
   const track = db.getSchema().table('Track');
 
   const clause = buildClause(track, playlist.rules);
-  const query = db.select().from(track).where(clause);
+  let query = db.select().from(track).where(clause);
 
   const orderBy = track[playlist.sortBy];
   const order = Lf.Order[playlist.sortByOrder];
-  query.orderBy(orderBy, order).
-    limit(playlist.limit).
-    exec().
+  query = query.orderBy(orderBy, order);
+
+  if (playlist.limit) {
+    query = query.limit(playlist.limit);
+  }
+
+  query.exec().
     then(callback).
     catch(console.error);
 };
