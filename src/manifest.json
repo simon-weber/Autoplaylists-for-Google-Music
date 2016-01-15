@@ -4,6 +4,10 @@
     "version": "0.6.0",
 
     "description": "Create Google Music™ playlists that automatically update from user-defined criteria.",
+    "icons": {
+        "64": "icon-64.png",
+        "128": "icon-128.png"
+    },
 
     "page_action": {
         "default_title": "Autoplaylists for Google Music™"
