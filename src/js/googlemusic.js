@@ -219,6 +219,10 @@ exports.setPlaylistTo = function setPlaylistTo(db, userIndex, playlistId, tracks
   const payload = [['', 1], [playlistId]];
   authedGMRequest('loaduserplaylist', payload, userIndex, 'post', response => {
     console.log('load response', response);
+    if (response.length < 2) {
+      return onError('unexpected setPlaylistTo response: ' + JSON.stringify(response));
+    }
+
     if (response[1].length !== 0) {
       const gentries = response[1][0];
 
