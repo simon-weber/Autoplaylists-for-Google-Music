@@ -1,3 +1,14 @@
+## 0.7.0 (January 15, 2016)
+
+Features:
+
+  - add case-insensitive string operators
+  - add icons
+
+Bugfixes:
+
+  - fix another bug preventing periodic updates after an error: [#24](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/24)
+
 ## 0.6.0 (January 12, 2016)
 
 Features:
