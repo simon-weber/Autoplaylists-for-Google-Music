@@ -46,6 +46,12 @@ exports.deleteTracks = function deleteTracks(db, userId, trackIds, callback) {
     catch(console.error);
 };
 
+function escapeForRegex(s) {
+  // Return a copy of the string s with regex control characters escaped.
+  // Source: http://stackoverflow.com/a/3561711.
+  return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+}
+
 function buildClause(track, rule) {
   let clause = null;
 
@@ -55,10 +61,26 @@ function buildClause(track, rule) {
     clause = Lf.op.and.apply(Lf.op, rule.all.map(buildClause.bind(undefined, track)));
   } else {
     let value = rule.value;
+    let operator = rule.operator;
+
     if (Track.fieldsByName[rule.name].is_datetime) {
       value = Date.create(rule.value).getTime() * 1000;
     }
-    clause = track[rule.name][rule.operator](value);
+
+    if (rule.operator === 'match-insensitive') {
+      operator = 'match';
+      value = new RegExp(escapeForRegex(value), 'i');
+    } else if (rule.operator === 'eq-insensitive') {
+      operator = 'match';
+      value = new RegExp('^' + escapeForRegex(value) + '$', 'i');
+    } else if (rule.operator === 'neq-insensitive') {
+      // Use a regex with negative lookahead.
+      // Source: http://stackoverflow.com/a/2964653.
+      operator = 'match';
+      value = new RegExp('^(?!' + escapeForRegex(value) + '$)', 'i');
+    }
+
+    clause = track[rule.name][operator](value);
   }
 
   return clause;

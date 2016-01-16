@@ -9,7 +9,7 @@ const Track = require('./track.js');
 const operators = {
   numeric: [
     {name: 'eq', label: 'equals', input_type: 'numeric'},
-    {name: 'neq', label: 'does not equal', input_type: 'numeric'},
+    {name: 'neq', label: "doesn't equal", input_type: 'numeric'},
     {name: 'lt', label: 'less than', input_type: 'numeric'},
     {name: 'lte', label: 'less than or equal', input_type: 'numeric'},
     {name: 'gt', label: 'greater than', input_type: 'numeric'},
@@ -17,8 +17,11 @@ const operators = {
   ],
   string: [
     {name: 'eq', label: 'equals', input_type: 'text'},
-    {name: 'neq', label: 'does not equal', input_type: 'text'},
-    {name: 'match', label: 'matches regex', input_type: 'text'},
+    {name: 'eq-insensitive', label: 'equals (case ignored)', input_type: 'text'},
+    {name: 'neq', label: "doesn't equal", input_type: 'text'},
+    {name: 'neq-insensitive', label: "doesn't equal (case ignored)", input_type: 'text'},
+    {name: 'match', label: 'has regex', input_type: 'text'},
+    {name: 'match-insensitive', label: 'has regex (case ignored)', input_type: 'text'},
   ],
   datetime: [
     {name: 'lt', label: 'before', input_type: 'text'},

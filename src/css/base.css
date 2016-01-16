@@ -3,6 +3,10 @@
     border-width: thin;
 }
 
+.operator {
+    width: 200px;
+}
+
 #conditions, #actions {
     margin: 20px 0;
 }
