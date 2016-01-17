@@ -1,3 +1,9 @@
+## 0.9.0 (January 17, 2016)
+
+Features:
+
+  - add support for multiple sorts (subsorts): [#14](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/14)
+
 ## 0.8.0 (January 17, 2016)
 
 Features:
