@@ -52,14 +52,14 @@ function escapeForRegex(s) {
   return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 }
 
-function buildClause(track, rule) {
+function buildWhereClause(track, rule) {
   // Return a clause for use in a lovefield where() predicate, or null to select all tracks.
   let clause = null;
 
   if ('any' in rule && rule.any.length > 0) {
-    clause = Lf.op.or.apply(Lf.op, rule.any.map(buildClause.bind(undefined, track)));
+    clause = Lf.op.or.apply(Lf.op, rule.any.map(buildWhereClause.bind(undefined, track)));
   } else if ('all' in rule && rule.all.length > 0) {
-    clause = Lf.op.and.apply(Lf.op, rule.all.map(buildClause.bind(undefined, track)));
+    clause = Lf.op.and.apply(Lf.op, rule.all.map(buildWhereClause.bind(undefined, track)));
   } else if ('value' in rule && 'operator' in rule) {
     let value = rule.value;
     let operator = rule.operator;
@@ -87,14 +87,11 @@ function buildClause(track, rule) {
   return clause;
 }
 
-exports.queryTracks = function queryTracks(db, playlist, callback) {
-  const track = db.getSchema().table('Track');
-
+function execQuery(db, track, whereClause, playlist, callback, onError) {
   let query = db.select().from(track);
 
-  const clause = buildClause(track, playlist.rules);
-  if (clause !== null) {
-    query = query.where(clause);
+  if (whereClause !== null) {
+    query = query.where(whereClause);
   }
 
   const orderBy = track[playlist.sortBy];
@@ -107,5 +104,24 @@ exports.queryTracks = function queryTracks(db, playlist, callback) {
 
   query.exec().
     then(callback).
-    catch(console.error);
+    catch(onError);
+}
+
+exports.queryTracks = function queryTracks(db, playlist, callback) {
+  // Return a list of tracks that should be in the playlist.
+
+  const track = db.getSchema().table('Track');
+  const whereClause = buildWhereClause(track, playlist.rules);
+
+  execQuery(db, track, whereClause, playlist, callback, console.error);
+};
+
+exports.orderTracks = function orderTracks(db, playlist, tracks, callback, onError) {
+  // Return a copy of tracks, ordered by playlist's sort rules.
+  // Tracks that wouldn't normally be in playlist are allowed.
+
+  const track = db.getSchema().table('Track');
+  const whereClause = track.id.in(tracks.map(t => t.id));
+
+  execQuery(db, track, whereClause, playlist, callback, onError);
 };

@@ -115,12 +115,11 @@ function syncPlaylist(playlist, attempt) {
       });
     });
   } else {
-    console.log('lock', playlist.title);
-    playlistIsUpdating[playlist.remoteId] = true;
-
     // refresh tracks and write out playlist
     const db = dbs[playlist.userId];
     Trackcache.queryTracks(db, playlist, tracks => {
+      console.log('lock', playlist.title);
+      playlistIsUpdating[playlist.remoteId] = true;
       console.log(playlist.title, 'found', tracks.length);
       if (tracks.length > 0) {
         console.log('first is', tracks[0]);
@@ -141,7 +140,7 @@ function syncPlaylist(playlist, attempt) {
           } else {
             console.warn('giving up on syncPlaylist!', response);
             // Never has the need for promises been so clear.
-            Gm.setPlaylistOrder(db, userIndex, playlist.remoteId, desiredTracks, orderResponse => {
+            Gm.setPlaylistOrder(db, userIndex, playlist, orderResponse => {
               console.log('reorder response', orderResponse);
               console.log('unlock', playlist.title);
               playlistIsUpdating[playlist.remoteId] = false;
@@ -152,7 +151,7 @@ function syncPlaylist(playlist, attempt) {
             });
           }
         } else {
-          Gm.setPlaylistOrder(db, userIndex, playlist.remoteId, desiredTracks, orderResponse => {
+          Gm.setPlaylistOrder(db, userIndex, playlist, orderResponse => {
             console.log('reorder response', orderResponse);
             console.log('unlock', playlist.title);
             playlistIsUpdating[playlist.remoteId] = false;

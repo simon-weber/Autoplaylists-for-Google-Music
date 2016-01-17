@@ -5,6 +5,7 @@ const Qs = require('qs');
 
 const Chrometools = require('./chrometools.js');
 const Track = require('./track.js');
+const Trackcache = require('./trackcache.js');
 const Playlist = require('./playlist.js');
 
 const GM_BASE_URL = 'https://play.google.com/music/';
@@ -275,6 +276,7 @@ exports.setPlaylistContents = function setPlaylistContents(db, userIndex, playli
         // Don't delete tracks that may be currently playing.
         // This requires a query against the track cache, since the lastPlayed
         // for remote tracks is set to 0 for any recent plays!?
+        // FIXME pull this out to Trackcache.
         const track = db.getSchema().table('Track');
         db.select().from(track).where(
           // We don't know if these entries name a library or store id.
@@ -322,19 +324,16 @@ exports.setPlaylistContents = function setPlaylistContents(db, userIndex, playli
   }, onError);
 };
 
-exports.setPlaylistOrder = function setPlaylistOrder(db, userIndex, playlistId, tracks, callback, onError) {
-  // Set the remote ordering of a playlist to match tracks.
-  // It's assumed that the remote content already matches the tracks.
+exports.setPlaylistOrder = function setPlaylistOrder(db, userIndex, playlist, callback, onError) {
+  // Set the remote ordering of a playlist according to playlist's sort order.
+  // This trusts that the remote contents are already correct.
 
-  loadPlaylistContents(db, userIndex, playlistId, contents => {
-    if (contents.length !== tracks.length) {
-      // This will always trigger for the don't-delete-the-currently-playing-track case.
-      console.warn('remote playlist does not contain expected number of tracks:', contents.length, tracks.length);
-    }
+  // This approach handles the maybe-playing tracks that wouldn't be in our tracks
+  // if we queried them locally.
 
+  loadPlaylistContents(db, userIndex, playlist.remoteId, contents => {
     if (contents.length !== 0) {
-      // Locally we deal in track ids, but remote playlists deal in entry ids.
-      // So, we need to match our ids to the entry ids, then make the call with those.
+      // Reordering calls deal in entry ids, not track ids.
       const currentOrdering = [];
       const desiredOrdering = [];
       const idToEntryId = {};
@@ -344,35 +343,34 @@ exports.setPlaylistOrder = function setPlaylistOrder(db, userIndex, playlistId, 
         currentOrdering.push(contents[i].entryId);
       }
 
-      for (let i = 0; i < tracks.length; i++) {
-        const track = tracks[i];
-        if (track.id in idToEntryId) {
-          desiredOrdering.push(idToEntryId[track.id]);
-        } else {
-          // This isn't the only case, but it's the one we can check without building another mapping.
-          console.warn('remote playlist is missing', track);
-        }
-      }
+      const remoteTracks = contents.map(c => c.track);
 
-      // It's ridiculous that javascript doesn't have a builtin for this.
-      // Thankfully we have simple items and can get away with this hack.
-      if (JSON.stringify(currentOrdering) !== JSON.stringify(desiredOrdering)) {
-        // The two empty strings are sentinels for "first track" and "last track".
-        // This lets us send our entire reordering at once without calculating the relative movements.
-        // I'm not sure if the interface was intended to be used this way, but it seems to work.
-        const payload = [['', 1], [desiredOrdering, '', '']];
-        authedGMRequest('changeplaylisttrackorder', payload, userIndex, 'post', response => {
-          // TODO These should all be checked for errors.
-          // It looks like responses will have [[0, 1, 1], [call-specific response]] on success.
-          callback(response);
-        }, onError);
-      } else {
-        // Avoid triggering a ui refresh on noop reorderings.
-        console.log('no need to reorder playlist', playlistId);
-        callback(null);
-      }
+      Trackcache.orderTracks(db, playlist, remoteTracks, orderedTracks => {
+        for (let i = 0; i < orderedTracks.length; i++) {
+          const track = orderedTracks[i];
+          desiredOrdering.push(idToEntryId[track.id]);
+        }
+
+        // It's ridiculous that javascript doesn't have a builtin for this.
+        // Thankfully we have simple items and can get away with this hack.
+        if (JSON.stringify(currentOrdering) !== JSON.stringify(desiredOrdering)) {
+          // The two empty strings are sentinels for "first track" and "last track".
+          // This lets us send our entire reordering at once without calculating the relative movements.
+          // I'm not sure if the interface was intended to be used this way, but it seems to work.
+          const payload = [['', 1], [desiredOrdering, '', '']];
+          authedGMRequest('changeplaylisttrackorder', payload, userIndex, 'post', response => {
+            // TODO These should all be checked for errors.
+            // It looks like responses will have [[0, 1, 1], [call-specific response]] on success.
+            callback(response);
+          }, onError);
+        } else {
+          // Avoid triggering a ui refresh on noop reorderings.
+          console.log('no need to reorder playlist', playlist.title);
+          callback(null);
+        }
+      }, onError);
     } else {
-      console.log('no need to reorder empty playlist', playlistId);
+      console.log('no need to reorder empty playlist', playlist.title);
       callback(null);
     }
   }, onError);
