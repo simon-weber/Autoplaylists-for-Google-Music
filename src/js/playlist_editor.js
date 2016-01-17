@@ -136,9 +136,14 @@ function initializeForm(userId, playlistId) {
 
     $('#query-result').text('');
     chrome.runtime.sendMessage({action: 'query', playlist}, response => {
-      $('#query-result').text(
-        'Matched ' + response.tracks.length + ' tracks pre-limit.' +
-        '\nThe first was:\n' + JSON.stringify(response.tracks[0], null, 2));
+      const matchedNote = 'Matched ' + response.tracks.length + ' tracks.';
+      let trackDetails = '';
+
+      if (response.tracks.length > 0) {
+        trackDetails = 'The first was:\n' + Track.toString(response.tracks[0]);
+      }
+
+      $('#query-result').text(matchedNote + '\n' + trackDetails);
     });
   });
 

@@ -100,3 +100,20 @@ exports.getPlaylistAddId = function getPlaylistAddId(track) {
 
   return id;
 };
+
+exports.toString = function toString(track) {
+  let output = '';
+  for (const key in track) {
+    const field = exports.fieldsByName[key];
+    const val = track[key];
+    let strVal = JSON.stringify(val);
+
+    if (field.is_datetime) {
+      strVal = new Date(val / 1000).toLocaleString();
+    }
+
+    output += field.label + ': ' + strVal + '\n';
+  }
+
+  return output;
+};
