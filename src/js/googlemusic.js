@@ -209,23 +209,43 @@ function deleteEntries(userIndex, playlistId, entries, callback, onError) {
   }, onError);
 }
 
-exports.setPlaylistTo = function setPlaylistTo(db, userIndex, playlistId, tracks, callback, onError) {
-  // Update a remote playlist to contain only the given ordering of tracks.
+function loadPlaylistContents(db, userIndex, playlistId, callback, onError) {
+  // Callback a list of objects with entryId and track keys.
 
-  // inefficient three step process:
-  // 1) get playlist tracks
-  // 2) delete current - desired
-  // 3) add desired - current
   const payload = [['', 1], [playlistId]];
   authedGMRequest('loaduserplaylist', payload, userIndex, 'post', response => {
     console.log('load response', response);
     if (response.length < 2) {
-      return onError('unexpected setPlaylistTo response: ' + JSON.stringify(response));
+      return onError('unexpected loadPlaylistContents response: ' + JSON.stringify(response));
     }
+
+    const contents = [];
 
     if (response[1].length !== 0) {
       const gentries = response[1][0];
 
+      for (let i = 0; i < gentries.length; i++) {
+        const gentry = gentries[i];
+        const entryId = gentry[43];
+        const track = Track.fromJsproto(gentry);
+        contents.push({entryId, track});
+      }
+    }
+
+    callback(contents);
+  }, onError);
+}
+
+exports.setPlaylistContents = function setPlaylistContents(db, userIndex, playlistId, tracks, callback, onError) {
+  // Update a remote playlist to contain only the given tracks, in any order.
+
+  // This requires multiple requests:
+  // 1) get playlist tracks
+  // 2) delete current - desired
+  // 3) add desired - current
+
+  loadPlaylistContents(db, userIndex, playlistId, contents => {
+    if (contents.length !== 0) {
       const idsToAdd = {};
       for (let i = 0; i < tracks.length; i++) {
         const track = tracks[i];
@@ -233,12 +253,12 @@ exports.setPlaylistTo = function setPlaylistTo(db, userIndex, playlistId, tracks
       }
 
       const deleteCandidates = {};
-      for (let i = 0; i < gentries.length; i++) {
-        const gentry = gentries[i];
-        const remoteTrack = Track.fromJsproto(gentry);
+      for (let i = 0; i < contents.length; i++) {
+        const remoteTrack = contents[i].track;
+        const entryId = contents[i].entryId;
 
         if (!(Track.getPlaylistAddId(remoteTrack) in idsToAdd)) {
-          deleteCandidates[remoteTrack.id] = gentry[43];
+          deleteCandidates[remoteTrack.id] = entryId;
         } else {
           delete idsToAdd[Track.getPlaylistAddId(remoteTrack)];
         }
