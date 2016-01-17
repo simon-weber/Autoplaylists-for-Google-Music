@@ -53,13 +53,14 @@ function escapeForRegex(s) {
 }
 
 function buildClause(track, rule) {
+  // Return a clause for use in a lovefield where() predicate, or null to select all tracks.
   let clause = null;
 
-  if ('any' in rule) {
+  if ('any' in rule && rule.any.length > 0) {
     clause = Lf.op.or.apply(Lf.op, rule.any.map(buildClause.bind(undefined, track)));
-  } else if ('all' in rule) {
+  } else if ('all' in rule && rule.all.length > 0) {
     clause = Lf.op.and.apply(Lf.op, rule.all.map(buildClause.bind(undefined, track)));
-  } else {
+  } else if ('value' in rule && 'operator' in rule) {
     let value = rule.value;
     let operator = rule.operator;
 
@@ -89,8 +90,12 @@ function buildClause(track, rule) {
 exports.queryTracks = function queryTracks(db, playlist, callback) {
   const track = db.getSchema().table('Track');
 
+  let query = db.select().from(track);
+
   const clause = buildClause(track, playlist.rules);
-  let query = db.select().from(track).where(clause);
+  if (clause !== null) {
+    query = query.where(clause);
+  }
 
   const orderBy = track[playlist.sortBy];
   const order = Lf.Order[playlist.sortByOrder];
