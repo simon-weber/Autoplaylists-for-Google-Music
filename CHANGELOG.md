@@ -1,3 +1,14 @@
+## 0.8.0 (January 17, 2016)
+
+Features:
+
+  - improve "test" output formatting
+
+Bugfixes:
+
+  - fix the ordering of playlists: [#9](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/9)
+  - empty playlists now select all tracks instead of none
+
 ## 0.7.0 (January 15, 2016)
 
 Features:
