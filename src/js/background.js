@@ -129,7 +129,9 @@ function syncPlaylist(playlist, attempt) {
         console.warn('attempting to sync over 1000 tracks; only first 1k will sync');
       }
 
-      Gm.setPlaylistContents(db, userIndex, playlist.remoteId, tracks.slice(0, 1000), response => {
+      const desiredTracks = tracks.slice(0, 1000);
+
+      Gm.setPlaylistContents(db, userIndex, playlist.remoteId, desiredTracks, response => {
         if (response !== null) {
           // large updates seem to only apply partway sometimes.
           // retrying like this seems to make even 1k playlists eventually consistent.
@@ -138,12 +140,27 @@ function syncPlaylist(playlist, attempt) {
             setTimeout(syncPlaylist, 1000 * _attempt + 1000, playlist, _attempt + 1);
           } else {
             console.warn('giving up on syncPlaylist!', response);
-            console.log('unlock', playlist.title);
-            playlistIsUpdating[playlist.remoteId] = false;
+            // Never has the need for promises been so clear.
+            Gm.setPlaylistOrder(db, userIndex, playlist.remoteId, desiredTracks, orderResponse => {
+              console.log('reorder response', orderResponse);
+              console.log('unlock', playlist.title);
+              playlistIsUpdating[playlist.remoteId] = false;
+            }, err => {
+              console.error('failed to reorder playlist', playlist.title, err);
+              console.log('unlock', playlist.title);
+              playlistIsUpdating[playlist.remoteId] = false;
+            });
           }
         } else {
-          console.log('unlock', playlist.title);
-          playlistIsUpdating[playlist.remoteId] = false;
+          Gm.setPlaylistOrder(db, userIndex, playlist.remoteId, desiredTracks, orderResponse => {
+            console.log('reorder response', orderResponse);
+            console.log('unlock', playlist.title);
+            playlistIsUpdating[playlist.remoteId] = false;
+          }, err => {
+            console.error('failed to reorder playlist', playlist.title, err);
+            console.log('unlock', playlist.title);
+            playlistIsUpdating[playlist.remoteId] = false;
+          });
         }
       }, err => {
         console.error('failed to sync playlist', playlist.title, err);

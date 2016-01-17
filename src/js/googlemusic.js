@@ -321,3 +321,59 @@ exports.setPlaylistContents = function setPlaylistContents(db, userIndex, playli
     }
   }, onError);
 };
+
+exports.setPlaylistOrder = function setPlaylistOrder(db, userIndex, playlistId, tracks, callback, onError) {
+  // Set the remote ordering of a playlist to match tracks.
+  // It's assumed that the remote content already matches the tracks.
+
+  loadPlaylistContents(db, userIndex, playlistId, contents => {
+    if (contents.length !== tracks.length) {
+      // This will always trigger for the don't-delete-the-currently-playing-track case.
+      console.warn('remote playlist does not contain expected number of tracks:', contents.length, tracks.length);
+    }
+
+    if (contents.length !== 0) {
+      // Locally we deal in track ids, but remote playlists deal in entry ids.
+      // So, we need to match our ids to the entry ids, then make the call with those.
+      const currentOrdering = [];
+      const desiredOrdering = [];
+      const idToEntryId = {};
+
+      for (let i = 0; i < contents.length; i++) {
+        idToEntryId[contents[i].track.id] = contents[i].entryId;
+        currentOrdering.push(contents[i].entryId);
+      }
+
+      for (let i = 0; i < tracks.length; i++) {
+        const track = tracks[i];
+        if (track.id in idToEntryId) {
+          desiredOrdering.push(idToEntryId[track.id]);
+        } else {
+          // This isn't the only case, but it's the one we can check without building another mapping.
+          console.warn('remote playlist is missing', track);
+        }
+      }
+
+      // It's ridiculous that javascript doesn't have a builtin for this.
+      // Thankfully we have simple items and can get away with this hack.
+      if (JSON.stringify(currentOrdering) !== JSON.stringify(desiredOrdering)) {
+        // The two empty strings are sentinels for "first track" and "last track".
+        // This lets us send our entire reordering at once without calculating the relative movements.
+        // I'm not sure if the interface was intended to be used this way, but it seems to work.
+        const payload = [['', 1], [desiredOrdering, '', '']];
+        authedGMRequest('changeplaylisttrackorder', payload, userIndex, 'post', response => {
+          // TODO These should all be checked for errors.
+          // It looks like responses will have [[0, 1, 1], [call-specific response]] on success.
+          callback(response);
+        }, onError);
+      } else {
+        // Avoid triggering a ui refresh on noop reorderings.
+        console.log('no need to reorder playlist', playlistId);
+        callback(null);
+      }
+    } else {
+      console.log('no need to reorder empty playlist', playlistId);
+      callback(null);
+    }
+  }, onError);
+};
