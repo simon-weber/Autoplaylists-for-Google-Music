@@ -7,14 +7,14 @@ function unlessError(func) {
   return function unlessErrorWrapper() {
     // can't use an arrow function here because we need our own `this`.
     if (chrome.extension.lastError) {
-      console.error(chrome.extension.lastError.message);
+      console.error('unlessError:', chrome.extension.lastError.message);
     } else {
       func.apply(this, arguments);
     }
   };
 }
 
-// FIXME unlessError should be used everywhere
+// FIXME unlessError should be used everywhere we use chrome.
 exports.unlessError = unlessError;
 
 exports.focusOrCreateExtensionTab = function focusOrCreateExtensionTab(url) {

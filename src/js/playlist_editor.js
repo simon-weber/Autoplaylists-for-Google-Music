@@ -85,8 +85,8 @@ function initializeForm(userId, playlistId) {
       initConditions.data = loadedPlaylist.rules;
       $conditions.conditionsBuilder(initConditions);
 
-      $sortBy.val(loadedPlaylist.sortBy);
-      $('#sort-by-order').val(loadedPlaylist.sortByOrder);
+      $sortBy.val(loadedPlaylist.sorts[0].sortBy);
+      $('#sort-by-order').val(loadedPlaylist.sorts[0].sortByOrder);
       $('#limit-to').val(loadedPlaylist.limit);
     });
   } else {
@@ -107,8 +107,7 @@ function initializeForm(userId, playlistId) {
     playlist.title = $('#playlist-title').val() || '[untitled autoplaylist]';
     playlist.rules = playlistRules;
     playlist.userId = userId;
-    playlist.sortBy = $('#sort-by').val();
-    playlist.sortByOrder = $('#sort-by-order').val();
+    playlist.sorts = [{sortBy: $('#sort-by').val(), sortByOrder: $('#sort-by-order').val()}];
     playlist.limit = Math.min(1000, parseInt($('#limit-to').val(), 10));
 
     return playlist;

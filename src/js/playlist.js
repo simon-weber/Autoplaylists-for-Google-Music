@@ -6,9 +6,10 @@
 //   * title
 //   * rules: the query to find tracks with
 //   * userId: Google Music user id
-//   * sortBy
-//   * sortByOrder
+//   * sorts: [{sortBy, sortByOrder}]
 //   * limit
+
+// FIXME: these strings are exposed to the user, so they should use labels instead of direct field names.
 
 function ruleToString(rule) {
   // Return a string representation of a rule, parenthesised if necessary
@@ -35,6 +36,12 @@ function lfOrderToString(lfOrder) {
   return str;
 }
 
+function sortToString(sort) {
+  return sort.sortBy + ' ' + lfOrderToString(sort.sortByOrder);
+}
+
 exports.toString = function toString(playlist) {
-  return ruleToString(playlist.rules) + ' sort by ' + playlist.sortBy + ' ' + lfOrderToString(playlist.sortByOrder);
+  const sorts = playlist.sorts.map(sortToString).join(', ');
+
+  return ruleToString(playlist.rules) + ' sort by ' + sorts;
 };

@@ -290,4 +290,4 @@ function main() {
   });
 }
 
-main();
+Storage.handleMigrations(main);

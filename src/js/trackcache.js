@@ -94,9 +94,12 @@ function execQuery(db, track, whereClause, playlist, callback, onError) {
     query = query.where(whereClause);
   }
 
-  const orderBy = track[playlist.sortBy];
-  const order = Lf.Order[playlist.sortByOrder];
-  query = query.orderBy(orderBy, order);
+  for (let i = 0; i < playlist.sorts.length; i++) {
+    const sort = playlist.sorts[i];
+    const orderBy = track[sort.sortBy];
+    const order = Lf.Order[sort.sortByOrder];
+    query = query.orderBy(orderBy, order);
+  }
 
   if (playlist.limit) {
     query = query.limit(playlist.limit);
