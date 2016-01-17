@@ -23,12 +23,13 @@
 
                     <div id="conditions"></div>
 
-                    <label for="sort-by">sort by</label>
-                    <select id="sort-by"></select>
-                    <select id="sort-by-order">
-                        <option value="ASC">ascending</option>
-                        <option value="DESC">descending</option>
-                    </select>
+                    <!-- using a label will break the line -->
+                    <b>sort by</b>
+                    &nbsp; &nbsp;
+                    <a id="add-sort" href="javascript:void(0)">Add subsort</a>
+                    (drag bullet to rearrange)
+                    <ul id="sorts"></ul>
+
 
                     <label for="limit-to">limit to</label>
                     <input type="text" id="limit-to" value="1000" /> (Google <a href="https://support.google.com/googleplay/answer/1250213?hl=en" target="_blank">limits playlists to 1000 tracks</a>)

@@ -1,6 +1,7 @@
 'use strict';
 
 const Qs = require('qs');
+const Sortable = require('sortablejs');
 
 const Chrometools = require('./chrometools.js');
 const Storage = require('./storage.js');
@@ -58,6 +59,45 @@ function getRulesData() {
   };
 }
 
+function createSort(fields) {
+  const $sort = $('<li>');
+  const $sortBy = $('<select class="sort-by">');
+  const $sortByOrder = $(
+    '<select class="sort-by-order">' +
+    '   <option value="ASC">ascending</option>' +
+    '   <option value="DESC">descending</option>' +
+    '</select');
+  const $remove = $('<a class="remove" href="javascript:void(0)">Remove</a>');
+  $remove.click(function remove(e) {
+    e.preventDefault();
+    $sort.remove();
+  });
+
+  fields.forEach(field => {
+    $('<option>').val(field.name).text(field.label).appendTo($sortBy);
+  });
+
+  $sort.append($sortBy);
+  $sort.append($sortByOrder);
+  $sort.append($remove);
+
+  return $sort;
+}
+
+function parseSorts($sorts) {
+  const sorts = [];
+
+  $sorts.children().each((idx, li) => {
+    const sort = [];
+    $(li).children('select').each((idx2, select) => {
+      sort.push($(select).val());
+    });
+    sorts.push({sortBy: sort[0], sortByOrder: sort[1]});
+  });
+
+  return sorts;
+}
+
 function initializeForm(userId, playlistId) {
   const initConditions = getRulesData();
   let initialPlaylist = null;
@@ -65,12 +105,11 @@ function initializeForm(userId, playlistId) {
 
   console.log(userId, playlistId);
 
-  const $sortBy = $('#sort-by');
+  const $sorts = $('#sorts');
+  Sortable.create($sorts[0]);
   const $explanations = $('#explanations');
 
-
   sortedFields.forEach(field => {
-    $('<option>').val(field.name).text(field.label).appendTo($sortBy);
     if (field.explanation) {
       $('<li>').text(field.label + ': ' + field.explanation).appendTo($explanations);
     }
@@ -85,14 +124,21 @@ function initializeForm(userId, playlistId) {
       initConditions.data = loadedPlaylist.rules;
       $conditions.conditionsBuilder(initConditions);
 
-      $sortBy.val(loadedPlaylist.sorts[0].sortBy);
-      $('#sort-by-order').val(loadedPlaylist.sorts[0].sortByOrder);
       $('#limit-to').val(loadedPlaylist.limit);
+
+      for (let i = 0; i < loadedPlaylist.sorts.length; i++) {
+        const sort = loadedPlaylist.sorts[i];
+        const $sort = createSort(sortedFields);
+        $sort.children('.sort-by').val(sort.sortBy);
+        $sort.children('.sort-by-order').val(sort.sortByOrder);
+        $sorts.append($sort);
+      }
     });
   } else {
     console.log('creating empty form');
     $conditions.conditionsBuilder(initConditions);
     $('#playlist-title').val('[auto] new playlist').focus();
+    $sorts.append(createSort(sortedFields));
     $('#delete').hide();
   }
 
@@ -107,12 +153,17 @@ function initializeForm(userId, playlistId) {
     playlist.title = $('#playlist-title').val() || '[untitled autoplaylist]';
     playlist.rules = playlistRules;
     playlist.userId = userId;
-    playlist.sorts = [{sortBy: $('#sort-by').val(), sortByOrder: $('#sort-by-order').val()}];
     playlist.limit = Math.min(1000, parseInt($('#limit-to').val(), 10));
+    playlist.sorts = parseSorts($('#sorts'));
 
     return playlist;
   }
 
+
+  $('#add-sort').click(function addSort(e) {
+    e.preventDefault();
+    $('#sorts').append(createSort(sortedFields));
+  });
 
   $('#submit').click(function submit(e) {
     e.preventDefault();
@@ -129,6 +180,7 @@ function initializeForm(userId, playlistId) {
     e.preventDefault();
 
     const playlist = readForm();
+    console.log('testing', playlist);
 
     // When testing, show the total number of matched tracks.
     playlist.limit = null;
