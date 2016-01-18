@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "Autoplaylists for Google Music™",
-    "version": "0.9.0",
+    "version": "0.9.1",
 
     "description": "Create Google Music™ playlists that automatically update from user-defined criteria.",
     "icons": {

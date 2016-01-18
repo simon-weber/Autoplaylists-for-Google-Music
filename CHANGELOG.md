@@ -1,3 +1,7 @@
+## 0.9.1 (January 18, 2016)
+
+Adds logging to debug an issue around tab creation: [#30](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/30).
+
 ## 0.9.0 (January 17, 2016)
 
 Features:
