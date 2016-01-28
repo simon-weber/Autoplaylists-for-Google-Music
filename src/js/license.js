@@ -34,7 +34,7 @@ exports.fetch = function fetch(callback) {
     if (forced) {
       return callback({
         kind: 'chromewebstore#license',
-        itemId: chrome.runime.id,
+        itemId: chrome.runtime.id,
         createdTime: '1453982717000',
         result: true,
         accessLevel: 'FULL',
@@ -45,7 +45,7 @@ exports.fetch = function fetch(callback) {
     // TODO cache in sync storage
     callback({
       kind: 'chromewebstore#license',
-      itemId: chrome.runime.id,
+      itemId: chrome.runtime.id,
       createdTime: '1453982717000',
       result: true,
       accessLevel: 'TRIAL',

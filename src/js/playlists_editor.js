@@ -11,17 +11,32 @@ function initializeForm(userId, playlists) {
     chrome.runtime.sendMessage({action: 'forceUpdate', userId});
   });
 
-  const $playlists = $('#playlists');
-  for (let i = 0; i < playlists.length; i++) {
-    const playlist = playlists[i];
-    console.log(playlist);
-    $playlists.append(
-      $('<li>')
-      .append($('<a>', {
+  License.fetch(license => {
+    const $playlists = $('#playlists');
+
+    if (license.accessLevel !== 'FULL') {
+      $('#add-playlist')
+      .addClass('locked')
+      .wrap('<div class="hint--right" data-hint="The free version allows only one playlist. Upgrade to add more."/>');
+    }
+
+    for (let i = 0; i < playlists.length; i++) {
+      const playlist = playlists[i];
+      let $link = $('<a>', {
         text: playlist.title,
-        href: '/html/playlist.html?' + Qs.stringify({id: playlist.localId, userId})}))
-    );
-  }
+        href: '/html/playlist.html?' + Qs.stringify({id: playlist.localId, userId})});
+
+      if (i > 0 && license.accessLevel !== 'FULL') {
+        $link.addClass('locked')
+        .wrap('<div class="hint--right" data-hint="The free version allows only one playlist,' +
+              ' so this playlist will not be synced."/>');
+        $link = $link.parent();
+      }
+
+      console.log(playlist);
+      $playlists.append($('<li>').append($link));
+    }
+  });
 
   if (License.isDev()) {
     License.isFullForced(forced => {
