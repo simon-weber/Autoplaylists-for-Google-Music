@@ -3,6 +3,7 @@
 const Qs = require('qs');
 
 const Storage = require('./storage.js');
+const License = require('./license.js');
 
 function initializeForm(userId, playlists) {
   $('#force-update').click(e => {
@@ -20,6 +21,25 @@ function initializeForm(userId, playlists) {
         text: playlist.title,
         href: '/html/playlist.html?' + Qs.stringify({id: playlist.localId, userId})}))
     );
+  }
+
+  if (License.isDev()) {
+    License.isFullForced(forced => {
+      let verb = 'enable';
+      if (forced) {
+        verb = 'disable';
+      }
+
+      $('#dev-tools').append(
+        $('<button id="force-full-license">' + verb + ' full license</button>')
+        .click(function toggleForceFull(e) {
+          e.preventDefault();
+          License.setFullForced(!forced, () => {
+            document.location.reload(true);
+          });
+        })
+      );
+    });
   }
 }
 
