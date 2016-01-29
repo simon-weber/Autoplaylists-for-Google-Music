@@ -1,3 +1,7 @@
+## 0.9.2 (January 29, 2016)
+
+Changes the format of logging to be more informative when dumped to a file.
+
 ## 0.9.1 (January 18, 2016)
 
 Adds logging to debug an issue around tab creation: [#30](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/30).
