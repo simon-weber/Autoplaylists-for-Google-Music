@@ -179,7 +179,7 @@ function addTracks(userIndex, playlistId, tracks, callback, onError) {
     return callback(null);
   }
 
-  console.log('adding', tracks.length, 'tracks. first 10 are', tracks.slice(0, 10));
+  console.log('adding', tracks.length, 'tracks. first 5 are', JSON.stringify(tracks.slice(0, 5), null, 2));
 
   // [["<sessionid>",1],["<listid>",[["<store id or songid>",tracktype]]]]
   const payload = [['', 1],
@@ -188,14 +188,14 @@ function addTracks(userIndex, playlistId, tracks, callback, onError) {
     ],
   ];
   authedGMRequest('addtrackstoplaylist', payload, userIndex, 'post', response => {
-    console.log('add response', response);
+    console.log('add response', JSON.stringify(response, null, 2));
     callback(response);
   }, onError);
 }
 
 function deleteEntries(userIndex, playlistId, entries, callback, onError) {
   // Delete entries with id and entryId keys; callback the api response.
-  console.log('deleting', entries.length, 'entries. first 10 are', entries.slice(0, 10));
+  console.log('deleting', entries.length, 'entries. first 5 are', JSON.stringify(entries.slice(0, 5), null, 2));
   const payload = {
     songIds: entries.map(entry => {return entry.id;}),
 
@@ -205,7 +205,7 @@ function deleteEntries(userIndex, playlistId, entries, callback, onError) {
     sessionId: '',
   };
   authedGMRequest('deletesong', payload, userIndex, 'post', response => {
-    console.log('delete response', response);
+    console.log('delete response', JSON.stringify(response, null, 2));
     callback(response);
   }, onError);
 }
@@ -215,15 +215,16 @@ function loadPlaylistContents(db, userIndex, playlistId, callback, onError) {
 
   const payload = [['', 1], [playlistId]];
   authedGMRequest('loaduserplaylist', payload, userIndex, 'post', response => {
-    console.log('load response', response);
     if (response.length < 2) {
-      return onError('unexpected loadPlaylistContents response: ' + JSON.stringify(response));
+      return onError('unexpected loadPlaylistContents response: ' + JSON.stringify(response, null, 2));
     }
 
     const contents = [];
 
     if (response[1].length !== 0) {
       const gentries = response[1][0];
+      console.log('playlist', playlistId, 'has', gentries.length, 'entries. first 3:',
+                  JSON.stringify(gentries.slice(0, 3), null, 2));
 
       for (let i = 0; i < gentries.length; i++) {
         const gentry = gentries[i];
