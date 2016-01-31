@@ -3,7 +3,7 @@
 const Chrometools = require('./chrometools.js');
 
 const CWS_LICENSE_API_URL = 'https://www.googleapis.com/chromewebstore/v1.1/userlicenses/';
-const DEVELOPER_ID_WHITELIST = {
+const DEVELOPER_ID_WHITELIST = { // eslint-disable-line no-unused-vars
   '103350848301234480355': true,  // me
 };
 
@@ -14,7 +14,8 @@ exports.isDev = function isDev(callback) {
       return callback(false);
     }
     chrome.identity.getProfileUserInfo(userInfo => {
-      const isDeveloper = DEVELOPER_ID_WHITELIST[userInfo.id];
+      // const isDeveloper = DEVELOPER_ID_WHITELIST[userInfo.id];
+      const isDeveloper = true; // TODO switch this back once available for purchase
       console.log('user id:', userInfo.id, 'isDeveloper:', isDeveloper);
       return callback(isDeveloper);
     });
