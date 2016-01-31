@@ -189,18 +189,24 @@ function forceUpdate(userId) {
     }
 
     diffUpdateLibrary(userId, timestamp, () => {
-      Storage.getPlaylistsForUser(userId, playlists => {
-        for (let i = 0; i < playlists.length; i++) {
-          // This locking prevents two things:
-          //   * slow periodic syncs from stepping on later periodic syncs
-          //   * periodic syncs from stepping on manual syncs
-          // which is why it's done at this level (and not around eg syncPlaylist).
-          if (playlistIsUpdating[playlists[i].remoteId]) {
-            console.warn('skipping forceUpdate since playlist is being updated:', playlists[i].title);
-          } else {
-            renameAndSync(playlists[i]);
+      License.hasFullVersion(false, hasFullVersion => {
+        Storage.getPlaylistsForUser(userId, playlists => {
+          for (let i = 0; i < playlists.length; i++) {
+            if (i > 0 && !hasFullVersion) {
+              console.log('skipping sync of locked playlist', playlists[i].title);
+              continue;
+            }
+            // This locking prevents two things:
+            //   * slow periodic syncs from stepping on later periodic syncs
+            //   * periodic syncs from stepping on manual syncs
+            // which is why it's done at this level (and not around eg syncPlaylist).
+            if (playlistIsUpdating[playlists[i].remoteId]) {
+              console.warn('skipping forceUpdate since playlist is being updated:', playlists[i].title);
+            } else {
+              renameAndSync(playlists[i]);
+            }
           }
-        }
+        });
       });
     });
   });
