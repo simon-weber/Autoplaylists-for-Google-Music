@@ -36,6 +36,7 @@ function initializeForm(userId, playlists) {
     if (!hasFullVersion) {
       $('#add-playlist')
       .addClass('locked')
+      .addClass('disabled')
       .wrap('<div class="hint--right" data-hint="The free version allows only one playlist. Upgrade to add more."/>');
     } else {
       $('#check-license-wrapper').hide();
@@ -43,12 +44,18 @@ function initializeForm(userId, playlists) {
 
     for (let i = 0; i < playlists.length; i++) {
       const playlist = playlists[i];
-      let $link = $('<a>', {
-        text: playlist.title,
-        href: '/html/playlist.html?' + Qs.stringify({id: playlist.localId, userId})});
+      const isLocked = (i > 0 && !hasFullVersion);
+      const qs = {
+        userId,
+        id: playlist.localId,
+        locked: isLocked,
+      };
+      const href = '/html/playlist.html?' + Qs.stringify(qs);
+      let $link = $('<a>', {href, text: playlist.title});
 
-      if (i > 0 && !hasFullVersion) {
-        $link.addClass('locked')
+      if (isLocked) {
+        $link
+        .addClass('locked')
         .wrap('<div class="hint--right" data-hint="The free version allows only one playlist,' +
               ' so this playlist will not be synced."/>');
         $link = $link.parent();
