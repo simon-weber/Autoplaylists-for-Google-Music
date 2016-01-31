@@ -2,15 +2,28 @@
 
 const Chrometools = require('./chrometools.js');
 
-const storeItemId = 'blbompphddfibggfmmfcgjjoadebinem';
+const CWS_LICENSE_API_URL = 'https://www.googleapis.com/chromewebstore/v1.1/userlicenses/';
+const DEVELOPER_ID_WHITELIST = {
+  '103350848301234480355': true,  // me
+};
 
-exports.isDev = function isDev() {
-  return chrome.runtime.id !== storeItemId;
+exports.isDev = function isDev(callback) {
+  // Callback a truthy value for whether the current user is a developer.
+  chrome.management.getSelf(extensionInfo => {
+    if (extensionInfo.installType !== 'development') {
+      return callback(false);
+    }
+    chrome.identity.getProfileUserInfo(userInfo => {
+      const isDeveloper = DEVELOPER_ID_WHITELIST[userInfo.id];
+      console.log('user id:', userInfo.id, 'isDeveloper:', isDeveloper);
+      return callback(isDeveloper);
+    });
+  });
 };
 
 exports.setFullForced = function setFullForced(enabled, callback) {
-  chrome.storage.local.set({devForceFullLicense: enabled}, Chrometools.unlessError(items => {
-    console.log('wrote fullForced', items);
+  chrome.storage.local.set({devForceFullLicense: enabled}, Chrometools.unlessError(() => {
+    console.log('wrote fullForced to', enabled);
     callback();
   }));
 };
@@ -18,38 +31,86 @@ exports.setFullForced = function setFullForced(enabled, callback) {
 exports.isFullForced = function isFullForced(callback) {
   // Callback a truthy value.
 
-  if (!exports.isDev()) {
-    return callback(false);
-  }
-
-  chrome.storage.local.get('devForceFullLicense', Chrometools.unlessError(items => {
-    callback(items.devForceFullLicense);
-  }));
+  exports.isDev(isDev => {
+    if (!isDev) {
+      return callback(false);
+    }
+    chrome.storage.local.get('devForceFullLicense', Chrometools.unlessError(items => {
+      callback(items.devForceFullLicense);
+    }));
+  });
 };
 
-exports.fetch = function fetch(callback) {
-  // Callback a chrome license object.
+function cacheLicense(interactive, callback) {
+  // Retrieve and callback a cachedLicense, or null if we can't right now.
+
+  chrome.identity.getAuthToken({interactive}, token => {
+    if (chrome.runtime.lastError) {
+      console.warn('error during getAuthToken', chrome.runtime.lastError);
+      return callback(null);
+    }
+
+    const req = new XMLHttpRequest();
+    req.open('GET', CWS_LICENSE_API_URL + chrome.runtime.id);
+    req.setRequestHeader('Authorization', `Bearer ${token}`);
+    req.onreadystatechange = () => {
+      if (req.readyState === 4) {
+        const license = JSON.parse(req.responseText);
+        console.info('got license:', license);
+
+        const expiration = new Date();
+        expiration.setSeconds(expiration.getSeconds() + license.maxAgeSecs);
+        const cachedLicense = {license, expiration};
+        chrome.storage.sync.set({cachedLicense}, Chrometools.unlessError(() => {
+          console.log('cached license', cachedLicense);
+        }));
+        callback(cachedLicense);
+      }
+    };
+    req.send();
+  });
+}
+
+function checkCachedLicense(cachedLicense) {
+  return cachedLicense !== null && cachedLicense.license.accessLevel === 'FULL';
+}
+
+function getCachedLicense(callback) {
+  // Callback a license, or null if one hasn't been cached.
+
+  chrome.storage.sync.get('cachedLicense', Chrometools.unlessError(items => {
+    console.log('got cached license', items);
+    if ('cachedLicense' in items) {
+      callback(items.cachedLicense);
+    } else {
+      callback(null);
+    }
+  }));
+}
+
+exports.hasFullVersion = function hasFullVersion(interactive, callback) {
+  // Callback a truthy value.
 
   exports.isFullForced(forced => {
     if (forced) {
-      return callback({
-        kind: 'chromewebstore#license',
-        itemId: chrome.runtime.id,
-        createdTime: '1453982717000',
-        result: true,
-        accessLevel: 'FULL',
-        maxAgeSecs: '1337',
-      });
+      return callback(true);
     }
 
-    // TODO cache in sync storage
-    callback({
-      kind: 'chromewebstore#license',
-      itemId: chrome.runtime.id,
-      createdTime: '1453982717000',
-      result: true,
-      accessLevel: 'TRIAL',
-      maxAgeSecs: '1337',
-    });
+    if (interactive) {
+      // Always invalidate the cache on interactive checks.
+      cacheLicense(interactive, cachedLicense => {
+        callback(checkCachedLicense(cachedLicense));
+      });
+    } else {
+      getCachedLicense(cachedLicense => {
+        if (cachedLicense === null || cachedLicense.expiration > new Date()) {
+          cacheLicense(interactive, newCachedLicense => {
+            callback(checkCachedLicense(newCachedLicense));
+          });
+        } else {
+          callback(checkCachedLicense(cachedLicense));
+        }
+      });
+    }
   });
 };

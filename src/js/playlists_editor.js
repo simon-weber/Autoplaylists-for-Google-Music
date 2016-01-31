@@ -5,19 +5,40 @@ const Qs = require('qs');
 const Storage = require('./storage.js');
 const License = require('./license.js');
 
+//TODO push lengthy ops into the background script
+
 function initializeForm(userId, playlists) {
   $('#force-update').click(e => {
     e.preventDefault();
     chrome.runtime.sendMessage({action: 'forceUpdate', userId});
   });
 
-  License.fetch(license => {
+  $('#check-license').click(e => {
+    e.preventDefault();
+    License.hasFullVersion(true, hasFullVersion => {
+      let msg = 'Sorry, either the Chrome licensing api is unavailable' +
+       " or it reported that you haven't purchased the full version.";
+      if (hasFullVersion) {
+        msg = "Thanks for purchasing the full version! You've been upgraded.";
+      }
+
+      alert(msg);
+
+      if (hasFullVersion) {
+        location.reload(true);
+      }
+    });
+  });
+
+  License.hasFullVersion(false, hasFullVersion => {
     const $playlists = $('#playlists');
 
-    if (license.accessLevel !== 'FULL') {
+    if (!hasFullVersion) {
       $('#add-playlist')
       .addClass('locked')
       .wrap('<div class="hint--right" data-hint="The free version allows only one playlist. Upgrade to add more."/>');
+    } else {
+      $('#check-license-wrapper').hide();
     }
 
     for (let i = 0; i < playlists.length; i++) {
@@ -26,7 +47,7 @@ function initializeForm(userId, playlists) {
         text: playlist.title,
         href: '/html/playlist.html?' + Qs.stringify({id: playlist.localId, userId})});
 
-      if (i > 0 && license.accessLevel !== 'FULL') {
+      if (i > 0 && !hasFullVersion) {
         $link.addClass('locked')
         .wrap('<div class="hint--right" data-hint="The free version allows only one playlist,' +
               ' so this playlist will not be synced."/>');
@@ -38,24 +59,26 @@ function initializeForm(userId, playlists) {
     }
   });
 
-  if (License.isDev()) {
-    License.isFullForced(forced => {
-      let verb = 'enable';
-      if (forced) {
-        verb = 'disable';
-      }
+  License.isDev(isDev => {
+    if (isDev) {
+      License.isFullForced(forced => {
+        let verb = 'enable';
+        if (forced) {
+          verb = 'disable';
+        }
 
-      $('#dev-tools').append(
-        $('<button id="force-full-license">' + verb + ' full license</button>')
-        .click(function toggleForceFull(e) {
-          e.preventDefault();
-          License.setFullForced(!forced, () => {
-            document.location.reload(true);
-          });
-        })
-      );
-    });
-  }
+        $('#dev-tools').append(
+          $(`<button id="force-full-license">${verb} full license</button>`)
+          .click(e => {
+            e.preventDefault();
+            License.setFullForced(!forced, () => {
+              document.location.reload(true);
+            });
+          })
+        );
+      });
+    }
+  });
 }
 
 function onReady() {

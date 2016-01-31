@@ -4,6 +4,7 @@ const Qs = require('qs');
 
 const Chrometools = require('./chrometools.js');
 const Gm = require('./googlemusic.js');
+const License = require('./license.js');
 const Storage = require('./storage.js');
 const Trackcache = require('./trackcache.js');
 
@@ -278,6 +279,7 @@ function main() {
 
       users[request.userId] = {userIndex: request.userIndex, tabId: sender.tab.id};
       console.log('see user', request.userId, users);
+      License.hasFullVersion(false, hasFullVersion => {console.log('precached license status:', hasFullVersion);});
       chrome.pageAction.show(sender.tab.id);
     } else if (request.action === 'query') {
       Trackcache.queryTracks(dbs[request.playlist.userId], request.playlist, tracks => {
