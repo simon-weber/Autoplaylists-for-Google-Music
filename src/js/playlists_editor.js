@@ -19,7 +19,8 @@ function initializeForm(userId, playlists) {
       let msg = 'Sorry, either the Chrome licensing api is unavailable' +
        " or it reported that you haven't purchased the full version.";
       if (hasFullVersion) {
-        msg = "Thanks for purchasing the full version! You've been upgraded.";
+        msg = "Thanks for purchasing the full version! You've been upgraded." +
+          ' Please consider rating the extension if you like it.';
       }
 
       alert(msg);
