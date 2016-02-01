@@ -6,8 +6,8 @@ This is a Chrome extension that allows for user-defined autoplaylists in Google 
 
 **This extension is not supported nor endorsed by Google.**
 
-## Installation
-The project homepage has all the details: https://autoplaylists.simon.codes.
+## Installation and support
+Everything relevant to users can be found at https://autoplaylists.simon.codes.
 
 The rest of this page is intended for developers.
 
