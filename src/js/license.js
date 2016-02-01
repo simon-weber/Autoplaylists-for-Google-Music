@@ -7,18 +7,37 @@ const DEVELOPER_ID_WHITELIST = { // eslint-disable-line no-unused-vars
   '103350848301234480355': true,  // me
 };
 
-exports.isDev = function isDev(callback) {
+function isDeveloper(callback) {
   // Callback a truthy value for whether the current user is a developer.
   chrome.management.getSelf(extensionInfo => {
     if (extensionInfo.installType !== 'development') {
       return callback(false);
     }
     chrome.identity.getProfileUserInfo(userInfo => {
-      // const isDeveloper = DEVELOPER_ID_WHITELIST[userInfo.id];
-      const isDeveloper = true; // TODO switch this back once available for purchase
-      console.log('user id:', userInfo.id, 'isDeveloper:', isDeveloper);
-      return callback(isDeveloper);
+      // const isDev = DEVELOPER_ID_WHITELIST[userInfo.id];
+      const isDev = true; // TODO switch this back once available for purchase
+      console.log('user id:', userInfo.id, 'isDev:', isDev);
+      return callback(isDev);
     });
+  });
+}
+
+exports.getDevStatus = function getDevStatus(callback) {
+  // Callback an object with isDev and isFullForced fields.
+
+  const devStatus = {isDev: false, isFullForced: false};
+
+  isDeveloper(isDev => {
+    devStatus.isDev = isDev;
+
+    if (!isDev) {
+      return callback(devStatus);
+    }
+
+    chrome.storage.local.get('devForceFullLicense', Chrometools.unlessError(items => {
+      devStatus.isFullForced = items.devForceFullLicense;
+      callback(devStatus);
+    }));
   });
 };
 
@@ -27,19 +46,6 @@ exports.setFullForced = function setFullForced(enabled, callback) {
     console.log('wrote fullForced to', enabled);
     callback();
   }));
-};
-
-exports.isFullForced = function isFullForced(callback) {
-  // Callback a truthy value.
-
-  exports.isDev(isDev => {
-    if (!isDev) {
-      return callback(false);
-    }
-    chrome.storage.local.get('devForceFullLicense', Chrometools.unlessError(items => {
-      callback(items.devForceFullLicense);
-    }));
-  });
 };
 
 function cacheLicense(interactive, callback) {
@@ -92,8 +98,8 @@ function getCachedLicense(callback) {
 exports.hasFullVersion = function hasFullVersion(interactive, callback) {
   // Callback a truthy value.
 
-  exports.isFullForced(forced => {
-    if (forced) {
+  exports.getDevStatus(devStatus => {
+    if (devStatus.isFullForced) {
       return callback(true);
     }
 

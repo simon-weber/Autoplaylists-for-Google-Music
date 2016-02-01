@@ -69,24 +69,22 @@ function initializeForm(userId, playlists) {
     }
   });
 
-  License.isDev(isDev => {
-    if (isDev) {
-      License.isFullForced(forced => {
-        let verb = 'enable';
-        if (forced) {
-          verb = 'disable';
-        }
+  License.getDevStatus(devStatus => {
+    if (devStatus.isDev) {
+      let verb = 'enable';
+      if (devStatus.isFullForced) {
+        verb = 'disable';
+      }
 
-        $('#dev-tools').append(
-          $(`<button id="force-full-license" class="menu-button">${verb} full license</button>`)
-          .click(e => {
-            e.preventDefault();
-            License.setFullForced(!forced, () => {
-              document.location.reload(true);
-            });
-          })
-        );
-      });
+      $('#dev-tools').append(
+        $(`<button id="force-full-license" class="menu-button">${verb} full license</button>`)
+        .click(e => {
+          e.preventDefault();
+          License.setFullForced(!devStatus.isFullForced, () => {
+            document.location.reload(true);
+          });
+        })
+      );
     }
   });
 }
