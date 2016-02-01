@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Autoplaylists for Google Music™ : Adds autoplaylists (iTunes &quot;smart playlists&quot;) to Google Music.">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Autoplaylists for Google Music™</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/simon-weber/Autoplaylists-for-Google-Music">View on GitHub</a>
+
+          <h1 id="project_title">Autoplaylists for Google Music™</h1>
+          <h2 id="project_tagline">Adds autoplaylists (iTunes &quot;smart playlists&quot;) to Google Music.</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a id="autoplaylists-for-google-music" class="anchor" href="#autoplaylists-for-google-music" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Autoplaylists for Google Music™</h1>
+
+<p>This is a Chrome extension that allows for user-defined autoplaylists in Google Music (iTunes calls these "Smart Playlists").</p>
+
+<p><img src="http://i.imgur.com/NQlu84kl.png" alt="autoplaylist screenshot"></p>
+
+<p><strong>This extension is not supported nor endorsed by Google.</strong></p>
+
+<h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Installation</h2>
+
+<p>An unlisted beta can be installed from the Chrome Web Store:</p>
+
+<ul>
+<li>join <a href="https://groups.google.com/forum/#!forum/autoplaylists-for-google-music">the autoplaylists mailing list</a>
+</li>
+<li>install <a href="https://chrome.google.com/webstore/detail/autoplaylists-for-google/blbompphddfibggfmmfcgjjoadebinem">the autoplaylists extension</a>.</li>
+</ul>
+
+<p>Mailing list members are "trusted testers" of the extension; you'll need to be a member for the link to work.</p>
+
+<h2>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Usage</h2>
+
+<ul>
+<li>open a tab to <a href="https://play.google.com/music/listen">https://play.google.com/music/listen</a>
+</li>
+<li>click the extension's "page action": the tiny icon in the far right of the url bar, to the left of the bookmark star</li>
+<li>playlists are updated whenever their definition changes and automatically once a minute</li>
+</ul>
+
+<h3>
+<a id="how-it-works" class="anchor" href="#how-it-works" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>How it works</h3>
+
+<ul>
+<li>your library is pulled from a local Google Music IndexedDB (or Google's servers as a fallback)</li>
+<li>your tracks are indexed in an in-memory <a href="https://github.com/google/lovefield">lovefield</a> database</li>
+<li>differential updates are polled for periodically</li>
+<li>playlist definitions are stored in chrome.storage.sync</li>
+</ul>
+
+<h2>
+<a id="support" class="anchor" href="#support" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Support</h2>
+
+<p>Please visit <a href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki">the wiki</a>.</p>
+
+<h2>
+<a id="contributing" class="anchor" href="#contributing" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Contributing</h2>
+
+<p>Please visit <a href="https://github.com/simon-weber/Autoplaylists-for-Google-Music">the GitHub project page</a>.</p>
+
+<hr>
+
+<p>Google Music is a trademark of Google Inc. Use of this trademark is subject to Google Permissions.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Autoplaylists for Google Music™ maintained by <a href="https://github.com/simon-weber">simon-weber</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-71628085-2");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+
+  </body>
+</html>
