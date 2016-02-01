@@ -1,0 +1,6 @@
+*.crx
+*.zip
+*.pem
+node_modules/
+src/js-built/*.js
+build
