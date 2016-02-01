@@ -5,7 +5,7 @@ const Qs = require('qs');
 const Storage = require('./storage.js');
 const License = require('./license.js');
 
-//TODO push lengthy ops into the background script
+// TODO push lengthy ops into the background script
 
 function initializeForm(userId, playlists) {
   $('#force-update').click(e => {
@@ -34,12 +34,14 @@ function initializeForm(userId, playlists) {
     const $playlists = $('#playlists');
 
     if (!hasFullVersion) {
+      $('#version-header').text('Version: free');
       $('#add-playlist')
       .addClass('locked')
       .addClass('disabled')
       .wrap('<div class="hint--right" data-hint="The free version allows only one playlist. Upgrade to add more."/>');
     } else {
-      $('#check-license-wrapper').hide();
+      $('#version-header').text('Version: full');
+      $('#upgrade-wrapper').hide();
     }
 
     for (let i = 0; i < playlists.length; i++) {
