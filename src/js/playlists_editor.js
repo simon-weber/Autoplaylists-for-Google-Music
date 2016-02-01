@@ -59,8 +59,8 @@ function initializeForm(userId, playlists) {
       if (isLocked) {
         $link
         .addClass('locked')
-        .wrap('<div class="hint--right" data-hint="The free version allows only one playlist,' +
-              ' so this playlist will not be synced."/>');
+        .wrap('<div class="hint--right" data-hint="The free version allows only one playlist.' +
+              ' This playlist is not being synced."/>');
         $link = $link.parent();
       }
 
