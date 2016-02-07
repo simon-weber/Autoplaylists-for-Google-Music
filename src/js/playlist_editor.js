@@ -21,8 +21,10 @@ const operators = {
     {name: 'eq-insensitive', label: 'equals (case ignored)', input_type: 'text'},
     {name: 'neq', label: "doesn't equal", input_type: 'text'},
     {name: 'neq-insensitive', label: "doesn't equal (case ignored)", input_type: 'text'},
-    {name: 'match', label: 'has regex', input_type: 'text'},
-    {name: 'match-insensitive', label: 'has regex (case ignored)', input_type: 'text'},
+    {name: 'match', label: 'contains', input_type: 'text'},
+    {name: 'match-insensitive', label: 'contains (case ignored)', input_type: 'text'},
+    {name: 'no-match', label: 'does not contain', input_type: 'text'},
+    {name: 'no-match-insensitive', label: 'does not contain (case ignored)', input_type: 'text'},
   ],
   datetime: [
     {name: 'lt', label: 'before', input_type: 'text'},

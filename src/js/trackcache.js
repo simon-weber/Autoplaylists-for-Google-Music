@@ -71,11 +71,19 @@ function buildWhereClause(track, rule) {
     if (rule.operator === 'match-insensitive') {
       operator = 'match';
       value = new RegExp(escapeForRegex(value), 'i');
+    } else if (rule.operator === 'no-match') {
+      operator = 'match';
+      // Negative lookahead on each character.
+      // Source: http://stackoverflow.com/a/957581/1231454
+      value = new RegExp(`^((?!${escapeForRegex(value)}).)*$`);
+    } else if (rule.operator === 'no-match-insensitive') {
+      operator = 'match';
+      value = new RegExp(`^((?!${escapeForRegex(value)}).)*$`, 'i');
     } else if (rule.operator === 'eq-insensitive') {
       operator = 'match';
       value = new RegExp(`^${escapeForRegex(value)}$`, 'i');
     } else if (rule.operator === 'neq-insensitive') {
-      // Use a regex with negative lookahead.
+      // Negative lookahead once.
       // Source: http://stackoverflow.com/a/2964653.
       operator = 'match';
       value = new RegExp(`^(?!${escapeForRegex(value)}$)`, 'i');
