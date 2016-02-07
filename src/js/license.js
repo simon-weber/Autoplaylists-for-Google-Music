@@ -10,20 +10,18 @@ const DEVELOPER_ID_WHITELIST = { // eslint-disable-line no-unused-vars
 function isDeveloper(callback) {
   // Callback a truthy value for whether the current user is a developer.
   chrome.management.getSelf(extensionInfo => {
-    // REMOVE_ON_FULL
-    return callback(true);
-
-    if (extensionInfo.installType !== 'development') {
-      // this check should be the opposite -- force on for dev.
-      return callback(false);
+    if (extensionInfo.installType === 'development') {
+      return callback(true);
     }
-    chrome.identity.getProfileUserInfo(userInfo => {
-      // REMOVE_ON_FULL
-      // const isDev = DEVELOPER_ID_WHITELIST[userInfo.id];
-      const isDev = true;
-      console.log('user id:', userInfo.id, 'isDev:', isDev);
-      return callback(isDev);
-    });
+
+    // REMOVE_ON_FULL
+    callback(true);
+
+    // chrome.identity.getProfileUserInfo(userInfo => {
+    //   const isDev = DEVELOPER_ID_WHITELIST[userInfo.id];
+    //   console.log('user id:', userInfo.id, 'isDev:', isDev);
+    //   return callback(isDev);
+    // });
   });
 }
 
