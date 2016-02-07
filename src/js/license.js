@@ -14,8 +14,9 @@ function isDeveloper(callback) {
       return callback(false);
     }
     chrome.identity.getProfileUserInfo(userInfo => {
+      // REMOVE_ON_FULL
       // const isDev = DEVELOPER_ID_WHITELIST[userInfo.id];
-      const isDev = true; // TODO switch this back once available for purchase
+      const isDev = true;
       console.log('user id:', userInfo.id, 'isDev:', isDev);
       return callback(isDev);
     });
