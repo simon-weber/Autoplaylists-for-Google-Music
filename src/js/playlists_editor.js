@@ -36,10 +36,6 @@ function initializeForm(userId, playlists) {
 
     if (!hasFullVersion) {
       $('#version-header').text('Version: free');
-      $('#add-playlist')
-      .addClass('locked')
-      .addClass('disabled')
-      .wrap('<div class="hint--right" data-hint="The free version allows only one playlist. Upgrade to add more."/>');
     } else {
       $('#version-header').text('Version: full');
       $('#upgrade-wrapper').hide();
@@ -62,6 +58,12 @@ function initializeForm(userId, playlists) {
         .wrap('<div class="hint--right" data-hint="The free version allows only one playlist.' +
               ' This playlist is not being synced."/>');
         $link = $link.parent();
+
+        $('#add-playlist:not(.locked)')
+        .addClass('locked')
+        .addClass('disabled')
+        .wrap('<div class="hint--right" data-hint="The free version allows only one playlist.' +
+             ' Upgrade to add more."/>');
       }
 
       console.log(playlist);
@@ -84,14 +86,12 @@ function initializeForm(userId, playlists) {
             document.location.reload(true);
           });
         })
-        /* eslint-disable max-len */
         // REMOVE_ON_FULL ->
         .wrap(
-          '<div class="hint--right" data-hint="This button will be available until the extension is available for purchase.' +
-          ' Feel free to enable the full version, and please report any bugs you notice around free -> full transitions."/>')
+          '<div class="hint--right" data-hint="Feel free to use the full version for now.' +
+          ' Please report any bugs you notice around version transitions."/>')
         .parent()
         // <-
-        /* eslint-enable max-len */
       );
     }
   });
