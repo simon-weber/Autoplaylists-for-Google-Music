@@ -1,3 +1,7 @@
+## 0.10.1 (February 7, 2016)
+
+Fix faulty logic for giving everyone the contributor version.
+
 ## 0.10.0 (February 6, 2016)
 
 Prepares the extension for purchase on the Chrome Web store.
