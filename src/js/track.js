@@ -17,7 +17,7 @@ function f(requiredItems, optionalItems) {
   if (opt.coerce) {
     field.coerce = opt.coerce;
   } else {
-    field.coerce = val => {return val;};
+    field.coerce = val => val;
   }
 
   return field;
@@ -46,7 +46,7 @@ exports.fields = [
   f([23, 'rating', Lf.Type.INTEGER], {
     explanation: '0: no thumb, 1: down thumb, 5: up thumb.',
     // coerce nulls to 0; see https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/15.
-    coerce: val => {return val || 0;},
+    coerce: val => val || 0,
   }),
 
   // Lf.Type.DATE_TIME introduces a TypeError on indexing,
@@ -112,7 +112,7 @@ exports.toString = function toString(track) {
       strVal = new Date(val / 1000).toLocaleString();
     }
 
-    output += field.label + ': ' + strVal + '\n';
+    output += `${field.label}: ${strVal}\n`;
   }
 
   return output;

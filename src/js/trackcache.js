@@ -7,7 +7,7 @@ const Track = require('./track.js');
 
 exports.openDb = function openDb(userId, callback) {
   console.log('opening...');
-  const schemaBuilder = Lf.schema.create('ltracks_' + userId, 1);
+  const schemaBuilder = Lf.schema.create(`ltracks_${userId}`, 1);
 
   let table = schemaBuilder.createTable('Track');
 
@@ -18,7 +18,7 @@ exports.openDb = function openDb(userId, callback) {
       table = table.addPrimaryKey(['id']);
     } else {
       table = table.addNullable([field.name]);
-      table = table.addIndex('idx_' + field.name, [field.name], false, Lf.Order.DESC);
+      table = table.addIndex(`idx_${field.name}`, [field.name], false, Lf.Order.DESC);
     }
   });
 
@@ -73,12 +73,12 @@ function buildWhereClause(track, rule) {
       value = new RegExp(escapeForRegex(value), 'i');
     } else if (rule.operator === 'eq-insensitive') {
       operator = 'match';
-      value = new RegExp('^' + escapeForRegex(value) + '$', 'i');
+      value = new RegExp(`^${escapeForRegex(value)}$`, 'i');
     } else if (rule.operator === 'neq-insensitive') {
       // Use a regex with negative lookahead.
       // Source: http://stackoverflow.com/a/2964653.
       operator = 'match';
-      value = new RegExp('^(?!' + escapeForRegex(value) + '$)', 'i');
+      value = new RegExp(`^(?!${escapeForRegex(value)}$)`, 'i');
     }
 
     clause = track[rule.name][operator](value);

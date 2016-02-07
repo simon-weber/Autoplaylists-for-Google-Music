@@ -29,5 +29,5 @@ exports.focusOrCreateExtensionTab = function focusOrCreateExtensionTab(url) {
 };
 
 exports.goToManager = function goToManager(userId) {
-  window.location.href = '/html/playlists.html?' + Qs.stringify({userId});
+  window.location.href = `/html/playlists.html?${Qs.stringify({userId})}`;
 };

@@ -15,13 +15,14 @@ function ruleToString(rule) {
   // Return a string representation of a rule, parenthesised if necessary
   if (rule.name) {
     const operators = {eq: '=', neq: '≠', lt: '<', lte: '≤', gt: '>', gte: '≥', match: 'matches'};
-    return rule.name + ' ' + (operators[rule.operator] || rule.operator) + ' ' + rule.value;
+    return `${rule.name} ${operators[rule.operator] || rule.operator} ${rule.value}`;
   } else if (rule.all || rule.any) {
     const subRules = rule.all || rule.any;
     if (subRules.length === 1) {
       return ruleToString(subRules[0]);
     } else if (subRules.length > 1) {
-      return '(' + subRules.map(r => ruleToString(r)).filter(s => s.length).join(rule.any ? ' or ' : ' and ') + ')';
+      const subRulesStr = subRules.map(r => ruleToString(r)).filter(s => s.length).join(rule.any ? ' or ' : ' and ');
+      return `(${subRulesStr})`;
     }
   }
   return '';
@@ -37,11 +38,11 @@ function lfOrderToString(lfOrder) {
 }
 
 function sortToString(sort) {
-  return sort.sortBy + ' ' + lfOrderToString(sort.sortByOrder);
+  return `${sort.sortBy} ${lfOrderToString(sort.sortByOrder)}`;
 }
 
 exports.toString = function toString(playlist) {
   const sorts = playlist.sorts.map(sortToString).join(', ');
 
-  return ruleToString(playlist.rules) + ' sort by ' + sorts;
+  return `${ruleToString(playlist.rules)} sort by ${sorts}`;
 };

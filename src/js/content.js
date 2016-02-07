@@ -7,7 +7,7 @@ const Track = require('./track.js');
 let userId;
 
 function getGtracks(callback) {
-  const dbName = 'music_' + userId;
+  const dbName = `music_${userId}`;
   const DBOpenRequest = window.indexedDB.open(dbName, 6);
 
   DBOpenRequest.onerror = err => {
@@ -81,7 +81,7 @@ function main() {
 
     chrome.runtime.sendMessage({
       action: 'showPageAction',
-      userId: '' + userId,
+      userId: `${userId}`,
       userIndex: parseInt(userIndex, 10),
     });
 
@@ -103,9 +103,11 @@ function main() {
     });
   }, false);
 
+  /* eslint-disable prefer-template */
   const code = '(' + function inject() {
     window.postMessage({userId: window.USER_ID}, '*');
   } + ')()';
+  /* eslint-enable prefer-template */
 
   injectCode(code);
 }

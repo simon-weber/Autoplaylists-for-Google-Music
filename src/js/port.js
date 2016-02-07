@@ -17,7 +17,7 @@ function onDrop(event) {
   console.log(playlists);
 
   const playlistNames = playlists.map(p => p.title).join('\n');
-  const msg = 'Overwrite current playlists with these ' + playlists.length + '?\n' + playlistNames;
+  const msg = `Overwrite current playlists with these ${playlists.length}?\n${playlistNames}`;
 
   if (confirm(msg)) {  // eslint-disable-line no-alert
     // Convert the playlists for this user.
@@ -25,7 +25,7 @@ function onDrop(event) {
       const playlist = playlists[i];
 
       // This is faster than getTime granularity, so use i to avoid duplicate ids.
-      playlist.localId = '' + new Date().getTime() + i;
+      playlist.localId = `${new Date().getTime()}${i}`;
       playlist.userId = userId;
       delete playlist.remoteId;
     }

@@ -53,7 +53,7 @@ function initializeForm(userId, playlists) {
         id: playlist.localId,
         locked: isLocked,
       };
-      const href = '/html/playlist.html?' + Qs.stringify(qs);
+      const href = `/html/playlist.html?${Qs.stringify(qs)}`;
       let $link = $('<a>', {href, text: playlist.title});
 
       if (isLocked) {
@@ -100,8 +100,8 @@ function initializeForm(userId, playlists) {
 function onReady() {
   const userId = Qs.parse(location.search.substring(1)).userId;
 
-  $('#add-playlist').attr('href', '/html/playlist.html?' + Qs.stringify({userId}));
-  $('#import-export').attr('href', '/html/port.html?' + Qs.stringify({userId}));
+  $('#add-playlist').attr('href', `/html/playlist.html?${Qs.stringify({userId})}`);
+  $('#import-export').attr('href', `/html/port.html?${Qs.stringify({userId})}`);
 
   Storage.getPlaylistsForUser(userId, playlists => {
     initializeForm(userId, playlists);

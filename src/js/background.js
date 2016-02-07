@@ -34,7 +34,7 @@ function userIndexForId(userId) {
 }
 
 function timestampKey(userId) {
-  return 'lastPoll-' + userId;
+  return `lastPoll-${userId}`;
 }
 
 function setPollTimestamp(userId, timestamp) {
@@ -81,7 +81,7 @@ function initLibrary(userId) {
   chrome.tabs.sendMessage(users[userId].tabId, message, Chrometools.unlessError(response => {
     if (response.tracks === null) {
       // problem with indexeddb, fall back to update from 0.
-      diffUpdateLibrary(userId, 0, () => {});
+      diffUpdateLibrary(userId, 0, () => null);
     } else {
       console.log('got tracks', response.tracks.length);
       Trackcache.upsertTracks(dbs[userId], userId, response.tracks, () => {
@@ -219,7 +219,7 @@ function main() {
 
     if (hasOld && !hasNew) {
       // deletion
-      Gm.deleteRemotePlaylist(userIndexForId(change.oldValue.userId), change.oldValue.remoteId, () => {});
+      Gm.deleteRemotePlaylist(userIndexForId(change.oldValue.userId), change.oldValue.remoteId, () => null);
     } else if (hasOld && hasNew) {
       // update
       if (change.oldValue.title !== change.newValue.title) {
@@ -234,9 +234,9 @@ function main() {
   });
 
   chrome.pageAction.onClicked.addListener(tab => {
-    let managerUrl = chrome.extension.getURL('html/playlists.html');
-    managerUrl = managerUrl + '?' + Qs.stringify({userId: userIdForTabId(tab.id)});
-    Chrometools.focusOrCreateExtensionTab(managerUrl);
+    const managerUrl = chrome.extension.getURL('html/playlists.html');
+    const qstring = Qs.stringify({userId: userIdForTabId(tab.id)});
+    Chrometools.focusOrCreateExtensionTab(`${managerUrl}?${qstring}`);
   });
 
   // Update periodically.

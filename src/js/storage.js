@@ -92,7 +92,7 @@ exports.importPlaylistsForUser = function importPlaylistsForUser(userId, playlis
   exports.getPlaylistsForUser(userId, currentPlaylists => {
     // FIXME we should wait on all callbacks before calling back.
     for (let i = 0; i < currentPlaylists.length; i++) {
-      exports.deletePlaylist(userId, currentPlaylists[i].localId, () => {});
+      exports.deletePlaylist(userId, currentPlaylists[i].localId, () => null);
     }
 
     for (let i = 0; i < playlists.length; i++) {
@@ -100,7 +100,7 @@ exports.importPlaylistsForUser = function importPlaylistsForUser(userId, playlis
       if (i === playlists.length - 1) {
         exports.savePlaylist(playlists[i], callback);
       } else {
-        exports.savePlaylist(playlists[i], () => {});
+        exports.savePlaylist(playlists[i], () => null);
       }
     }
   });

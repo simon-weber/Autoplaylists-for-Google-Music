@@ -68,7 +68,7 @@ function createSort(fields, isLocked) {
     '   <option value="DESC">descending</option>' +
     '</select');
   const $remove = $('<a class="remove" href="javascript:void(0)">Remove</a>');
-  $remove.click(function remove(e) {
+  $remove.click(e => {
     e.preventDefault();
     $sort.remove();
   });
@@ -118,7 +118,7 @@ function initializeForm(userId, playlistId, isLocked) {
 
   sortedFields.forEach(field => {
     if (field.explanation) {
-      $('<li>').text(field.label + ': ' + field.explanation).appendTo($explanations);
+      $('<li>').text(`${field.label}: ${field.explanation}`).appendTo($explanations);
     }
   });
 
@@ -157,7 +157,7 @@ function initializeForm(userId, playlistId, isLocked) {
     const playlistRules = $('#conditions').conditionsBuilder('data');
 
     if (!('localId' in playlist)) {
-      playlist.localId = '' + new Date().getTime();
+      playlist.localId = `${new Date().getTime()}`;
     }
 
     playlist.title = $('#playlist-title').val() || '[untitled autoplaylist]';
@@ -170,12 +170,12 @@ function initializeForm(userId, playlistId, isLocked) {
   }
 
 
-  $('#add-sort').click(function addSort(e) {
+  $('#add-sort').click(e => {
     e.preventDefault();
     $('#sorts').append(createSort(sortedFields, isLocked));
   });
 
-  $('#submit').click(function submit(e) {
+  $('#submit').click(e => {
     e.preventDefault();
     const playlist = readForm();
 
@@ -186,7 +186,7 @@ function initializeForm(userId, playlistId, isLocked) {
     });
   });
 
-  $('#test').click(function deletePlaylist(e) {
+  $('#test').click(e => {
     e.preventDefault();
 
     const playlist = readForm();
@@ -197,18 +197,18 @@ function initializeForm(userId, playlistId, isLocked) {
 
     $('#query-result').text('');
     chrome.runtime.sendMessage({action: 'query', playlist}, response => {
-      const matchedNote = 'Matched ' + response.tracks.length + ' tracks.';
+      const matchedNote = `Matched ${response.tracks.length} tracks.`;
       let trackDetails = '';
 
       if (response.tracks.length > 0) {
-        trackDetails = 'The first was:\n' + Track.toString(response.tracks[0]);
+        trackDetails = `The first was:\n${Track.toString(response.tracks[0])}`;
       }
 
-      $('#query-result').text(matchedNote + '\n' + trackDetails);
+      $('#query-result').text(`${matchedNote}\n${trackDetails}`);
     });
   });
 
-  $('#delete').click(function deletePlaylist(e) {
+  $('#delete').click(e => {
     e.preventDefault();
     Storage.deletePlaylist(userId, playlistId, () => {
       Chrometools.goToManager(userId);
@@ -225,7 +225,8 @@ function initializeForm(userId, playlistId, isLocked) {
     $('#submit, #test')
     .addClass('locked')
     .addClass('disabled')
-    .wrap('<div class="hint--top" data-hint="The free version allows only one playlist. This one is locked to editing."/>');
+    .wrap('<div class="hint--top" data-hint="The free version allows only one playlist.' +
+         ' This one is locked to editing."/>');
   }
 }
 

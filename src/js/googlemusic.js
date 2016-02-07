@@ -9,7 +9,7 @@ const Trackcache = require('./trackcache.js');
 const Playlist = require('./playlist.js');
 
 const GM_BASE_URL = 'https://play.google.com/music/';
-const GM_SERVICE_URL = GM_BASE_URL + 'services/';
+const GM_SERVICE_URL = `${GM_BASE_URL}services/`;
 
 function authedGMRequest(endpoint, data, userIndex, method, callback, onError) {
   // Call an endpoint and callback with it's parsed response.
@@ -28,7 +28,7 @@ function authedGMRequest(endpoint, data, userIndex, method, callback, onError) {
         }
       }
 
-      const url = GM_SERVICE_URL + endpoint + '?' + format + Qs.stringify({u: userIndex, xt: cookie.value});
+      const url = `${GM_SERVICE_URL}${endpoint}?${format}${Qs.stringify({u: userIndex, xt: cookie.value})}`;
 
       // TODO this is stupid
       let dataType = 'json';
@@ -184,7 +184,7 @@ function addTracks(userIndex, playlistId, tracks, callback, onError) {
   // [["<sessionid>",1],["<listid>",[["<store id or songid>",tracktype]]]]
   const payload = [['', 1],
     [
-      playlistId, tracks.map(t => {return [Track.getPlaylistAddId(t), t.type];}),
+      playlistId, tracks.map(t => [Track.getPlaylistAddId(t), t.type]),
     ],
   ];
   authedGMRequest('addtrackstoplaylist', payload, userIndex, 'post', response => {
@@ -197,9 +197,9 @@ function deleteEntries(userIndex, playlistId, entries, callback, onError) {
   // Delete entries with id and entryId keys; callback the api response.
   console.log('deleting', entries.length, 'entries. first 5 are', JSON.stringify(entries.slice(0, 5), null, 2));
   const payload = {
-    songIds: entries.map(entry => {return entry.id;}),
+    songIds: entries.map(entry => entry.id),
 
-    entryIds: entries.map(entry => {return entry.entryId;}),
+    entryIds: entries.map(entry => entry.entryId),
 
     listId: playlistId,
     sessionId: '',
@@ -216,7 +216,7 @@ function loadPlaylistContents(db, userIndex, playlistId, callback, onError) {
   const payload = [['', 1], [playlistId]];
   authedGMRequest('loaduserplaylist', payload, userIndex, 'post', response => {
     if (response.length < 2) {
-      return onError('unexpected loadPlaylistContents response: ' + JSON.stringify(response, null, 2));
+      return onError(`unexpected loadPlaylistContents response: ${JSON.stringify(response, null, 2)}`);
     }
 
     const contents = [];
