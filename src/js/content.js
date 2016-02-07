@@ -3,6 +3,7 @@
 const Qs = require('qs');
 
 const Track = require('./track.js');
+const Raven = require('./raven.js');
 
 let userId;
 
@@ -12,6 +13,7 @@ function getGtracks(callback) {
 
   DBOpenRequest.onerror = err => {
     console.error('could not open db', err);
+    Raven.captureException(err);
     return callback(null);
   };
 
@@ -27,6 +29,7 @@ function getGtracks(callback) {
       // sometimes the indexeddb just isn't written at all, though
       // i can't figure out why.
       console.error(e);
+      Raven.captureException(e);
       return callback(null);
     }
 
@@ -48,6 +51,7 @@ function getGtracks(callback) {
 
     objectStore.openCursor().onerror = err => {
       console.error(err);
+      Raven.captureException(err);
       return callback(null);
     };
   };

@@ -5,6 +5,8 @@ require('sugar'); // monkeypatches Date
 
 const Track = require('./track.js');
 
+const Raven = require('./raven.js');
+
 exports.openDb = function openDb(userId, callback) {
   console.log('opening...');
   const schemaBuilder = Lf.schema.create(`ltracks_${userId}`, 1);
@@ -22,8 +24,12 @@ exports.openDb = function openDb(userId, callback) {
     }
   });
 
-  schemaBuilder.connect({storeType: Lf.schema.DataStoreType.MEMORY}).
-    then(callback).catch(console.error);
+  schemaBuilder.connect({storeType: Lf.schema.DataStoreType.MEMORY})
+  .then(callback)
+  .catch(e => {
+    console.error(e);
+    Raven.captureException(e);
+  });
 };
 
 exports.upsertTracks = function upsertTracks(db, userId, tracks, callback) {
@@ -34,16 +40,22 @@ exports.upsertTracks = function upsertTracks(db, userId, tracks, callback) {
     rows.push(track.createRow(tracks[i]));
   }
 
-  return db.insertOrReplace().into(track).values(rows).exec().
-    then(callback).
-    catch(console.error);
+  return db.insertOrReplace().into(track).values(rows).exec()
+  .then(callback)
+  .catch(e => {
+    console.error(e);
+    Raven.captureException(e);
+  });
 };
 
 exports.deleteTracks = function deleteTracks(db, userId, trackIds, callback) {
   const track = db.getSchema().table('Track');
-  db.delete().from(track).where(track.id.in(trackIds)).exec().
-    then(callback).
-    catch(console.error);
+  db.delete().from(track).where(track.id.in(trackIds)).exec()
+  .then(callback)
+  .catch(e => {
+    console.error(e);
+    Raven.captureException(e);
+  });
 };
 
 function escapeForRegex(s) {
@@ -124,7 +136,10 @@ exports.queryTracks = function queryTracks(db, playlist, callback) {
   const track = db.getSchema().table('Track');
   const whereClause = buildWhereClause(track, playlist.rules);
 
-  execQuery(db, track, whereClause, playlist, callback, console.error);
+  execQuery(db, track, whereClause, playlist, callback, e => {
+    console.error(e);
+    Raven.captureException(e);
+  });
 };
 
 exports.orderTracks = function orderTracks(db, playlist, tracks, callback, onError) {

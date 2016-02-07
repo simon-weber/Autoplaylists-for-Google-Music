@@ -8,6 +8,8 @@ const Track = require('./track.js');
 const Trackcache = require('./trackcache.js');
 const Playlist = require('./playlist.js');
 
+const Raven = require('./raven.js');
+
 const GM_BASE_URL = 'https://play.google.com/music/';
 const GM_SERVICE_URL = `${GM_BASE_URL}services/`;
 
@@ -18,6 +20,7 @@ function authedGMRequest(endpoint, data, userIndex, method, callback, onError) {
     if (cookie === null) {
       // TODO alert user somehow
       console.error('unable to get xt cookie');
+      Raven.captureMessage('unable to get xt cookie');
     } else {
       let format = '';
       let payload = {json: JSON.stringify(data)};
@@ -39,6 +42,9 @@ function authedGMRequest(endpoint, data, userIndex, method, callback, onError) {
       if (typeof onError === 'undefined') {
         onError = res => {  // eslint-disable-line no-param-reassign
           console.error('request failed:', url, data, res);
+          Raven.captureMessage('request failed', {
+            extra: {url, data, res},
+          });
         };
       }
 
@@ -189,6 +195,15 @@ function addTracks(userIndex, playlistId, tracks, callback, onError) {
   ];
   authedGMRequest('addtrackstoplaylist', payload, userIndex, 'post', response => {
     console.log('add response', JSON.stringify(response, null, 2));
+    if (response.length > 0 && response[0].length > 1 &&
+        response[0][0] === 0 && response[0][1] === 2) {
+      // I think this signals errors and is something we should check for on each GM response.
+      // For now though, I'm just interested in logging them.
+      Raven.captureMessage('probable error from addTracks', {
+        tags: {playlistId},
+        extra: {response, playlistId, tracks},
+      });
+    }
     callback(response);
   }, onError);
 }
@@ -313,7 +328,12 @@ exports.setPlaylistContents = function setPlaylistContents(db, userIndex, playli
             console.log('no need to delete post-filter; adding');
             addTracks(userIndex, playlistId, tracksToAdd, callback, onError);
           }
-        }).catch(console.error);
+        }).catch(e => {
+          console.error(e);
+          Raven.captureException(e, {
+            tags: {playlistId},
+          });
+        });
       } else {
         console.log('no need to delete pre-filter; adding');
         addTracks(userIndex, playlistId, tracksToAdd, callback, onError);
