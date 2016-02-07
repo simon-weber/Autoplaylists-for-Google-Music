@@ -1,3 +1,15 @@
+## 0.11.0 (February 7, 2016)
+
+
+Features:
+
+  - support "does not match" rules: [#34](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/34)
+  - improve rating field explanation: [#37](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/37)
+
+Bugfixes:
+
+  - fix the free version not being able to create a playlist [#38](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/38)
+
 ## 0.10.1 (February 7, 2016)
 
 Fix faulty logic for giving everyone the contributor version.
