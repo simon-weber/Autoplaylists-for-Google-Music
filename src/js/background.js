@@ -7,6 +7,10 @@ const Gm = require('./googlemusic.js');
 const License = require('./license.js');
 const Storage = require('./storage.js');
 const Trackcache = require('./trackcache.js');
+const Context = require('./context.js');
+
+const Raven = require('./raven.js');
+
 
 // {userId: {userIndex: int, tabId: int}}
 const users = {};
@@ -140,6 +144,11 @@ function syncPlaylist(playlist, attempt) {
             setTimeout(syncPlaylist, 1000 * _attempt + 1000, playlist, _attempt + 1);
           } else {
             console.warn('giving up on syncPlaylist!', response);
+            Raven.captureMessage('gave up on syncing', {
+              level: 'warning',
+              tags: {playlistId: playlist.remoteId},
+              extra: {playlist},
+            });
             // Never has the need for promises been so clear.
             Gm.setPlaylistOrder(db, userIndex, playlist, orderResponse => {
               console.log('reorder response', orderResponse);
@@ -147,6 +156,10 @@ function syncPlaylist(playlist, attempt) {
               playlistIsUpdating[playlist.remoteId] = false;
             }, err => {
               console.error('failed to reorder playlist', playlist.title, err);
+              Raven.captureException(err, {
+                tags: {playlistId: playlist.remoteId},
+                extra: {playlist},
+              });
               console.log('unlock', playlist.title);
               playlistIsUpdating[playlist.remoteId] = false;
             });
@@ -158,12 +171,20 @@ function syncPlaylist(playlist, attempt) {
             playlistIsUpdating[playlist.remoteId] = false;
           }, err => {
             console.error('failed to reorder playlist', playlist.title, err);
+            Raven.captureException(err, {
+              tags: {playlistId: playlist.remoteId},
+              extra: {playlist},
+            });
             console.log('unlock', playlist.title);
             playlistIsUpdating[playlist.remoteId] = false;
           });
         }
       }, err => {
         console.error('failed to sync playlist', playlist.title, err);
+        Raven.captureException(err, {
+          tags: {playlistId: playlist.remoteId},
+          extra: {playlist},
+        });
         console.log('unlock', playlist.title);
         playlistIsUpdating[playlist.remoteId] = false;
       });
@@ -182,9 +203,15 @@ function forceUpdate(userId) {
   getPollTimestamp(userId, timestamp => {
     if (!(dbIsInit[userId])) {
       console.warn('refusing forceUpdate because db is not init');
+      Raven.captureMessage('refusing forceUpdate because db is not init', {
+        level: 'warning',
+      });
       return;
     } else if (!timestamp) {
       console.warn('db was init, but no timestamp found');
+      Raven.captureMessage('db was init, but no timestamp found', {
+        level: 'warning',
+      });
       return;
     }
 
@@ -255,6 +282,10 @@ function main() {
     } else if (request.action === 'showPageAction') {
       if (!(request.userId)) {
         console.warn('received falsey user id from page action');
+        Raven.captureMessage('received falsey user id from page action', {
+          level: 'warning',
+          extra: {user_id: request.userId},
+        });
         return false;
       }
 
@@ -292,8 +323,15 @@ function main() {
         sendResponse({tracks});
       });
       return true; // wait for async response
+    } else if (request.action === 'getContext') {
+      Context.get(sendResponse);
+      return true;
     } else {
       console.warn('received unknown request', request);
+      Raven.captureMessage('received unknown request', {
+        level: 'warning',
+        extra: {request},
+      });
     }
   });
 }

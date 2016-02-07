@@ -82,7 +82,8 @@ function cacheLicense(interactive, callback) {
 }
 
 function checkCachedLicense(cachedLicense) {
-  return cachedLicense !== null && cachedLicense.license.accessLevel === 'FULL';
+  const hasFull = cachedLicense !== null && cachedLicense.license.accessLevel === 'FULL';
+  return hasFull;
 }
 
 function getCachedLicense(callback) {
