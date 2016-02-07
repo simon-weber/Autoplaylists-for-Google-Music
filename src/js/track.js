@@ -44,7 +44,7 @@ exports.fields = [
   f([22, 'playCount', Lf.Type.INTEGER], {
     label: 'play count'}),
   f([23, 'rating', Lf.Type.INTEGER], {
-    explanation: '0: no thumb, 1: down thumb, 5: up thumb.',
+    explanation: '0: no thumb, 1: down thumb, 5: up thumb; or, values from the old 5-star ratings lab.',
     // coerce nulls to 0; see https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/15.
     coerce: val => val || 0,
   }),
@@ -64,7 +64,7 @@ exports.fields = [
   f([27, 'storeId', Lf.Type.STRING], {
     label: 'store id'}),
   f([29, 'type', Lf.Type.INTEGER], {
-    explanation: '1: free/purchased, 2: uploaded but not matched, 6: uploaded and matched, 7: All Access'}),
+    explanation: '1: free/purchased, 2: uploaded but not matched, 6: uploaded and matched, 7: All Access.'}),
   f([30, 'comment', Lf.Type.STRING]),
   f([34, 'bitrate', Lf.Type.INTEGER]),
 ];
