@@ -1,3 +1,10 @@
+## 0.10.0 (February 6, 2016)
+
+Prepares the extension for purchase on the Chrome Web store.
+Until it's available for purchase, everyone can switch between the full and free version at will.
+
+For more details, see this mailing list post: https://groups.google.com/d/msg/autoplaylists-for-google-music/hJ8j5eao4HE/3gmx1IfbCwAJ.
+
 ## 0.9.2 (January 29, 2016)
 
 Changes the format of logging to be more informative when dumped to a file.
