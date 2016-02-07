@@ -126,11 +126,11 @@ exports.getTrackChanges = function getTrackChanges(userIndex, sinceTimestamp, ca
 
 exports.updatePlaylist = function updatePlaylist(userIndex, id, title, playlist, callback) {
   // Callback no args after updating an existing playlist.
-  const description = 'Managed by Autoplaylists for Google Music™ to contain: ' +
-    Playlist.toString(playlist) +
-    '. Last sync: ' + new Date().toLocaleString() + '.';
-  const payload = [['', 1], [id, null, title, description]];
+  const lastSync = new Date().toLocaleString();
+  const description = Playlist.toString(playlist);
+  const syncMsg = `Synced ${lastSync} by Autoplaylists for Google Music™ to contain: ${description}.`;
 
+  const payload = [['', 1], [id, null, title, syncMsg]];
   console.log('updatePlaylist', playlist);
 
   authedGMRequest('editplaylist', payload, userIndex, 'post', response => {

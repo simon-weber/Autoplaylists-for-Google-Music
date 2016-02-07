@@ -15,6 +15,11 @@
     this.element = $(element);
     this.options = options || {};
     this.init();
+    if (this.options.disabled) {
+      $('input').prop('disabled', true);
+      $('select').prop('disabled', true);
+      $('a').remove();
+    }
   }
 
   ConditionsBuilder.prototype = {

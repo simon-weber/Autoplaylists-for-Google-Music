@@ -1,3 +1,20 @@
+.menu-button {
+    width: 250px;
+}
+
+.disabled {
+    opacity: 0.65;
+    pointer-events: none;
+}
+
+.locked:after {
+    /* The lock utf8 character. */
+    content: "\1F512";
+
+    /* Chrome has a bug where some characters aren't shown when bolded. */
+    font-weight: normal;
+}
+
 .operator {
     width: 200px;
 }

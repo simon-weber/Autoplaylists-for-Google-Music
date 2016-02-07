@@ -59,7 +59,7 @@ function getRulesData() {
   };
 }
 
-function createSort(fields) {
+function createSort(fields, isLocked) {
   const $sort = $('<li>');
   const $sortBy = $('<select class="sort-by">');
   const $sortByOrder = $(
@@ -79,7 +79,12 @@ function createSort(fields) {
 
   $sort.append($sortBy);
   $sort.append($sortByOrder);
-  $sort.append($remove);
+  if (!isLocked) {
+    $sort.append($remove);
+  } else {
+    $sortBy.prop('disabled', true);
+    $sortByOrder.prop('disabled', true);
+  }
 
   return $sort;
 }
@@ -98,7 +103,7 @@ function parseSorts($sorts) {
   return sorts;
 }
 
-function initializeForm(userId, playlistId) {
+function initializeForm(userId, playlistId, isLocked) {
   const initConditions = getRulesData();
   let initialPlaylist = null;
   const $conditions = $('#conditions');
@@ -106,7 +111,9 @@ function initializeForm(userId, playlistId) {
   console.log(userId, playlistId);
 
   const $sorts = $('#sorts');
-  Sortable.create($sorts[0]);
+  if (!isLocked) {
+    Sortable.create($sorts[0]);
+  }
   const $explanations = $('#explanations');
 
   sortedFields.forEach(field => {
@@ -122,13 +129,16 @@ function initializeForm(userId, playlistId) {
 
       console.log('loading playlist', loadedPlaylist);
       initConditions.data = loadedPlaylist.rules;
+      if (isLocked) {
+        initConditions.disabled = true;
+      }
       $conditions.conditionsBuilder(initConditions);
 
       $('#limit-to').val(loadedPlaylist.limit);
 
       for (let i = 0; i < loadedPlaylist.sorts.length; i++) {
         const sort = loadedPlaylist.sorts[i];
-        const $sort = createSort(sortedFields);
+        const $sort = createSort(sortedFields, isLocked);
         $sort.children('.sort-by').val(sort.sortBy);
         $sort.children('.sort-by-order').val(sort.sortByOrder);
         $sorts.append($sort);
@@ -138,7 +148,7 @@ function initializeForm(userId, playlistId) {
     console.log('creating empty form');
     $conditions.conditionsBuilder(initConditions);
     $('#playlist-title').val('[auto] new playlist').focus();
-    $sorts.append(createSort(sortedFields));
+    $sorts.append(createSort(sortedFields, isLocked));
     $('#delete').hide();
   }
 
@@ -162,7 +172,7 @@ function initializeForm(userId, playlistId) {
 
   $('#add-sort').click(function addSort(e) {
     e.preventDefault();
-    $('#sorts').append(createSort(sortedFields));
+    $('#sorts').append(createSort(sortedFields, isLocked));
   });
 
   $('#submit').click(function submit(e) {
@@ -204,11 +214,24 @@ function initializeForm(userId, playlistId) {
       Chrometools.goToManager(userId);
     });
   });
+
+  if (isLocked) {
+    $('#drag-explanation').remove();
+    $('#limit-explanation').remove();
+    $('input').prop('disabled', true);
+    $('select').prop('disabled', true);
+    $('a').remove();
+
+    $('#submit, #test')
+    .addClass('locked')
+    .addClass('disabled')
+    .wrap('<div class="hint--top" data-hint="The free version allows only one playlist. This one is locked to editing."/>');
+  }
 }
 
 function main() {
   const qstring = Qs.parse(location.search.substring(1));
-  initializeForm(qstring.userId, qstring.id);
+  initializeForm(qstring.userId, qstring.id, qstring.locked === 'true');
 }
 
 $(main);

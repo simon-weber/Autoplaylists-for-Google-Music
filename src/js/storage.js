@@ -80,7 +80,7 @@ exports.getPlaylistsForUser = function getPlaylistsForUser(userId, callback) {
           playlists.push(items[key]);
         }
       } catch (SyntaxError) {
-        console.log(key, 'is not json');
+        // eslint-disable-line no-empty
       }
     }
 
