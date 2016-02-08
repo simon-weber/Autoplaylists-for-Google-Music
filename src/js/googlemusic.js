@@ -199,6 +199,8 @@ function addTracks(userIndex, playlistId, tracks, callback, onError) {
         response[0][0] === 0 && response[0][1] === 2) {
       // I think this signals errors and is something we should check for on each GM response.
       // For now though, I'm just interested in logging them.
+      // TODO: probably better to figure out what successful requests look like, and
+      // log any others.
       Raven.captureMessage('probable error from addTracks', {
         tags: {playlistId},
         extra: {response, playlistId, tracks},
@@ -330,8 +332,9 @@ exports.setPlaylistContents = function setPlaylistContents(db, userIndex, playli
           }
         }).catch(e => {
           console.error(e);
-          Raven.captureException(e, {
+          Raven.captureMessage(JSON.stringify(e), {
             tags: {playlistId},
+            extra: {deleteCandidates, deleteCandidateIds, tracksToAdd},
           });
         });
       } else {
