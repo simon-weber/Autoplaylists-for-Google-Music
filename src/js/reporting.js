@@ -32,4 +32,4 @@ if (chrome.identity && chrome.management) {
   });
 }
 
-module.exports = Raven;
+exports.Raven = Raven;

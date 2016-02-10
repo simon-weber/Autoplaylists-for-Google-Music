@@ -8,7 +8,7 @@ const Track = require('./track.js');
 const Trackcache = require('./trackcache.js');
 const Playlist = require('./playlist.js');
 
-const Raven = require('./raven.js');
+const Reporting = require('./reporting.js');
 
 const GM_BASE_URL = 'https://play.google.com/music/';
 const GM_SERVICE_URL = `${GM_BASE_URL}services/`;
@@ -20,7 +20,7 @@ function authedGMRequest(endpoint, data, userIndex, method, callback, onError) {
     if (cookie === null) {
       // TODO alert user somehow
       console.error('unable to get xt cookie');
-      Raven.captureMessage('unable to get xt cookie');
+      Reporting.Raven.captureMessage('unable to get xt cookie');
     } else {
       let format = '';
       let payload = {json: JSON.stringify(data)};
@@ -42,7 +42,7 @@ function authedGMRequest(endpoint, data, userIndex, method, callback, onError) {
       if (typeof onError === 'undefined') {
         onError = res => {  // eslint-disable-line no-param-reassign
           console.error('request failed:', url, data, res);
-          Raven.captureMessage('request failed', {
+          Reporting.Raven.captureMessage('request failed', {
             extra: {url, data, res},
           });
         };
@@ -201,7 +201,7 @@ function addTracks(userIndex, playlistId, tracks, callback, onError) {
       // For now though, I'm just interested in logging them.
       // TODO: probably better to figure out what successful requests look like, and
       // log any others.
-      Raven.captureMessage('probable error from addTracks', {
+      Reporting.Raven.captureMessage('probable error from addTracks', {
         tags: {playlistId},
         extra: {response, playlistId, tracks},
       });
@@ -332,7 +332,7 @@ exports.setPlaylistContents = function setPlaylistContents(db, userIndex, playli
           }
         }).catch(e => {
           console.error(e);
-          Raven.captureMessage(JSON.stringify(e), {
+          Reporting.Raven.captureMessage(JSON.stringify(e), {
             tags: {playlistId},
             extra: {deleteCandidates, deleteCandidateIds, tracksToAdd},
           });

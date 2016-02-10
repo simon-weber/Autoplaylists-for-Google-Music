@@ -2,7 +2,7 @@
 
 const Qs = require('qs');
 
-const Raven = require('./raven.js');
+const Reporting = require('./reporting.js');
 
 function unlessError(func) {
   // Decorate chrome callbacks to notice errors.
@@ -10,7 +10,7 @@ function unlessError(func) {
     // can't use an arrow function here because we need our own `this`.
     if (chrome.extension.lastError) {
       console.error('unlessError:', chrome.extension.lastError.message);
-      Raven.captureException(chrome.extension.lastError);
+      Reporting.Raven.captureException(chrome.extension.lastError);
     } else {
       func.apply(this, arguments);
     }

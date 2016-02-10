@@ -4,7 +4,7 @@ const Qs = require('qs');
 
 const Storage = require('./storage.js');
 const License = require('./license.js');
-require('./raven.js');
+require('./reporting.js');
 
 // TODO push lengthy ops into the background script
 

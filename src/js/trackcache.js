@@ -5,7 +5,7 @@ require('sugar'); // monkeypatches Date
 
 const Track = require('./track.js');
 
-const Raven = require('./raven.js');
+const Reporting = require('./reporting.js');
 
 exports.openDb = function openDb(userId, callback) {
   console.log('opening...');
@@ -28,7 +28,7 @@ exports.openDb = function openDb(userId, callback) {
   .then(callback)
   .catch(e => {
     console.error(e);
-    Raven.captureException(e);
+    Reporting.Raven.captureException(e);
   });
 };
 
@@ -44,7 +44,7 @@ exports.upsertTracks = function upsertTracks(db, userId, tracks, callback) {
   .then(callback)
   .catch(e => {
     console.error(e);
-    Raven.captureException(e);
+    Reporting.Raven.captureException(e);
   });
 };
 
@@ -54,7 +54,7 @@ exports.deleteTracks = function deleteTracks(db, userId, trackIds, callback) {
   .then(callback)
   .catch(e => {
     console.error(e);
-    Raven.captureException(e);
+    Reporting.Raven.captureException(e);
   });
 };
 
@@ -138,7 +138,7 @@ exports.queryTracks = function queryTracks(db, playlist, callback) {
 
   execQuery(db, track, whereClause, playlist, callback, e => {
     console.error(e);
-    Raven.captureException(e);
+    Reporting.Raven.captureException(e);
   });
 };
 
