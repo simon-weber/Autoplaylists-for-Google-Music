@@ -33,3 +33,9 @@ if (chrome.identity && chrome.management) {
 }
 
 exports.Raven = Raven;
+
+const GAService = analytics.getService('autoplaylists');
+const GATracker = GAService.getTracker('UA-71628085-3');
+
+exports.GAService = GAService;
+exports.GATracker = GATracker;
