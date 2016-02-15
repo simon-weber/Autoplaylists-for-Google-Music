@@ -1,3 +1,7 @@
+## 0.11.1 (February 15, 2016)
+
+Improves error reporting to help me track down bugs.
+
 ## 0.11.0 (February 7, 2016)
 
 
