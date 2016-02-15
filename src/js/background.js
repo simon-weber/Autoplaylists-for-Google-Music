@@ -121,6 +121,13 @@ function syncPlaylist(playlist, attempt) {
     });
   } else {
     // refresh tracks and write out playlist
+
+    if (_attempt === 0) {
+      // We only want to report the first of many recursive calls as an attempt.
+      // The others will register as retries.
+      Reporting.reportSync('attempt');
+    }
+
     const db = dbs[playlist.userId];
     Trackcache.queryTracks(db, playlist, tracks => {
       console.log('lock', playlist.title);
@@ -140,9 +147,11 @@ function syncPlaylist(playlist, attempt) {
           // large updates seem to only apply partway sometimes.
           // retrying like this seems to make even 1k playlists eventually consistent.
           if (_attempt < 5) {
+            Reporting.reportSync('retry', `retry-${_attempt}`);
             console.log('not a 0-track add; retrying syncPlaylist', response);
             setTimeout(syncPlaylist, 1000 * _attempt + 1000, playlist, _attempt + 1);
           } else {
+            Reporting.reportSync('failure', 'gave-up');
             console.warn('giving up on syncPlaylist!', response);
             Reporting.Raven.captureMessage('gave up on syncing', {
               level: 'warning',
@@ -155,6 +164,7 @@ function syncPlaylist(playlist, attempt) {
               console.log('unlock', playlist.title);
               playlistIsUpdating[playlist.remoteId] = false;
             }, err => {
+              Reporting.reportSync('failure', 'failed-reorder');
               console.error('failed to reorder playlist', playlist.title, err);
               Reporting.Raven.captureException(err, {
                 tags: {playlistId: playlist.remoteId},
@@ -166,10 +176,12 @@ function syncPlaylist(playlist, attempt) {
           }
         } else {
           Gm.setPlaylistOrder(db, userIndex, playlist, orderResponse => {
+            Reporting.reportSync('success');
             console.log('reorder response', orderResponse);
             console.log('unlock', playlist.title);
             playlistIsUpdating[playlist.remoteId] = false;
           }, err => {
+            Reporting.reportSync('failure', 'failed-reorder');
             console.error('failed to reorder playlist', playlist.title, err);
             Reporting.Raven.captureException(err, {
               tags: {playlistId: playlist.remoteId},
@@ -180,6 +192,7 @@ function syncPlaylist(playlist, attempt) {
           });
         }
       }, err => {
+        Reporting.reportSync('failure', 'failed-set');
         console.error('failed to sync playlist', playlist.title, err);
         Reporting.Raven.captureException(err, {
           tags: {playlistId: playlist.remoteId},

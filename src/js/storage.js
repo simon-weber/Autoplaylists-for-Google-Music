@@ -1,5 +1,7 @@
 'use strict';
 
+const UUID = require('node-uuid');
+
 const Chrometools = require('./chrometools.js');
 
 
@@ -37,6 +39,21 @@ const MIGRATIONS = [
   // Migrations receive all items and transform them.
   migrateToOne,
 ];
+
+exports.getOrCreateReportingUUID = function getOrCreateReportingUUID(callback) {
+  chrome.storage.sync.get('reportingUUID', Chrometools.unlessError(items => {
+    let reportingUUID = items.reportingUUID;
+
+    if (!reportingUUID) {
+      reportingUUID = UUID.v1();
+      chrome.storage.sync.set({reportingUUID}, Chrometools.unlessError(() => {
+        callback(reportingUUID);
+      }));
+    } else {
+      callback(reportingUUID);
+    }
+  }));
+};
 
 exports.getPlaylist = function getPlaylist(userId, playlistLid, callback) {
   const key = playlistKey(userId, playlistLid);

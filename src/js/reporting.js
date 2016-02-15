@@ -9,14 +9,47 @@ Raven
   release: chrome.runtime.getManifest().version,
 })
 .install();
+exports.Raven = Raven;
 
-// FIXME there's a race between using Raven and setting the context.
-// It won't be attached for very early errors.
+const GAService = analytics.getService('autoplaylists');
+const GATracker = GAService.getTracker('UA-71628085-3');
+exports.GAService = GAService;
+exports.GATracker = GATracker;
+
+let cachedContext = null;
+
+// action is one of 'attempt', 'success', 'retry', or 'failure'.
+// label is optional, and can be something like 'gave-up' or 'failed-reorder'.
+exports.reportSync = function reportSync(action, label) {
+  if (!cachedContext) {
+    // setContext should make this available very quickly after loading.
+    setTimeout(reportSync, 5000);
+  } else {
+    let sync = analytics.EventBuilder.builder()
+    .category('sync')
+    .action(action)
+    .dimension(1, cachedContext.hasFullVersion ? 'full' : 'free')
+    .dimension(2, cachedContext.isDeveloper ? 'yes' : 'no');
+
+    if (arguments.length === 2) {
+      sync = sync.label(label);
+    }
+
+    GATracker.send(sync);
+  }
+};
+
+
+// FIXME there's a race between doing reporting and setting the context.
+// It won't be attached for very early messages.
 function setContext(isBackground, context) {
   console.log('setting context:', isBackground, context);
 
-  Raven.setUserContext(context.user);
+  cachedContext = context;
 
+  GATracker.set('userId', context.reportingUUID);
+
+  Raven.setUserContext(context.user);
   context.tags.isBackground = isBackground; // eslint-disable-line no-param-reassign
   Raven.setTagsContext(context.tags);
 }
@@ -31,11 +64,3 @@ if (chrome.identity && chrome.management) {
     setContext(false, context);
   });
 }
-
-exports.Raven = Raven;
-
-const GAService = analytics.getService('autoplaylists');
-const GATracker = GAService.getTracker('UA-71628085-3');
-
-exports.GAService = GAService;
-exports.GATracker = GATracker;
