@@ -6,7 +6,7 @@ const Sortable = require('sortablejs');
 const Chrometools = require('./chrometools.js');
 const Storage = require('./storage.js');
 const Track = require('./track.js');
-require('./raven.js');
+require('./reporting.js');
 
 const operators = {
   numeric: [

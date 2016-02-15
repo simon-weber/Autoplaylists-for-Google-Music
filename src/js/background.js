@@ -9,7 +9,7 @@ const Storage = require('./storage.js');
 const Trackcache = require('./trackcache.js');
 const Context = require('./context.js');
 
-const Raven = require('./raven.js');
+const Reporting = require('./reporting.js');
 
 
 // {userId: {userIndex: int, tabId: int}}
@@ -121,6 +121,7 @@ function syncPlaylist(playlist, attempt) {
     });
   } else {
     // refresh tracks and write out playlist
+
     const db = dbs[playlist.userId];
     Trackcache.queryTracks(db, playlist, tracks => {
       console.log('lock', playlist.title);
@@ -140,11 +141,13 @@ function syncPlaylist(playlist, attempt) {
           // large updates seem to only apply partway sometimes.
           // retrying like this seems to make even 1k playlists eventually consistent.
           if (_attempt < 5) {
+            Reporting.reportSync('retry', `retry-${_attempt}`);
             console.log('not a 0-track add; retrying syncPlaylist', response);
             setTimeout(syncPlaylist, 1000 * _attempt + 1000, playlist, _attempt + 1);
           } else {
+            Reporting.reportSync('failure', 'gave-up');
             console.warn('giving up on syncPlaylist!', response);
-            Raven.captureMessage('gave up on syncing', {
+            Reporting.Raven.captureMessage('gave up on syncing', {
               level: 'warning',
               tags: {playlistId: playlist.remoteId},
               extra: {playlist},
@@ -155,8 +158,9 @@ function syncPlaylist(playlist, attempt) {
               console.log('unlock', playlist.title);
               playlistIsUpdating[playlist.remoteId] = false;
             }, err => {
+              Reporting.reportSync('failure', 'failed-reorder');
               console.error('failed to reorder playlist', playlist.title, err);
-              Raven.captureException(err, {
+              Reporting.Raven.captureException(err, {
                 tags: {playlistId: playlist.remoteId},
                 extra: {playlist},
               });
@@ -166,12 +170,14 @@ function syncPlaylist(playlist, attempt) {
           }
         } else {
           Gm.setPlaylistOrder(db, userIndex, playlist, orderResponse => {
+            Reporting.reportSync('success');
             console.log('reorder response', orderResponse);
             console.log('unlock', playlist.title);
             playlistIsUpdating[playlist.remoteId] = false;
           }, err => {
+            Reporting.reportSync('failure', 'failed-reorder');
             console.error('failed to reorder playlist', playlist.title, err);
-            Raven.captureException(err, {
+            Reporting.Raven.captureException(err, {
               tags: {playlistId: playlist.remoteId},
               extra: {playlist},
             });
@@ -180,8 +186,9 @@ function syncPlaylist(playlist, attempt) {
           });
         }
       }, err => {
+        Reporting.reportSync('failure', 'failed-set');
         console.error('failed to sync playlist', playlist.title, err);
-        Raven.captureException(err, {
+        Reporting.Raven.captureException(err, {
           tags: {playlistId: playlist.remoteId},
           extra: {playlist},
         });
@@ -203,13 +210,13 @@ function forceUpdate(userId) {
   getPollTimestamp(userId, timestamp => {
     if (!(dbIsInit[userId])) {
       console.warn('refusing forceUpdate because db is not init');
-      Raven.captureMessage('refusing forceUpdate because db is not init', {
+      Reporting.Raven.captureMessage('refusing forceUpdate because db is not init', {
         level: 'warning',
       });
       return;
     } else if (!timestamp) {
       console.warn('db was init, but no timestamp found');
-      Raven.captureMessage('db was init, but no timestamp found', {
+      Reporting.Raven.captureMessage('db was init, but no timestamp found', {
         level: 'warning',
       });
       return;
@@ -282,7 +289,7 @@ function main() {
     } else if (request.action === 'showPageAction') {
       if (!(request.userId)) {
         console.warn('received falsey user id from page action');
-        Raven.captureMessage('received falsey user id from page action', {
+        Reporting.Raven.captureMessage('received falsey user id from page action', {
           level: 'warning',
           extra: {user_id: request.userId},
         });
@@ -328,7 +335,7 @@ function main() {
       return true;
     } else {
       console.warn('received unknown request', request);
-      Raven.captureMessage('received unknown request', {
+      Reporting.Raven.captureMessage('received unknown request', {
         level: 'warning',
         extra: {request},
       });

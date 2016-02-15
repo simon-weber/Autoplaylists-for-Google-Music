@@ -14,14 +14,14 @@
     },
 
     "background": {
-        "scripts": ["js/vendor/jquery-1.9.1.min.js", "js-built/background.js"],
+        "scripts": ["js/vendor/jquery-1.9.1.min.js", "js/vendor/google-analytics-bundle.js", "js-built/background.js"],
         "persistent": true
     },
     "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
     "content_scripts": [
         {
             "matches": ["https://play.google.com/music/listen*"],
-            "js": ["js-built/content.js"],
+            "js": ["js/vendor/google-analytics-bundle.js", "js-built/content.js"],
             "run_at": "document_idle"
         }
     ],
@@ -35,6 +35,7 @@
     "permissions": [
         "*://play.google.com/music/*",
         "https://www.googleapis.com/",
+        "https://www.google-analytics.com/",
         "cookies",
         "identity",
         "identity.email",

@@ -3,7 +3,8 @@
     "globals": {
       "chrome": true,
       "$": true,
-      "__DEVELOPMENT__": true
+      "__DEVELOPMENT__": true,
+      "analytics": true
     },
     "env": {
        "browser": true,
