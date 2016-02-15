@@ -122,12 +122,6 @@ function syncPlaylist(playlist, attempt) {
   } else {
     // refresh tracks and write out playlist
 
-    if (_attempt === 0) {
-      // We only want to report the first of many recursive calls as an attempt.
-      // The others will register as retries.
-      Reporting.reportSync('attempt');
-    }
-
     const db = dbs[playlist.userId];
     Trackcache.queryTracks(db, playlist, tracks => {
       console.log('lock', playlist.title);

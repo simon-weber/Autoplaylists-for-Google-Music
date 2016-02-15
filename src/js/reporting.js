@@ -18,9 +18,12 @@ exports.GATracker = GATracker;
 
 let cachedContext = null;
 
-// action is one of 'attempt', 'success', 'retry', or 'failure'.
+// action is one of 'success', 'retry', or 'failure'.
 // label is optional, and can be something like 'gave-up' or 'failed-reorder'.
 exports.reportSync = function reportSync(action, label) {
+  // Note that due to GA's serverside rate limiting, this can drop bursty events.
+  // If this becomes a problem, consider something like http://stackoverflow.com/a/9340290/1231454.
+
   if (!cachedContext) {
     // setContext should make this available very quickly after loading.
     setTimeout(reportSync, 5000);
