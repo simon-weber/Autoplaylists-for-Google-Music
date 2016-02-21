@@ -55,3 +55,7 @@ for file in src/js-built/*.js*; do
       -F name="${file}"
     echo
 done
+
+git tag -a "${version}" -m 'see changelog'
+git push origin "${version}"
+git push
