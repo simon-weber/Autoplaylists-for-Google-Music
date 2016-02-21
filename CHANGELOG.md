@@ -1,3 +1,7 @@
+## 0.11.3 (February 21, 2016)
+
+Internal enhancements.
+
 ## 0.11.2 (February 21, 2016)
 
 Adds an experimental fix for syncing problems.
