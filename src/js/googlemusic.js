@@ -197,14 +197,17 @@ function addTracks(userIndex, playlistId, tracks, callback, onError) {
   ];
   authedGMRequest('addtrackstoplaylist', payload, userIndex, 'post', response => {
     console.log('add response', JSON.stringify(response, null, 2));
-    if (response.length > 0 && response[0].length > 1 &&
-        response[0][0] === 0 && response[0][1] === 2) {
-      // I think this signals errors and is something we should check for on each GM response.
-      // For now though, I'm just interested in logging them.
-      // TODO: probably better to figure out what successful requests look like, and
-      // log any others.
+    if (response.length <= 1 || response[1].length <= 0 || response[1][0] === 0) {
+      // I used to think a [0] response array of 0, 2, 0 signaled errors,
+      // but I've seen some successful responses with that recently.
+      // 0 instead of the update timestamp seems a better indicator of errors.
+      let responseArray = null;
+      if (response.length > 0) {
+        responseArray = JSON.stringify(response[0]);
+      }
+
       Reporting.Raven.captureMessage('probable error from addTracks', {
-        tags: {playlistId},
+        tags: {playlistId, responseArray},
         extra: {response, playlistId, tracks},
       });
     }
