@@ -1,7 +1,5 @@
 'use strict';
 
-const UUID = require('node-uuid');
-
 const Chrometools = require('./chrometools.js');
 
 
@@ -12,6 +10,13 @@ function playlistKey(userId, playlistLid) {
 function isPlaylistKey(key) {
   return key.startsWith('["playlist');
 }
+
+/* eslint-disable */
+// Source: https://gist.github.com/jed/982883.
+function uuidV1(a){
+  return a?(a^Math.random()*16>>a/4).toString(16):([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,b)
+}
+/* eslint-enable */
 
 function migrateToOne(items) {
   // Prep for multiple sorts by combining
@@ -45,7 +50,7 @@ exports.getOrCreateReportingUUID = function getOrCreateReportingUUID(callback) {
     let reportingUUID = items.reportingUUID;
 
     if (!reportingUUID) {
-      reportingUUID = UUID.v1();
+      reportingUUID = uuidV1();
       chrome.storage.sync.set({reportingUUID}, Chrometools.unlessError(() => {
         callback(reportingUUID);
       }));
