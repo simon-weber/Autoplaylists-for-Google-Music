@@ -1,5 +1,5 @@
 language: node_js
 node_js:
     - 0.12
-install: npm install -g eslint-config-airbnb eslint-plugin-react eslint@^1.0.0
+install: npm install -g eslint-config-airbnb eslint-plugin-react@^3.16.1 eslint@^1.0.0
 script: eslint src/js/*.js
