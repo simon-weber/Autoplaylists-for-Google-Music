@@ -1,3 +1,7 @@
+## 0.11.2 (February 21, 2016)
+
+Adds an experimental fix for syncing problems.
+
 ## 0.11.1 (February 15, 2016)
 
 Improves error reporting to help me track down bugs.
