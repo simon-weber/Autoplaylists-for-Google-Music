@@ -5,3 +5,7 @@ node_modules/
 src/js-built/*.js
 src/js-built/*.js.map
 build
+sentry_api.key
+webstore_client.id
+webstore_client.secret
+webstore_client.refresh_token
