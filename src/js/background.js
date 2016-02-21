@@ -293,6 +293,7 @@ function main() {
           level: 'warning',
           extra: {user_id: request.userId},
         });
+
         return false;
       }
 
@@ -324,6 +325,11 @@ function main() {
       users[request.userId] = {userIndex: request.userIndex, tabId: sender.tab.id};
       console.log('see user', request.userId, users);
       License.hasFullVersion(false, hasFullVersion => {console.log('precached license status:', hasFullVersion);});
+
+      // FIXME store this in sync storage and include it in context?
+      // That'd mean we wouldn't get it immediately, though, so maybe this is better.
+      Reporting.Raven.setTagsContext({tier: request.tier});
+
       chrome.pageAction.show(sender.tab.id);
     } else if (request.action === 'query') {
       Trackcache.queryTracks(dbs[request.playlist.userId], request.playlist, tracks => {
