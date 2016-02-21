@@ -3,4 +3,5 @@
 *.pem
 node_modules/
 src/js-built/*.js
+src/js-built/*.js.map
 build
