@@ -170,7 +170,7 @@ function syncPlaylist(playlist, attempt) {
           }
         } else {
           Gm.setPlaylistOrder(db, userIndex, playlist, orderResponse => {
-            Reporting.reportSync('success');
+            Reporting.reportSync('success', `success-${_attempt}`);
             console.log('reorder response', orderResponse);
             console.log('unlock', playlist.title);
             playlistIsUpdating[playlist.remoteId] = false;
