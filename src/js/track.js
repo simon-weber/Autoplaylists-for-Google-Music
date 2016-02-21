@@ -89,18 +89,6 @@ exports.fromJsproto = function fromJsproto(jsproto) {
   return track;
 };
 
-exports.getPlaylistAddId = function getPlaylistAddId(track) {
-  // Return the id for this track when interacting with Google.
-  // For some reason Google doesn't accept AA playlist adds with library ids.
-  let id = track.id;
-
-  if (track.type === 7) {
-    id = track.storeId;
-  }
-
-  return id;
-};
-
 exports.toString = function toString(track) {
   let output = '';
   for (const key in track) {

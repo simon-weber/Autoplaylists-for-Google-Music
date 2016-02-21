@@ -190,7 +190,9 @@ function addTracks(userIndex, playlistId, tracks, callback, onError) {
   // [["<sessionid>",1],["<listid>",[["<store id or songid>",tracktype]]]]
   const payload = [['', 1],
     [
-      playlistId, tracks.map(t => [Track.getPlaylistAddId(t), t.type]),
+      // Google always sends [id, type] pairs, but that's caused problems for me around AA and store ids and types.
+      // Just sending an id seems to work, so maybe that'll fix everything?
+      playlistId, tracks.map(t => [t.id]),
     ],
   ];
   authedGMRequest('addtrackstoplaylist', payload, userIndex, 'post', response => {
@@ -268,7 +270,7 @@ exports.setPlaylistContents = function setPlaylistContents(db, userIndex, playli
       const idsToAdd = {};
       for (let i = 0; i < tracks.length; i++) {
         const track = tracks[i];
-        idsToAdd[Track.getPlaylistAddId(track)] = track;
+        idsToAdd[track.id] = track;
       }
 
       const deleteCandidates = {};
@@ -276,10 +278,10 @@ exports.setPlaylistContents = function setPlaylistContents(db, userIndex, playli
         const remoteTrack = contents[i].track;
         const entryId = contents[i].entryId;
 
-        if (!(Track.getPlaylistAddId(remoteTrack) in idsToAdd)) {
+        if (!(remoteTrack.id in idsToAdd)) {
           deleteCandidates[remoteTrack.id] = entryId;
         } else {
-          delete idsToAdd[Track.getPlaylistAddId(remoteTrack)];
+          delete idsToAdd[remoteTrack.id];
         }
       }
 
