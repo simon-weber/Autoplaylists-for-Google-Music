@@ -10,7 +10,9 @@ function unlessError(func) {
     // can't use an arrow function here because we need our own `this`.
     if (chrome.extension.lastError) {
       console.error('unlessError:', chrome.extension.lastError.message);
-      Reporting.Raven.captureException(chrome.extension.lastError);
+      Reporting.Raven.captureMessage(chrome.extension.lastError.message, {
+        extra: {location: 'chrometools.unlessError'},
+      });
     } else {
       func.apply(this, arguments);
     }
