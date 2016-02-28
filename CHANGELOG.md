@@ -1,3 +1,7 @@
+## 0.11.4 (February 27, 2016)
+
+Collects additional track metadata to help with error reporting.
+
 ## 0.11.3 (February 21, 2016)
 
 Internal enhancements.
