@@ -20,7 +20,9 @@ exports.openDb = function openDb(userId, callback) {
       table = table.addPrimaryKey(['id']);
     } else {
       table = table.addNullable([field.name]);
-      table = table.addIndex(`idx_${field.name}`, [field.name], false, Lf.Order.DESC);
+      if (!field.hidden) {
+        table = table.addIndex(`idx_${field.name}`, [field.name], false, Lf.Order.DESC);
+      }
     }
   });
 

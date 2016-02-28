@@ -13,6 +13,7 @@ function f(requiredItems, optionalItems) {
   field.label = opt.label || field.name;
   field.explanation = opt.explanation || '';
   field.is_datetime = opt.is_datetime || false;
+  field.hidden = opt.hidden || false;
 
   if (opt.coerce) {
     field.coerce = opt.coerce;
@@ -41,6 +42,15 @@ exports.fields = [
   f([17, 'totalDiscs', Lf.Type.INTEGER], {
     label: 'total discs'}),
   f([18, 'year', Lf.Type.INTEGER]),
+  f([19, 'deleted', Lf.Type.INTEGER], {
+    hidden: true,
+  }),
+  f([20, 'expunged', Lf.Type.INTEGER], {
+    hidden: true,
+  }),
+  f([21, 'pending', Lf.Type.INTEGER], {
+    hidden: true,
+  }),
   f([22, 'playCount', Lf.Type.INTEGER], {
     label: 'play count'}),
   f([23, 'rating', Lf.Type.INTEGER], {
@@ -61,12 +71,36 @@ exports.fields = [
     label: 'last played',
     explanation: 'eg "30 days ago" or "yesterday".',
     is_datetime: true}),
+  f([26, 'subjectToCuration', Lf.Type.INTEGER], {
+    hidden: true,
+  }),
   f([27, 'storeId', Lf.Type.STRING], {
     label: 'store id'}),
+  f([28, 'matchedId', Lf.Type.STRING], {
+    hidden: true,
+  }),
   f([29, 'type', Lf.Type.INTEGER], {
     explanation: '1: free/purchased, 2: uploaded but not matched, 6: uploaded and matched, 7: All Access.'}),
   f([30, 'comment', Lf.Type.STRING]),
   f([34, 'bitrate', Lf.Type.INTEGER]),
+  f([35, 'recentTimestamp', Lf.Type.INTEGER], {
+    hidden: true,
+  }),
+  f([37, 'albumPlaylistTimestamp', Lf.Type.INTEGER], {
+    hidden: true,
+  }),
+  f([38, 'explicitType', Lf.Type.INTEGER], {
+    hidden: true,
+  }),
+  f([41, 'curationSuggested', Lf.Type.INTEGER], {
+    hidden: true,
+  }),
+  f([42, 'curatedByUser', Lf.Type.INTEGER], {
+    hidden: true,
+  }),
+  f([43, 'playlistEntryId', Lf.Type.STRING], {
+    hidden: true,
+  }),
 ];
 
 exports.fieldsByName = exports.fields.reduce((obj, x) => {

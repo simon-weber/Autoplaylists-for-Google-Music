@@ -34,7 +34,7 @@ const operators = {
 };
 
 
-const sortedFields = [...Track.fields];
+const sortedFields = Track.fields.filter(e => !e.hidden);
 function compareByLabel(a, b) {
   const aName = a.label.toLowerCase();
   const bName = b.label.toLowerCase();
