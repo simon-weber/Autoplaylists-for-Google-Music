@@ -14,14 +14,11 @@ function isDeveloper(callback) {
       return callback(true);
     }
 
-    // REMOVE_ON_FULL
-    callback(true);
-
-    // chrome.identity.getProfileUserInfo(userInfo => {
-    //   const isDev = DEVELOPER_ID_WHITELIST[userInfo.id];
-    //   console.log('user id:', userInfo.id, 'isDev:', isDev);
-    //   return callback(isDev);
-    // });
+    chrome.identity.getProfileUserInfo(userInfo => {
+      const isDev = DEVELOPER_ID_WHITELIST[userInfo.id];
+      console.log('user id:', userInfo.id, 'isDev:', isDev);
+      return callback(isDev);
+    });
   });
 }
 

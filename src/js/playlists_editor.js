@@ -87,12 +87,6 @@ function initializeForm(userId, playlists) {
             document.location.reload(true);
           });
         })
-        // REMOVE_ON_FULL ->
-        .wrap(
-          '<div class="hint--right" data-hint="Feel free to use the full version for now.' +
-          ' Please report any bugs you notice around version transitions."/>')
-        .parent()
-        // <-
       );
     }
   });
