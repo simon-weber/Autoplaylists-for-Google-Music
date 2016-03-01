@@ -1,3 +1,7 @@
+## 1.0.1 (March 1, 2016)
+
+The extension is now available for purchase!
+
 ## 0.11.4 (February 27, 2016)
 
 Collects additional track metadata to help with error reporting.
