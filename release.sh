@@ -27,9 +27,9 @@ curl "https://www.googleapis.com/upload/chromewebstore/v1.1/items/${app_id}" \
     --progress-bar
 echo
 
-# Publish to testers.
+# Publish to everyone.
 echo 'publishing...'
-curl "https://www.googleapis.com/chromewebstore/v1.1/items/${app_id}/publish?publishTarget=trustedTesters" \
+curl "https://www.googleapis.com/chromewebstore/v1.1/items/${app_id}/publish" \
     -H "Authorization: Bearer ${g_access_token}"  \
     -X POST \
     -d ""
