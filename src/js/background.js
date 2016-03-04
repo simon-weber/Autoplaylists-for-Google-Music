@@ -140,10 +140,10 @@ function syncPlaylist(playlist, attempt) {
         if (response !== null) {
           // large updates seem to only apply partway sometimes.
           // retrying like this seems to make even 1k playlists eventually consistent.
-          if (_attempt < 5) {
+          if (_attempt < 2) {
             Reporting.reportSync('retry', `retry-${_attempt}`);
             console.log('not a 0-track add; retrying syncPlaylist', response);
-            setTimeout(syncPlaylist, 1000 * _attempt + 1000, playlist, _attempt + 1);
+            setTimeout(syncPlaylist, 10000 * (_attempt + 1), playlist, _attempt + 1);
           } else {
             Reporting.reportSync('failure', 'gave-up');
             console.warn('giving up on syncPlaylist!', response);
