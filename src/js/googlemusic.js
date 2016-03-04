@@ -206,10 +206,14 @@ function addTracks(userIndex, playlistId, tracks, callback, onError) {
         responseArray = JSON.stringify(response[0]);
       }
 
-      Reporting.Raven.captureMessage('probable error from addTracks', {
-        tags: {playlistId, responseArray},
-        extra: {response, playlistId, tracks},
-      });
+      // These events are really common and filling up the sentry quota.
+      // Only sending 1 in 1k ought to bring them under the quota.
+      if(Math.random() < 0.001) {
+        Reporting.Raven.captureMessage('probable error from addTracks', {
+          tags: {playlistId, responseArray},
+          extra: {response, playlistId, tracks},
+        });
+      }
     }
     callback(response);
   }, onError);

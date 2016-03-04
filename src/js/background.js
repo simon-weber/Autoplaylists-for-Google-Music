@@ -147,11 +147,14 @@ function syncPlaylist(playlist, attempt) {
           } else {
             Reporting.reportSync('failure', 'gave-up');
             console.warn('giving up on syncPlaylist!', response);
+            /*
+            // doesn't give much information beyond what GA tracks.
             Reporting.Raven.captureMessage('gave up on syncing', {
               level: 'warning',
               tags: {playlistId: playlist.remoteId},
               extra: {playlist},
             });
+            */
             // Never has the need for promises been so clear.
             Gm.setPlaylistOrder(db, userIndex, playlist, orderResponse => {
               console.log('reorder response', orderResponse);
