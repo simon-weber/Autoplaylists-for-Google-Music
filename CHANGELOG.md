@@ -1,3 +1,9 @@
+## 1.0.2 (March 3, 2016)
+
+Bugfixes:
+
+  - fix a crash preventing the page action for appearing for new users
+
 ## 1.0.1 (March 1, 2016)
 
 The extension is now available for purchase!
