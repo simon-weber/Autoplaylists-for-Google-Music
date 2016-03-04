@@ -83,7 +83,7 @@ function initLibrary(userId) {
 
   const message = {action: 'getLocalTracks', userId};
   chrome.tabs.sendMessage(users[userId].tabId, message, Chrometools.unlessError(response => {
-    if (response.tracks === null) {
+    if (response.tracks === null || response.tracks.length === 0) {
       // problem with indexeddb, fall back to update from 0.
       diffUpdateLibrary(userId, 0, () => null);
     } else {
