@@ -21,6 +21,7 @@ function authedGMRequest(endpoint, data, userIndex, method, callback, onError) {
       // TODO alert user somehow
       console.error('unable to get xt cookie');
       Reporting.Raven.captureMessage('unable to get xt cookie');
+      onError(new Error('unable to get xt cookie'));
     } else {
       let format = '';
       let payload = {json: JSON.stringify(data)};
