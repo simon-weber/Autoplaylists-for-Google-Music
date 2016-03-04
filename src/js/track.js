@@ -127,6 +127,10 @@ exports.toString = function toString(track) {
   let output = '';
   for (const key in track) {
     const field = exports.fieldsByName[key];
+    if (field.hidden) {
+      continue;
+    }
+
     const val = track[key];
     let strVal = JSON.stringify(val);
 
