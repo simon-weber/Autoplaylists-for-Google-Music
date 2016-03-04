@@ -1,3 +1,16 @@
+## 1.0.3 (March 4, 2016)
+
+Bugfixes:
+
+  - fix empty library when extension is loaded on very first visit to Google Music: [#47](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/47)
+  - better handle an error when Google cookies are unavailable
+  - omit hidden fields from test output
+
+Misc:
+
+  - slow down retry schedule to prevent web ui thrashing
+  - send fewer sentry events
+
 ## 1.0.2 (March 3, 2016)
 
 Bugfixes:
