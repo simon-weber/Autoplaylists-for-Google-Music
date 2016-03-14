@@ -1,3 +1,9 @@
+## 1.0.4 (March 13, 2016)
+
+Bugfixes:
+
+  - fix a bug with some version of chrome preventing the extension tab from opening: [#48](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/48)
+
 ## 1.0.3 (March 4, 2016)
 
 Bugfixes:
