@@ -16,52 +16,61 @@ const GM_SERVICE_URL = `${GM_BASE_URL}services/`;
 function authedGMRequest(endpoint, data, userIndex, method, callback, onError) {
   // Call an endpoint and callback with it's parsed response.
 
-  chrome.cookies.get({name: 'xt', url: 'https://play.google.com/music'}, Chrometools.unlessError(cookie => {
-    if (cookie === null) {
-      // TODO alert user somehow
-      console.error('unable to get xt cookie');
-      Reporting.Raven.captureMessage('unable to get xt cookie');
-      onError(new Error('unable to get xt cookie'));
-    } else {
-      let format = '';
-      let payload = {json: JSON.stringify(data)};
-      if (data.constructor === Array || method === 'get') {
-        format = 'format=jsarray&';
-        if (method !== 'get') {
-          payload = JSON.stringify(data);
+  chrome.cookies.getAllCookieStores(Chrometools.unlessError(cookieStores => {
+    chrome.cookies.get({name: 'xt', url: 'https://play.google.com/music'}, Chrometools.unlessError(cookie => {
+      if (cookie === null) {
+        // TODO alert user somehow
+        console.error('unable to get xt cookie');
+        Reporting.Raven.captureMessage('unable to get xt cookie');
+        onError(new Error('unable to get xt cookie'));
+      } else {
+        let format = '';
+        let payload = {json: JSON.stringify(data)};
+        if (data.constructor === Array || method === 'get') {
+          format = 'format=jsarray&';
+          if (method !== 'get') {
+            payload = JSON.stringify(data);
+          }
         }
+
+        const url = `${GM_SERVICE_URL}${endpoint}?${format}${Qs.stringify({u: userIndex, xt: cookie.value})}`;
+
+        // TODO this is stupid
+        let dataType = 'json';
+        if (method === 'get') {
+          dataType = 'html';
+        }
+
+        let ajaxOnError = onError;
+        if (typeof onError === 'undefined') {
+          ajaxOnError = res => {  // eslint-disable-line no-param-reassign
+            console.error('request to failed:', url, data, res);
+            Reporting.Raven.captureMessage(`request to ${endpoint} failed`, {
+              extra: {url, data, res, cookieStores},
+            });
+          };
+        }
+
+        // TODO jquery should be injected with browserify?
+        $[method](
+          url,
+          payload,
+          res => {
+            callback(res);
+          },
+
+          dataType
+        )
+        .fail(ajaxOnError);
       }
-
-      const url = `${GM_SERVICE_URL}${endpoint}?${format}${Qs.stringify({u: userIndex, xt: cookie.value})}`;
-
-      // TODO this is stupid
-      let dataType = 'json';
-      if (method === 'get') {
-        dataType = 'html';
-      }
-
-      if (typeof onError === 'undefined') {
-        onError = res => {  // eslint-disable-line no-param-reassign
-          console.error('request to failed:', url, data, res);
-          Reporting.Raven.captureMessage(`request to ${endpoint} failed`, {
-            extra: {url, data, res},
-          });
-        };
-      }
-
-      // TODO jquery should be injected with browserify?
-      $[method](
-        url,
-        payload,
-        res => {
-          callback(res);
-        },
-
-        dataType
-      )
-      .fail(onError);
-    }
-  }));
+    }, error => {
+      Reporting.Raven.captureMessage(error.message, {
+        location: 'googlemusic',
+        extra: {error, cookieStores},
+      });
+      onError(error);
+    }));
+  }, onError));
 }
 
 exports.getTrackChanges = function getTrackChanges(userIndex, sinceTimestamp, callback) {

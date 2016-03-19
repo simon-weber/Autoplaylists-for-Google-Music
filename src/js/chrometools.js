@@ -4,15 +4,23 @@ const Qs = require('qs');
 
 const Reporting = require('./reporting.js');
 
-function unlessError(func) {
+function unlessError(func, onError) {
   // Decorate chrome callbacks to notice errors.
+  // If an error occurs, call onError.
+
   return function unlessErrorWrapper() {
     // can't use an arrow function here because we need our own `this`.
     if (chrome.extension.lastError) {
       console.error('unlessError:', chrome.extension.lastError.message);
       Reporting.Raven.captureMessage(chrome.extension.lastError.message, {
-        extra: {location: 'chrometools.unlessError'},
+        extra: {
+          location: 'chrometools.unlessError',
+          error: chrome.extension.lastError,
+        },
       });
+      if (typeof onError !== 'undefined') {
+        onError(chrome.extension.lastError);
+      }
     } else {
       func.apply(this, arguments);
     }
