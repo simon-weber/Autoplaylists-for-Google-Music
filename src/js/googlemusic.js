@@ -43,7 +43,7 @@ function authedGMRequest(endpoint, data, userIndex, method, callback, onError) {
       if (typeof onError === 'undefined') {
         onError = res => {  // eslint-disable-line no-param-reassign
           console.error('request to failed:', url, data, res);
-          Reporting.Raven.captureMessage(`request to ${url} failed`, {
+          Reporting.Raven.captureMessage(`request to ${endpoint} failed`, {
             extra: {url, data, res},
           });
         };
