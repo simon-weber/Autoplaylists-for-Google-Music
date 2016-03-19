@@ -1,3 +1,9 @@
+## 1.0.5 (March 19, 2016)
+
+Misc:
+
+  - improve error reporting
+
 ## 1.0.4 (March 13, 2016)
 
 Bugfixes:
