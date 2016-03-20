@@ -3,7 +3,6 @@
 const Lf = require('lovefield');
 const Qs = require('qs');
 
-const Chrometools = require('./chrometools.js');
 const Track = require('./track.js');
 const Trackcache = require('./trackcache.js');
 const Playlist = require('./playlist.js');
@@ -13,67 +12,50 @@ const Reporting = require('./reporting.js');
 const GM_BASE_URL = 'https://play.google.com/music/';
 const GM_SERVICE_URL = `${GM_BASE_URL}services/`;
 
-function authedGMRequest(endpoint, data, userIndex, method, callback, onError) {
+function authedGMRequest(endpoint, data, user, method, callback, onError) {
   // Call an endpoint and callback with it's parsed response.
 
-  chrome.cookies.getAllCookieStores(Chrometools.unlessError(cookieStores => {
-    chrome.cookies.get({name: 'xt', url: 'https://play.google.com/music'}, Chrometools.unlessError(cookie => {
-      if (cookie === null) {
-        // TODO alert user somehow
-        console.error('unable to get xt cookie');
-        Reporting.Raven.captureMessage('unable to get xt cookie');
-        onError(new Error('unable to get xt cookie'));
-      } else {
-        let format = '';
-        let payload = {json: JSON.stringify(data)};
-        if (data.constructor === Array || method === 'get') {
-          format = 'format=jsarray&';
-          if (method !== 'get') {
-            payload = JSON.stringify(data);
-          }
-        }
+  let format = '';
+  let payload = {json: JSON.stringify(data)};
+  if (data.constructor === Array || method === 'get') {
+    format = 'format=jsarray&';
+    if (method !== 'get') {
+      payload = JSON.stringify(data);
+    }
+  }
 
-        const url = `${GM_SERVICE_URL}${endpoint}?${format}${Qs.stringify({u: userIndex, xt: cookie.value})}`;
+  const url = `${GM_SERVICE_URL}${endpoint}?${format}${Qs.stringify({u: user.userIndex, xt: user.xt})}`;
 
-        // TODO this is stupid
-        let dataType = 'json';
-        if (method === 'get') {
-          dataType = 'html';
-        }
+  // TODO this is stupid
+  let dataType = 'json';
+  if (method === 'get') {
+    dataType = 'html';
+  }
 
-        let ajaxOnError = onError;
-        if (typeof onError === 'undefined') {
-          ajaxOnError = res => {  // eslint-disable-line no-param-reassign
-            console.error('request to failed:', url, data, res);
-            Reporting.Raven.captureMessage(`request to ${endpoint} failed`, {
-              extra: {url, data, res, cookieStores},
-            });
-          };
-        }
-
-        // TODO jquery should be injected with browserify?
-        $[method](
-          url,
-          payload,
-          res => {
-            callback(res);
-          },
-
-          dataType
-        )
-        .fail(ajaxOnError);
-      }
-    }, error => {
-      Reporting.Raven.captureMessage(error.message, {
-        location: 'googlemusic',
-        extra: {error, cookieStores},
+  let ajaxOnError = onError;
+  if (typeof onError === 'undefined') {
+    ajaxOnError = res => {
+      console.error('request to failed:', url, data, res);
+      Reporting.Raven.captureMessage(`request to ${endpoint} failed`, {
+        extra: {url, data, res},
       });
-      onError(error);
-    }));
-  }, onError));
+    };
+  }
+
+  // TODO jquery should be injected with browserify?
+  $[method](
+    url,
+    payload,
+    res => {
+      callback(res);
+    },
+
+    dataType
+  )
+  .fail(ajaxOnError);
 }
 
-exports.getTrackChanges = function getTrackChanges(userIndex, sinceTimestamp, callback) {
+exports.getTrackChanges = function getTrackChanges(user, sinceTimestamp, callback) {
   // Callback {newTimestamp: 1234, upsertedTracks: [{}], deletedIds: ['']}
   // timestamps are in microseconds.
   const payload = {
@@ -86,7 +68,7 @@ exports.getTrackChanges = function getTrackChanges(userIndex, sinceTimestamp, ca
   console.log('getTrackChanges', sinceTimestamp);
 
   // want arg to window.parent['slat_process']
-  authedGMRequest('streamingloadalltracks', payload, userIndex, 'get', response => {
+  authedGMRequest('streamingloadalltracks', payload, user, 'get', response => {
     const result = {newTimestamp: null, upsertedTracks: [], deletedIds: []};
 
     const parser = new DOMParser();
@@ -140,7 +122,7 @@ exports.getTrackChanges = function getTrackChanges(userIndex, sinceTimestamp, ca
   });
 };
 
-exports.updatePlaylist = function updatePlaylist(userIndex, id, title, playlist, callback) {
+exports.updatePlaylist = function updatePlaylist(user, id, title, playlist, callback) {
   // Callback no args after updating an existing playlist.
   const lastSync = new Date().toLocaleString();
   const description = Playlist.toString(playlist);
@@ -149,13 +131,13 @@ exports.updatePlaylist = function updatePlaylist(userIndex, id, title, playlist,
   const payload = [['', 1], [id, null, title, syncMsg]];
   console.log('updatePlaylist', playlist);
 
-  authedGMRequest('editplaylist', payload, userIndex, 'post', response => {
+  authedGMRequest('editplaylist', payload, user, 'post', response => {
     console.log(response);
     callback();
   });
 };
 
-exports.createRemotePlaylist = function createRemotePlaylist(userIndex, title, callback) {
+exports.createRemotePlaylist = function createRemotePlaylist(user, title, callback) {
   // Callback a playlist id for a new, empty playlist.
   const payload = [['', 1], [false, title, null, []]];
 
@@ -163,13 +145,13 @@ exports.createRemotePlaylist = function createRemotePlaylist(userIndex, title, c
 
   // response:
   // [[0,2,0] ,["id","some long base64 string",null,timestamp]]
-  authedGMRequest('createplaylist', payload, userIndex, 'post', response => {
+  authedGMRequest('createplaylist', payload, user, 'post', response => {
     console.log(response);
     callback(response[1][0]);
   });
 };
 
-exports.deleteRemotePlaylist = function deleteRemotePlaylist(userIndex, remoteId, callback) {
+exports.deleteRemotePlaylist = function deleteRemotePlaylist(user, remoteId, callback) {
   // Callback no args after deleting a playlist.
 
   const payload = {
@@ -181,13 +163,13 @@ exports.deleteRemotePlaylist = function deleteRemotePlaylist(userIndex, remoteId
 
   console.log('deleteRemotePlaylist', remoteId);
 
-  authedGMRequest('deleteplaylist', payload, userIndex, 'post', response => {
+  authedGMRequest('deleteplaylist', payload, user, 'post', response => {
     console.log('delete playlist response', response);
     callback();
   });
 };
 
-function addTracks(userIndex, playlistId, tracks, callback, onError) {
+function addTracks(user, playlistId, tracks, callback, onError) {
   // Append these tracks and callback the api response, or null if adding 0 tracks.
 
   if (tracks.length === 0) {
@@ -205,7 +187,7 @@ function addTracks(userIndex, playlistId, tracks, callback, onError) {
       playlistId, tracks.map(t => [t.id]),
     ],
   ];
-  authedGMRequest('addtrackstoplaylist', payload, userIndex, 'post', response => {
+  authedGMRequest('addtrackstoplaylist', payload, user, 'post', response => {
     console.log('add response', JSON.stringify(response, null, 2));
     if (response.length <= 1 || response[1].length <= 0 || response[1][0] === 0) {
       // I used to think a [0] response array of 0, 2, 0 signaled errors,
@@ -229,7 +211,7 @@ function addTracks(userIndex, playlistId, tracks, callback, onError) {
   }, onError);
 }
 
-function deleteEntries(userIndex, playlistId, entries, callback, onError) {
+function deleteEntries(user, playlistId, entries, callback, onError) {
   // Delete entries with id and entryId keys; callback the api response.
   console.log('deleting', entries.length, 'entries. first 5 are', JSON.stringify(entries.slice(0, 5), null, 2));
   const payload = {
@@ -240,17 +222,17 @@ function deleteEntries(userIndex, playlistId, entries, callback, onError) {
     listId: playlistId,
     sessionId: '',
   };
-  authedGMRequest('deletesong', payload, userIndex, 'post', response => {
+  authedGMRequest('deletesong', payload, user, 'post', response => {
     console.log('delete response', JSON.stringify(response, null, 2));
     callback(response);
   }, onError);
 }
 
-function loadPlaylistContents(db, userIndex, playlistId, callback, onError) {
+function loadPlaylistContents(db, user, playlistId, callback, onError) {
   // Callback a list of objects with entryId and track keys.
 
   const payload = [['', 1], [playlistId]];
-  authedGMRequest('loaduserplaylist', payload, userIndex, 'post', response => {
+  authedGMRequest('loaduserplaylist', payload, user, 'post', response => {
     if (response.length < 2) {
       return onError(`unexpected loadPlaylistContents response: ${JSON.stringify(response, null, 2)}`);
     }
@@ -274,7 +256,7 @@ function loadPlaylistContents(db, userIndex, playlistId, callback, onError) {
   }, onError);
 }
 
-exports.setPlaylistContents = function setPlaylistContents(db, userIndex, playlistId, tracks, callback, onError) {
+exports.setPlaylistContents = function setPlaylistContents(db, user, playlistId, tracks, callback, onError) {
   // Update a remote playlist to contain only the given tracks, in any order.
 
   // This requires multiple requests:
@@ -282,7 +264,7 @@ exports.setPlaylistContents = function setPlaylistContents(db, userIndex, playli
   // 2) delete current - desired
   // 3) add desired - current
 
-  loadPlaylistContents(db, userIndex, playlistId, contents => {
+  loadPlaylistContents(db, user, playlistId, contents => {
     if (contents.length !== 0) {
       const idsToAdd = {};
       for (let i = 0; i < tracks.length; i++) {
@@ -341,13 +323,13 @@ exports.setPlaylistContents = function setPlaylistContents(db, userIndex, playli
           }
 
           if (entriesToDelete.length > 0) {
-            deleteEntries(userIndex, playlistId, entriesToDelete, deleteResponse => { // eslint-disable-line no-unused-vars
+            deleteEntries(user, playlistId, entriesToDelete, deleteResponse => { // eslint-disable-line no-unused-vars
               // We log the delete response inside deleteEntries and have no other need for it here.
-              addTracks(userIndex, playlistId, tracksToAdd, callback);
+              addTracks(user, playlistId, tracksToAdd, callback);
             }, onError);
           } else {
             console.log('no need to delete post-filter; adding');
-            addTracks(userIndex, playlistId, tracksToAdd, callback, onError);
+            addTracks(user, playlistId, tracksToAdd, callback, onError);
           }
         }).catch(e => {
           console.error(e);
@@ -358,23 +340,23 @@ exports.setPlaylistContents = function setPlaylistContents(db, userIndex, playli
         });
       } else {
         console.log('no need to delete pre-filter; adding');
-        addTracks(userIndex, playlistId, tracksToAdd, callback, onError);
+        addTracks(user, playlistId, tracksToAdd, callback, onError);
       }
     } else {
       console.log('adding to empty');
-      addTracks(userIndex, playlistId, tracks, callback, onError);
+      addTracks(user, playlistId, tracks, callback, onError);
     }
   }, onError);
 };
 
-exports.setPlaylistOrder = function setPlaylistOrder(db, userIndex, playlist, callback, onError) {
+exports.setPlaylistOrder = function setPlaylistOrder(db, user, playlist, callback, onError) {
   // Set the remote ordering of a playlist according to playlist's sort order.
   // This trusts that the remote contents are already correct.
 
   // This approach handles the maybe-playing tracks that wouldn't be in our tracks
   // if we queried them locally.
 
-  loadPlaylistContents(db, userIndex, playlist.remoteId, contents => {
+  loadPlaylistContents(db, user, playlist.remoteId, contents => {
     if (contents.length !== 0) {
       // Reordering calls deal in entry ids, not track ids.
       const currentOrdering = [];
@@ -401,7 +383,7 @@ exports.setPlaylistOrder = function setPlaylistOrder(db, userIndex, playlist, ca
           // This lets us send our entire reordering at once without calculating the relative movements.
           // I'm not sure if the interface was intended to be used this way, but it seems to work.
           const payload = [['', 1], [desiredOrdering, '', '']];
-          authedGMRequest('changeplaylisttrackorder', payload, userIndex, 'post', response => {
+          authedGMRequest('changeplaylisttrackorder', payload, user, 'post', response => {
             // TODO These should all be checked for errors.
             // It looks like responses will have [[0, 1, 1], [call-specific response]] on success.
             callback(response);

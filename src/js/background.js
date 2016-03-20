@@ -12,7 +12,7 @@ const Context = require('./context.js');
 const Reporting = require('./reporting.js');
 
 
-// {userId: {userIndex: int, tabId: int}}
+// {userId: {userIndex: int, tabId: int, xt: string}}
 const users = {};
 
 // {userId: <lovefield db>}
@@ -30,11 +30,6 @@ function userIdForTabId(tabId) {
       return userId;
     }
   }
-}
-
-function userIndexForId(userId) {
-  console.log('index for', userId, users[userId].userIndex);
-  return users[userId].userIndex;
 }
 
 function timestampKey(userId) {
@@ -61,7 +56,7 @@ function getPollTimestamp(userId, callback) {
 function diffUpdateLibrary(userId, timestamp, callback) {
   // Update our cache with any changes since our last poll.
 
-  Gm.getTrackChanges(userIndexForId(userId), timestamp, changes => {
+  Gm.getTrackChanges(users[userId], timestamp, changes => {
     Trackcache.upsertTracks(dbs[userId], userId, changes.upsertedTracks, () => {
       console.log('done with diff upsert of', changes.upsertedTracks.length);
       Trackcache.deleteTracks(dbs[userId], userId, changes.deletedIds, () => {
@@ -102,14 +97,14 @@ function initLibrary(userId) {
 function syncPlaylist(playlist, attempt) {
   // Make Google's playlist match the given one.
 
-  const userIndex = userIndexForId(playlist.userId);
+  const user = users[playlist.userId];
   const _attempt = attempt || 0;
 
   console.log('syncPlaylist, attempt', _attempt);
 
   if (!('remoteId' in playlist)) {
     // Create a remote playlist.
-    Gm.createRemotePlaylist(userIndex, playlist.title, remoteId => {
+    Gm.createRemotePlaylist(user, playlist.title, remoteId => {
       console.log('created remote playlist', remoteId);
       const playlistToSave = JSON.parse(JSON.stringify(playlist));
       playlistToSave.remoteId = remoteId;
@@ -136,7 +131,7 @@ function syncPlaylist(playlist, attempt) {
 
       const desiredTracks = tracks.slice(0, 1000);
 
-      Gm.setPlaylistContents(db, userIndex, playlist.remoteId, desiredTracks, response => {
+      Gm.setPlaylistContents(db, user, playlist.remoteId, desiredTracks, response => {
         if (response !== null) {
           // large updates seem to only apply partway sometimes.
           // retrying like this seems to make even 1k playlists eventually consistent.
@@ -156,7 +151,7 @@ function syncPlaylist(playlist, attempt) {
             });
             */
             // Never has the need for promises been so clear.
-            Gm.setPlaylistOrder(db, userIndex, playlist, orderResponse => {
+            Gm.setPlaylistOrder(db, user, playlist, orderResponse => {
               console.log('reorder response', orderResponse);
               console.log('unlock', playlist.title);
               playlistIsUpdating[playlist.remoteId] = false;
@@ -172,7 +167,7 @@ function syncPlaylist(playlist, attempt) {
             });
           }
         } else {
-          Gm.setPlaylistOrder(db, userIndex, playlist, orderResponse => {
+          Gm.setPlaylistOrder(db, user, playlist, orderResponse => {
             Reporting.reportSync('success', `success-${_attempt}`);
             console.log('reorder response', orderResponse);
             console.log('unlock', playlist.title);
@@ -204,7 +199,7 @@ function syncPlaylist(playlist, attempt) {
 
 function renameAndSync(playlist) {
   console.log('renaming to', playlist.title);
-  Gm.updatePlaylist(userIndexForId(playlist.userId), playlist.remoteId, playlist.title, playlist, () => {
+  Gm.updatePlaylist(users[playlist.userId], playlist.remoteId, playlist.title, playlist, () => {
     syncPlaylist(playlist);
   });
 }
@@ -256,7 +251,7 @@ function main() {
 
     if (hasOld && !hasNew) {
       // deletion
-      Gm.deleteRemotePlaylist(userIndexForId(change.oldValue.userId), change.oldValue.remoteId, () => null);
+      Gm.deleteRemotePlaylist(users[change.oldValue.userId], change.oldValue.remoteId, () => null);
     } else if (hasOld && hasNew) {
       // update
       if (change.oldValue.title !== change.newValue.title) {
@@ -325,7 +320,7 @@ function main() {
         }
       }
 
-      users[request.userId] = {userIndex: request.userIndex, tabId: sender.tab.id};
+      users[request.userId] = {userIndex: request.userIndex, tabId: sender.tab.id, xt: request.xt};
       console.log('see user', request.userId, users);
       License.hasFullVersion(false, hasFullVersion => {console.log('precached license status:', hasFullVersion);});
 

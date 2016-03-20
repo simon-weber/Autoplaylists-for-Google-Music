@@ -83,12 +83,14 @@ function main() {
 
     userId = event.data.userId;
     const tier = event.data.tier;
+    const xt = event.data.xt;
 
     chrome.runtime.sendMessage({
       action: 'showPageAction',
       userId: `${userId}`,
       userIndex: parseInt(userIndex, 10),
       tier,
+      xt,
     });
 
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -111,7 +113,7 @@ function main() {
 
   /* eslint-disable prefer-template */
   const code = '(' + function inject() {
-    window.postMessage({userId: window.USER_ID, tier: window.USER_CONTEXT[13]}, '*');
+    window.postMessage({userId: window.USER_ID, tier: window.USER_CONTEXT[13], xt: window._GU_getCookie('xt')}, '*');
   } + ')()';
   /* eslint-enable prefer-template */
 
