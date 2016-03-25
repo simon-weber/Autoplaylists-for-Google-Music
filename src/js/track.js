@@ -64,7 +64,7 @@ exports.fields = [
   // It's easier to treat it as an int internally,
   // though it does add some special-casing for datetimes in the view.
   f([24, 'creationDate', Lf.Type.INTEGER], {
-    label: 'creation date',
+    label: 'date added to library',
     explanation: 'eg "two weeks ago".',
     is_datetime: true}),
   f([25, 'lastPlayed', Lf.Type.INTEGER], {
