@@ -49,7 +49,7 @@ for file in src/js-built/*.js*; do
     echo "${file}"
     name="${file}"
     if [[ "${file}" == *.map ]]; then
-        name="chrome-extension://blbompphddfibggfmmfcgjjoadebinem/js-built/${file}"
+        name="chrome-extension://blbompphddfibggfmmfcgjjoadebinem/js-built/$(basename ${file})"
     fi
 
     # Upload a file for the given release.
