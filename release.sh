@@ -47,12 +47,17 @@ echo
 
 for file in src/js-built/*.js*; do
     echo "${file}"
+    name="${file}"
+    if [[ "${file}" == *.map ]]; then
+        name="chrome-extension://blbompphddfibggfmmfcgjjoadebinem/js-built/${file}"
+    fi
+
     # Upload a file for the given release.
     curl "https://app.getsentry.com/api/0/projects/simon-weber/autoplaylists-extension/releases/${version}/files/" \
       -u "${sentry_api_key}": \
       -X POST \
       -F file=@"${file}" \
-      -F name="${file}"
+      -F name="${name}"
     echo
 done
 

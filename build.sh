@@ -4,7 +4,8 @@ rm -f src/js-built/*.js
 
 for f in src/js/*.js; do
     output_path="src/js-built/$(basename $f)"
-    browserify "$f" --debug | exorcist "${output_path}.map" --url "$f.map" > "${output_path}"
+    url="chrome-extension://blbompphddfibggfmmfcgjjoadebinem/js-built/$(basename $f).map"
+    browserify "$f" --debug | exorcist "${output_path}.map" --url "${url}" > "${output_path}"
     printf '.'
 done
 
