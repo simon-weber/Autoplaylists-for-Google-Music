@@ -1,3 +1,9 @@
+## 1.0.7 (March 24, 2016)
+
+Bugfixes:
+
+  - fix syncs failing after a session is open for a long time: [#51](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/51)
+
 ## 1.0.6 (March 20, 2016)
 
 Bugfixes:
