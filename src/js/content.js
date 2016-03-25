@@ -7,6 +7,38 @@ const Reporting = require('./reporting.js');
 
 let userId;
 
+/*
+ * Return a string of javascript that will post a message to us.
+ * isInitial should be true for the very first message, false afterwards.
+ */
+function getInjectCode(isInitial) {
+  const isInitialRepr = isInitial ? 'true' : 'false';
+
+  /* eslint-disable prefer-template */
+  const code = '(' + function inject() {
+    window.postMessage(
+      {isInitial: isInitialRepr,
+        userId: window.USER_ID, tier: window.USER_CONTEXT[13], xt: window._GU_getCookie('xt')}, '*');
+  } + ')()';
+  /* eslint-enable prefer-template */
+
+  // We need to actually get the value of our variable into the string, not a reference to it.
+  return code.replace('isInitialRepr', isInitialRepr);
+}
+
+/*
+ * Inject some javascript (as a string) into the DOM.
+ */
+function injectCode(code) {
+  const script = document.createElement('script');
+  script.textContent = code;
+  (document.head || document.documentElement).appendChild(script);
+  script.parentNode.removeChild(script);
+}
+
+/*
+ * Return a list of jsproto tracks from the local indexedDb.
+ */
 function getGtracks(callback) {
   const dbName = `music_${userId}`;
   const DBOpenRequest = window.indexedDB.open(dbName, 6);
@@ -26,8 +58,8 @@ function getGtracks(callback) {
       const transaction = db.transaction(['tracks'], 'readonly');
       objectStore = transaction.objectStore('tracks');
     } catch (e) {
-      // sometimes the indexeddb just isn't written at all, though
-      // i can't figure out why.
+      // Sometimes the indexeddb just isn't written at all.
+      // This happens for the very first load of Music, and maybe other cases.
       console.error(e);
       Reporting.Raven.captureException(e);
       return callback(null);
@@ -57,22 +89,13 @@ function getGtracks(callback) {
   };
 }
 
-/*
- * Inject some javascript (as a string) into the DOM.
- */
-function injectCode(code) {
-  const script = document.createElement('script');
-  script.textContent = code;
-  (document.head || document.documentElement).appendChild(script);
-  script.parentNode.removeChild(script);
-}
-
 function main() {
   // This only exists in a multi-login session.
   const userIndex = Qs.parse(location.search.substring(1)).u || '0';
 
   // Pull the user id from the page before showing the page action.
   // Since we can't read window here, we inject code, then post a message back.
+
   window.addEventListener('message', event => {
     // We only accept messages from ourselves
     if (event.source !== window) {
@@ -84,40 +107,36 @@ function main() {
     userId = event.data.userId;
     const tier = event.data.tier;
     const xt = event.data.xt;
+    const action = event.data.isInitial ? 'showPageAction' : 'setXsrf';
 
     chrome.runtime.sendMessage({
-      action: 'showPageAction',
-      userId: `${userId}`,
-      userIndex: parseInt(userIndex, 10),
+      action,
       tier,
       xt,
-    });
-
-    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-      console.log('got message', request);
-      if (request.action === 'getLocalTracks') {
-        getGtracks(gtracks => {
-          if (gtracks === null) {
-            console.log('sending null');
-            sendResponse({tracks: null});
-          } else {
-            console.log('sending', gtracks.length);
-            sendResponse({tracks: gtracks.map(Track.fromJsproto)});
-          }
-        });
-      }
-
-      return true;
+      userId: `${userId}`,
+      userIndex: parseInt(userIndex, 10),
     });
   }, false);
 
-  /* eslint-disable prefer-template */
-  const code = '(' + function inject() {
-    window.postMessage({userId: window.USER_ID, tier: window.USER_CONTEXT[13], xt: window._GU_getCookie('xt')}, '*');
-  } + ')()';
-  /* eslint-enable prefer-template */
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    console.log('got message', request);
+    if (request.action === 'getLocalTracks') {
+      getGtracks(gtracks => {
+        if (gtracks === null) {
+          console.log('sending null');
+          sendResponse({tracks: null});
+        } else {
+          console.log('sending', gtracks.length);
+          sendResponse({tracks: gtracks.map(Track.fromJsproto)});
+        }
+      });
+      return true;
+    } else if (request.action === 'getXsrf') {
+      injectCode(getInjectCode(false));
+    }
+  });
 
-  injectCode(code);
+  injectCode(getInjectCode(true));
 }
 
 main();

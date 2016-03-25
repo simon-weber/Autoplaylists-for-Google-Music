@@ -55,8 +55,17 @@ function getPollTimestamp(userId, callback) {
 
 function diffUpdateLibrary(userId, timestamp, callback) {
   // Update our cache with any changes since our last poll.
+  // Callback an object with success = true if we were able to retrieve changes.
 
-  Gm.getTrackChanges(users[userId], timestamp, changes => {
+  const user = users[userId];
+
+  Gm.getTrackChanges(user, timestamp, changes => {
+    if (!changes.success && changes.reloadXsrf) {
+      console.info('request xsrf reload');
+      chrome.tabs.sendMessage(user.tabId, {action: 'getXsrf'});
+      return callback({success: false});
+    }
+
     Trackcache.upsertTracks(dbs[userId], userId, changes.upsertedTracks, () => {
       console.log('done with diff upsert of', changes.upsertedTracks.length);
       Trackcache.deleteTracks(dbs[userId], userId, changes.deletedIds, () => {
@@ -67,7 +76,7 @@ function diffUpdateLibrary(userId, timestamp, callback) {
           setPollTimestamp(userId, changes.newTimestamp);
         }
 
-        callback();
+        callback({success: true});
       });
     });
   });
@@ -80,7 +89,7 @@ function initLibrary(userId) {
   chrome.tabs.sendMessage(users[userId].tabId, message, Chrometools.unlessError(response => {
     if (response.tracks === null || response.tracks.length === 0) {
       // problem with indexeddb, fall back to update from 0.
-      diffUpdateLibrary(userId, 0, () => null);
+      diffUpdateLibrary(userId, 0, diffResponse => null);  // eslint-disable-line no-unused-vars
     } else {
       console.log('got tracks', response.tracks.length);
       Trackcache.upsertTracks(dbs[userId], userId, response.tracks, () => {
@@ -220,26 +229,28 @@ function forceUpdate(userId) {
       return;
     }
 
-    diffUpdateLibrary(userId, timestamp, () => {
-      License.hasFullVersion(false, hasFullVersion => {
-        Storage.getPlaylistsForUser(userId, playlists => {
-          for (let i = 0; i < playlists.length; i++) {
-            if (i > 0 && !hasFullVersion) {
-              console.log('skipping sync of locked playlist', playlists[i].title);
-              continue;
+    diffUpdateLibrary(userId, timestamp, response => {
+      if (response.success) {
+        License.hasFullVersion(false, hasFullVersion => {
+          Storage.getPlaylistsForUser(userId, playlists => {
+            for (let i = 0; i < playlists.length; i++) {
+              if (i > 0 && !hasFullVersion) {
+                console.log('skipping sync of locked playlist', playlists[i].title);
+                continue;
+              }
+              // This locking prevents two things:
+              //   * slow periodic syncs from stepping on later periodic syncs
+              //   * periodic syncs from stepping on manual syncs
+              // which is why it's done at this level (and not around eg syncPlaylist).
+              if (playlistIsUpdating[playlists[i].remoteId]) {
+                console.warn('skipping forceUpdate since playlist is being updated:', playlists[i].title);
+              } else {
+                renameAndSync(playlists[i]);
+              }
             }
-            // This locking prevents two things:
-            //   * slow periodic syncs from stepping on later periodic syncs
-            //   * periodic syncs from stepping on manual syncs
-            // which is why it's done at this level (and not around eg syncPlaylist).
-            if (playlistIsUpdating[playlists[i].remoteId]) {
-              console.warn('skipping forceUpdate since playlist is being updated:', playlists[i].title);
-            } else {
-              renameAndSync(playlists[i]);
-            }
-          }
+          });
         });
-      });
+      }
     });
   });
 }
@@ -283,6 +294,10 @@ function main() {
     // respond to manager / content script requests.
 
     if (request.action === 'forceUpdate') {
+      forceUpdate(request.userId);
+    } else if (request.action === 'setXsrf') {
+      console.info('updating xt:', request);
+      users[request.userId].xt = request.xt;
       forceUpdate(request.userId);
     } else if (request.action === 'showPageAction') {
       if (!(request.userId)) {

@@ -56,7 +56,7 @@ function authedGMRequest(endpoint, data, user, method, callback, onError) {
 }
 
 exports.getTrackChanges = function getTrackChanges(user, sinceTimestamp, callback) {
-  // Callback {newTimestamp: 1234, upsertedTracks: [{}], deletedIds: ['']}
+  // Callback {newTimestamp: 1234, upsertedTracks: [{}], deletedIds: ['']}, or {success: false, ...} on failure.
   // timestamps are in microseconds.
   const payload = {
     lastUpdated: sinceTimestamp,
@@ -67,17 +67,33 @@ exports.getTrackChanges = function getTrackChanges(user, sinceTimestamp, callbac
 
   console.log('getTrackChanges', sinceTimestamp);
 
-  // want arg to window.parent['slat_process']
   authedGMRequest('streamingloadalltracks', payload, user, 'get', response => {
+    // Try to parse a json response first, which is sent for errors.
+    try {
+      const jsonResponse = JSON.parse(response);
+
+      console.warn('received json response from streamingloadalltracks:', jsonResponse);
+
+      if (!(jsonResponse.success === false && jsonResponse.reloadXsrf)) {
+        Reporting.Raven.captureMessage('unexpected json response from streamingloadalltracks', {
+          extra: {jsonResponse},
+        });
+      }
+
+      return callback(jsonResponse);
+    } catch (SyntaxError) {
+      // eslint-disable-line no-empty
+    }
+
+    // Otherwise, parse the javascript from the html response.
     const result = {newTimestamp: null, upsertedTracks: [], deletedIds: []};
 
     const parser = new DOMParser();
     const doc = parser.parseFromString(response, 'application/xml');
 
-    // console.log(doc);
     const scripts = doc.getElementsByTagName('script');
 
-    // console.log(scripts);
+    // want arg to window.parent['slat_process']
     const startMark = '\nwindow.parent[\'slat_process\'](';
     const endMark = '000]';
     for (let i = 0; i < scripts.length; i++) {
@@ -87,20 +103,13 @@ exports.getTrackChanges = function getTrackChanges(user, sinceTimestamp, callbac
         continue;
       }
 
-      // console.log('chunk', i);
-      // console.log('to slice', JSON.stringify(code));
       let end = code.lastIndexOf(endMark);
-
-      // console.log(start, end);
 
       start = start + startMark.length;
       end = end + endMark.length;
       code = code.slice(start, end);
 
-      // console.log('to eval', JSON.stringify(code));
       const parsed = eval(code);
-
-      // console.log(parsed);
 
       // we just want the last chunk's timestamp
       result.newTimestamp = parsed[1];
