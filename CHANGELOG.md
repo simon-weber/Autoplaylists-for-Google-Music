@@ -1,3 +1,9 @@
+## 1.0.8 (March 24, 2016)
+
+Misc:
+
+  - relabel 'creation date' to 'date added to library'
+
 ## 1.0.7 (March 24, 2016)
 
 Bugfixes:
