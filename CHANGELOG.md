@@ -3,6 +3,7 @@
 Misc:
 
   - remove now-unused cookies permissions
+  - improve some error handling and reporting
 
 ## 1.0.8 (March 24, 2016)
 
