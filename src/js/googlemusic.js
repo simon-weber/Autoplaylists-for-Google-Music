@@ -402,7 +402,11 @@ exports.setPlaylistOrder = function setPlaylistOrder(db, user, playlist, callbac
           console.log('no need to reorder playlist', playlist.title);
           callback(null);
         }
-      }, onError);
+      }, e => {
+        // Lovefield seems to send back exceptions that Sentry can't understand.
+        console.error(e);
+        onError(JSON.stringify(e));
+      });
     } else {
       console.log('no need to reorder empty playlist', playlist.title);
       callback(null);
