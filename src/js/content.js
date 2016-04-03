@@ -66,7 +66,16 @@ function getGtracks(callback) {
     }
 
     const gtracks = [];
-    objectStore.openCursor().onsuccess = event2 => {
+    let cursorRequest;
+    try {
+      cursorRequest = objectStore.openCursor();
+    } catch (e) {
+      console.error(e);
+      Reporting.Raven.captureException(e);
+      return callback(null);
+    }
+
+    cursorRequest.onsuccess = event2 => {
       const cursor = event2.target.result;
       if (cursor) {
         const shard = JSON.parse(cursor.value);
@@ -81,7 +90,7 @@ function getGtracks(callback) {
       }
     };
 
-    objectStore.openCursor().onerror = err => {
+    cursorRequest.onerror = err => {
       console.error(err);
       Reporting.Raven.captureException(err);
       return callback(null);
