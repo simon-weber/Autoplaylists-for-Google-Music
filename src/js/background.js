@@ -217,8 +217,12 @@ function forceUpdate(userId) {
   getPollTimestamp(userId, timestamp => {
     if (!(dbIsInit[userId])) {
       console.warn('refusing forceUpdate because db is not init');
+
+      // If we've just started up, this error isn't a big deal.
+      // If we've been running for a while, it is: means we've never been able to pull the library.
       Reporting.Raven.captureMessage('refusing forceUpdate because db is not init', {
         level: 'warning',
+        extra: {timestamp, users, dbIsInit},
       });
       return;
     } else if (!timestamp) {
