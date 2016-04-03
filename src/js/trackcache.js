@@ -133,14 +133,28 @@ function execQuery(db, track, whereClause, playlist, callback, onError) {
 }
 
 exports.queryTracks = function queryTracks(db, playlist, callback) {
-  // Return a list of tracks that should be in the playlist.
+  // Callback a list of tracks that should be in the playlist, or null on problems.
 
   const track = db.getSchema().table('Track');
-  const whereClause = buildWhereClause(track, playlist.rules);
+  let whereClause;
+  try {
+    whereClause = buildWhereClause(track, playlist.rules);
+  } catch (e) {
+    console.error(e);
+    Reporting.Raven.captureException(e, {
+      tags: {playlistId: playlist.remoteId},
+      extra: {playlist},
+    });
+    return callback(null);
+  }
 
   execQuery(db, track, whereClause, playlist, callback, e => {
     console.error(e);
-    Reporting.Raven.captureException(e);
+    Reporting.Raven.captureException(e, {
+      tags: {playlistId: playlist.remoteId},
+      extra: {playlist},
+    });
+    return callback(null);
   });
 };
 

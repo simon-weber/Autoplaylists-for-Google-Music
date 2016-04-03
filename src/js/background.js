@@ -128,6 +128,11 @@ function syncPlaylist(playlist, attempt) {
 
     const db = dbs[playlist.userId];
     Trackcache.queryTracks(db, playlist, tracks => {
+      if (tracks === null) {
+        Reporting.reportSync('failure', 'failed-query');
+        return;
+      }
+
       console.log('lock', playlist.title);
       playlistIsUpdating[playlist.remoteId] = true;
       console.log(playlist.title, 'found', tracks.length);
