@@ -1,3 +1,9 @@
+## 1.0.9 (..., 2016)
+
+Misc:
+
+  - remove now-unused cookies permissions
+
 ## 1.0.8 (March 24, 2016)
 
 Misc:
