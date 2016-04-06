@@ -69,11 +69,23 @@ function escapeForRegex(s) {
 function buildWhereClause(track, rule) {
   // Return a clause for use in a lovefield where() predicate, or null to select all tracks.
   let clause = null;
+  let boolOp = null;
 
-  if ('any' in rule && rule.any.length > 0) {
-    clause = Lf.op.or.apply(Lf.op, rule.any.map(buildWhereClause.bind(undefined, track)));
-  } else if ('all' in rule && rule.all.length > 0) {
-    clause = Lf.op.and.apply(Lf.op, rule.all.map(buildWhereClause.bind(undefined, track)));
+  if ('any' in rule) {
+    boolOp = 'any';
+  } else if ('all' in rule) {
+    boolOp = 'all';
+  }
+
+  if (boolOp !== null) {
+    const subrules = rule[boolOp];
+    const lfOp = boolOp === 'all' ? Lf.op.and : Lf.op.or;
+
+    // We need to handle nulls from recursive calls, as well as empty subrule arrays.
+    const subClauses = subrules.map(buildWhereClause.bind(undefined, track)).filter(c => c !== null);
+    if (subClauses.length > 0) {
+      clause = lfOp.apply(Lf.op, subClauses);
+    }
   } else if ('value' in rule && 'operator' in rule) {
     let value = rule.value;
     let operator = rule.operator;
