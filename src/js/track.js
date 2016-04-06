@@ -17,6 +17,9 @@ function f(requiredItems, optionalItems) {
 
   if (opt.coerce) {
     field.coerce = opt.coerce;
+  } else if (field.type === Lf.Type.STRING) {
+    // Default nulls to the empty string to allow querying.
+    field.coerce = val => val || '';
   } else {
     field.coerce = val => val;
   }
@@ -58,7 +61,6 @@ exports.fields = [
     // coerce nulls to 0; see https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/15.
     coerce: val => val || 0,
   }),
-
   // Lf.Type.DATE_TIME introduces a TypeError on indexing,
   // and lots of serialization headaches without any benefit.
   // It's easier to treat it as an int internally,
