@@ -1,3 +1,10 @@
+## 1.0.10 (April 5, 2016)
+
+Bugfixes:
+
+  - coerce null string fields to the empty string to allow querying: [#52](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/52)
+  - fix playlists with empty subrules
+
 ## 1.0.9 (April 3, 2016)
 
 Misc:
