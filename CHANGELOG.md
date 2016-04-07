@@ -1,3 +1,9 @@
+## 1.1.0 (April 6, 2016)
+
+Features:
+
+  - add a new "rating thumb" field to simplify rating-based playlists: [#53](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/53)
+
 ## 1.0.10 (April 5, 2016)
 
 Bugfixes:
