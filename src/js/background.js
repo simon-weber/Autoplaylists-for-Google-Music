@@ -295,7 +295,10 @@ function main() {
   // Update periodically.
   Storage.getSyncMs(initSyncMs => {
     console.info('sync interval initially', initSyncMs);
-    let syncIntervalId = setInterval(periodicUpdate, initSyncMs);
+    let syncIntervalId = null;
+    if (initSyncMs >= 60 * 1000) {
+      syncIntervalId = setInterval(periodicUpdate, initSyncMs);
+    }
 
     Storage.addSyncMsChangeListener(change => {
       const hasNew = 'newValue' in change;
@@ -306,8 +309,15 @@ function main() {
 
       const syncMs = change.newValue;
       console.info('sync interval changing to', syncMs);
-      clearInterval(syncIntervalId);
-      syncIntervalId = setInterval(periodicUpdate, syncMs);
+
+      if (syncIntervalId !== null) {
+        clearInterval(syncIntervalId);
+      }
+
+      syncIntervalId = null;
+      if (syncMs >= 60 * 1000) {
+        syncIntervalId = setInterval(periodicUpdate, syncMs);
+      }
     });
   });
 

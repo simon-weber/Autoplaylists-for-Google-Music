@@ -97,6 +97,7 @@ function onReady() {
 
   $('#add-playlist').attr('href', `/html/playlist.html?${Qs.stringify({userId})}`);
   $('#import-export').attr('href', `/html/port.html?${Qs.stringify({userId})}`);
+  $('#settings').attr('href', `/html/settings.html?${Qs.stringify({userId})}`);
 
   Storage.getPlaylistsForUser(userId, playlists => {
     initializeForm(userId, playlists);
