@@ -49,7 +49,7 @@ exports.getSyncMs = function getSyncMs(callback) {
   chrome.storage.sync.get('syncMs', Chrometools.unlessError(items => {
     let syncMs = items.syncMs;
 
-    if (!syncMs) {
+    if (syncMs === null) {
       syncMs = 60 * 1000;
       chrome.storage.sync.set({syncMs}, Chrometools.unlessError(() => {
         callback(syncMs);
