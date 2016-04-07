@@ -45,6 +45,41 @@ const MIGRATIONS = [
   migrateToOne,
 ];
 
+exports.getSyncMs = function getSyncMs(callback) {
+  chrome.storage.sync.get('syncMs', Chrometools.unlessError(items => {
+    let syncMs = items.syncMs;
+
+    if (!syncMs) {
+      syncMs = 60 * 1000;
+      chrome.storage.sync.set({syncMs}, Chrometools.unlessError(() => {
+        callback(syncMs);
+      }));
+    } else {
+      callback(syncMs);
+    }
+  }));
+};
+
+exports.setSyncMs = function setSyncMs(syncMs, callback) {
+  const storageItems = {};
+  storageItems.syncMs = syncMs;
+
+  chrome.storage.sync.set(storageItems, Chrometools.unlessError(callback));
+};
+
+exports.addSyncMsChangeListener = function addSyncMsChangeListener(callback) {
+  chrome.storage.onChanged.addListener((changes, namespace) => {
+    if (namespace === 'sync') {
+      for (const key in changes) {
+        if (key === 'syncMs') {
+          callback(changes[key]);
+        }
+      }
+    }
+  });
+};
+
+
 exports.getOrCreateReportingUUID = function getOrCreateReportingUUID(callback) {
   chrome.storage.sync.get('reportingUUID', Chrometools.unlessError(items => {
     let reportingUUID = items.reportingUUID;

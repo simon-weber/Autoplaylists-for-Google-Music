@@ -264,6 +264,13 @@ function forceUpdate(userId) {
   });
 }
 
+function periodicUpdate() {
+  for (const userId in users) {
+    console.log('periodic update for', userId);
+    forceUpdate(userId);
+  }
+}
+
 function main() {
   Storage.addPlaylistChangeListener(change => {
     const hasOld = 'oldValue' in change;
@@ -285,19 +292,30 @@ function main() {
     }
   });
 
+  // Update periodically.
+  Storage.getSyncMs(initSyncMs => {
+    console.info('sync interval initially', initSyncMs);
+    let syncIntervalId = setInterval(periodicUpdate, initSyncMs);
+
+    Storage.addSyncMsChangeListener(change => {
+      const hasNew = 'newValue' in change;
+
+      if (!hasNew) {
+        return;
+      }
+
+      const syncMs = change.newValue;
+      console.info('sync interval changing to', syncMs);
+      clearInterval(syncIntervalId);
+      syncIntervalId = setInterval(periodicUpdate, syncMs);
+    });
+  });
+
   chrome.pageAction.onClicked.addListener(tab => {
     const managerUrl = chrome.extension.getURL('html/playlists.html');
     const qstring = Qs.stringify({userId: userIdForTabId(tab.id)});
     Chrometools.focusOrCreateExtensionTab(`${managerUrl}?${qstring}`);
   });
-
-  // Update periodically.
-  setInterval(() => {
-    for (const userId in users) {
-      console.log('periodic update for', userId);
-      forceUpdate(userId);
-    }
-  }, 60 * 1000);
 
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // respond to manager / content script requests.
