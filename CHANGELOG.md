@@ -1,3 +1,9 @@
+## 1.2.1 (April 7, 2016)
+
+Features:
+
+  - fix a crash when the sync interval was set to 0
+
 ## 1.2.0 (April 7, 2016)
 
 Features:
