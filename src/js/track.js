@@ -14,6 +14,7 @@ function f(requiredItems, optionalItems) {
   field.explanation = opt.explanation || '';
   field.is_datetime = opt.is_datetime || false;
   field.hidden = opt.hidden || false;
+  field.transformation = opt.transformation || null;
 
   if (opt.coerce) {
     field.coerce = opt.coerce;
@@ -57,9 +58,24 @@ exports.fields = [
   f([22, 'playCount', Lf.Type.INTEGER], {
     label: 'play count'}),
   f([23, 'rating', Lf.Type.INTEGER], {
-    explanation: '0: no thumb, 1: down thumb, 5: up thumb; or, values from the old 5-star ratings lab.',
+    explanation: 'an int between 0 and 5 representing the 5-star rating.',
     // coerce nulls to 0; see https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/15.
     coerce: val => val || 0,
+  }),
+  f([23, 'ratingThumb', Lf.Type.STRING], {
+    // This is a synthetic field created by applying a transformation to field number 23 (rating).
+    explanation: 'one of "up", "down", or "none".',
+    label: 'rating thumb',
+    transformation: n => {
+      let thumb = 'none';
+      if (n > 3) {
+        thumb = 'up';
+      } else if (n === 1 || n === 2) {
+        thumb = 'down';
+      }
+
+      return thumb;
+    },
   }),
   // Lf.Type.DATE_TIME introduces a TypeError on indexing,
   // and lots of serialization headaches without any benefit.
@@ -119,7 +135,13 @@ exports.lfToBusinessTypes = lToB;
 exports.fromJsproto = function fromJsproto(jsproto) {
   const track = {};
   exports.fields.forEach(field => {
-    track[field.name] = field.coerce(jsproto[field.protoNum]);
+    let val = field.coerce(jsproto[field.protoNum]);
+
+    if (field.transformation) {
+      val = field.transformation(val);
+    }
+
+    track[field.name] = val;
   });
 
   return track;
