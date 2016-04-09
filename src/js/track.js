@@ -83,11 +83,10 @@ exports.fields = [
   // though it does add some special-casing for datetimes in the view.
   f([24, 'creationDate', Lf.Type.INTEGER], {
     label: 'date added to library',
-    explanation: 'eg "two weeks ago".',
+    explanation: 'eiher a relative datetime like "30 days ago" or an absolute one like "April 1 2016".',
     is_datetime: true}),
   f([25, 'lastPlayed', Lf.Type.INTEGER], {
     label: 'last played',
-    explanation: 'eg "30 days ago" or "yesterday".',
     is_datetime: true}),
   f([26, 'subjectToCuration', Lf.Type.INTEGER], {
     hidden: true,
