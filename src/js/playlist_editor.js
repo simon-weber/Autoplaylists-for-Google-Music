@@ -28,8 +28,8 @@ const operators = {
     {name: 'no-match-insensitive', label: 'does not contain (case ignored)', input_type: 'text'},
   ],
   datetime: [
-    {name: 'lt', label: 'before', input_type: 'text'},
-    {name: 'gt', label: 'after', input_type: 'text'},
+    {name: 'lt', label: 'earlier than', input_type: 'text'},
+    {name: 'gt', label: 'between now and', input_type: 'text'},
   ],
 };
 
