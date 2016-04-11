@@ -1,3 +1,15 @@
+## 1.2.2 (April 10, 2016)
+
+Bugfixes:
+
+  - more accurately detect songs that have never been played: [#55](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/55)
+  - fix another sync interval bug that was preventing syncs: [#60](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/60)
+
+Misc:
+
+  - rename before/after datetime operators for clarity: [#56](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/56)
+  - sync immediately after initialization: [#58](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/58)
+
 ## 1.2.1 (April 7, 2016)
 
 Features:
