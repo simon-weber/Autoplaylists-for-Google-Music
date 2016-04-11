@@ -82,27 +82,6 @@ function diffUpdateLibrary(userId, timestamp, callback) {
   });
 }
 
-function initLibrary(userId) {
-  // Initialize our cache from Google's indexeddb, or fall back to a differential update from time 0.
-
-  const message = {action: 'getLocalTracks', userId};
-  chrome.tabs.sendMessage(users[userId].tabId, message, Chrometools.unlessError(response => {
-    if (response.tracks === null || response.tracks.length === 0) {
-      // problem with indexeddb, fall back to update from 0.
-      diffUpdateLibrary(userId, 0, diffResponse => null);  // eslint-disable-line no-unused-vars
-    } else {
-      console.log('got tracks', response.tracks.length);
-      Trackcache.upsertTracks(dbs[userId], userId, response.tracks, () => {
-        dbIsInit[userId] = true;
-
-        // we don't want to set the poll timestamp here since
-        // the indexeddb is only written on page load.
-        console.log('done with refresh of', response.tracks.length, 'tracks');
-      });
-    }
-  }));
-}
-
 function syncPlaylist(playlist, attempt) {
   // Make Google's playlist match the given one.
 
@@ -270,6 +249,33 @@ function periodicUpdate() {
     forceUpdate(userId);
   }
 }
+
+function initLibrary(userId) {
+  // Initialize our cache from Google's indexeddb, or fall back to a differential update from time 0.
+
+  const message = {action: 'getLocalTracks', userId};
+  chrome.tabs.sendMessage(users[userId].tabId, message, Chrometools.unlessError(response => {
+    if (response.tracks === null || response.tracks.length === 0) {
+      console.warn('local idb not available; falling back to diffUpdate(0)');
+      diffUpdateLibrary(userId, 0, diffResponse => {
+        if (diffResponse.success) {
+          forceUpdate(userId);
+        }
+      });
+    } else {
+      console.log('got tracks', response.tracks.length);
+      Trackcache.upsertTracks(dbs[userId], userId, response.tracks, () => {
+        dbIsInit[userId] = true;
+
+        // we don't want to set the poll timestamp here since
+        // the indexeddb is only written on page load.
+        console.log('found', response.tracks.length, 'tracks locally. syncing now.');
+        forceUpdate(userId);
+      });
+    }
+  }));
+}
+
 
 function main() {
   Storage.addPlaylistChangeListener(change => {
