@@ -2,6 +2,8 @@
 
 const Chrometools = require('./chrometools.js');
 
+const Reporting = require('./reporting.js');
+
 
 function playlistKey(userId, playlistLid) {
   return JSON.stringify(['playlist', userId, playlistLid]);
@@ -49,7 +51,11 @@ exports.getSyncMs = function getSyncMs(callback) {
   chrome.storage.sync.get('syncMs', Chrometools.unlessError(items => {
     let syncMs = items.syncMs;
 
-    if (syncMs === null) {
+    if (!Number.isInteger(syncMs)) {
+      Reporting.Raven.captureMessage('resetting syncMs', {
+        level: 'warning',
+        extra: {syncMs},
+      });
       syncMs = 60 * 1000;
       chrome.storage.sync.set({syncMs}, Chrometools.unlessError(() => {
         callback(syncMs);

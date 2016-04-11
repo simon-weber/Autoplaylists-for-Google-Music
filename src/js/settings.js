@@ -27,7 +27,6 @@ function main() {
     const syncMs = syncMinutes * 1000 * 60;
 
     Storage.setSyncMs(syncMs, () => {
-      console.log('wrote', syncMs);
       Chrometools.goToManager(userId);
     });
   });
