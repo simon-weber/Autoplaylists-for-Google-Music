@@ -4,7 +4,7 @@ const Lf = require('lovefield');
 
 function f(requiredItems, optionalItems) {
   const field = {
-    protoNum: requiredItems[0],
+    protoNum: requiredItems[0],  // null for synthetic fields
     name: requiredItems[1],
     type: requiredItems[2],
   };
@@ -55,18 +55,44 @@ exports.fields = [
   f([21, 'pending', Lf.Type.INTEGER], {
     hidden: true,
   }),
-  f([22, 'playCount', Lf.Type.INTEGER], {
-    label: 'play count'}),
+  f([null, 'playCount', Lf.Type.INTEGER], {
+    label: 'play count',
+    transformation: jsproto => {
+      // Google seems to lose playcounts somtimes, which is particularly bad for the falsely-0 case.
+      // Since lastPlayed seems to be set to a time shortly after creation for never-played tracks,
+      // we can assume those with more recently-played times have been played at least once.
+      // See https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/55#issuecomment-207359467
+      // for more details.
+      let playCount = jsproto[22];
+      const lastPlayed = jsproto[25];
+      const creationDate = jsproto[24];
+
+      // There's nothing scientific to this value.
+      // 3 hours was the value for which I had no more false negatives, doubled just in case.
+      // False positives shouldn't be a big deal: the difference between a track
+      // listened to a few hours after adding and never again is practically never played.
+      // With this value, only about 100 tracks of the ~4k with playCount 0
+      // not incremented to 1.
+      const sixHours = 1000 * 1000 * 60 * 60 * 3 * 2;
+
+      if (playCount === 0 && (lastPlayed - creationDate > sixHours)) {
+        playCount = 1;
+      }
+
+      return playCount;
+    },
+  }),
   f([23, 'rating', Lf.Type.INTEGER], {
     explanation: 'an int between 0 and 5 representing the 5-star rating.',
     // coerce nulls to 0; see https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/15.
     coerce: val => val || 0,
   }),
-  f([23, 'ratingThumb', Lf.Type.STRING], {
+  f([null, 'ratingThumb', Lf.Type.STRING], {
     // This is a synthetic field created by applying a transformation to field number 23 (rating).
     explanation: 'one of "up", "down", or "none".',
     label: 'rating thumb',
-    transformation: n => {
+    transformation: jsproto => {
+      const n = jsproto[23];
       let thumb = 'none';
       if (n > 3) {
         thumb = 'up';
@@ -134,10 +160,11 @@ exports.lfToBusinessTypes = lToB;
 exports.fromJsproto = function fromJsproto(jsproto) {
   const track = {};
   exports.fields.forEach(field => {
-    let val = field.coerce(jsproto[field.protoNum]);
-
-    if (field.transformation) {
-      val = field.transformation(val);
+    let val = null;
+    if (field.protoNum !== null) {
+      val = field.coerce(jsproto[field.protoNum]);
+    } else {
+      val = field.transformation(jsproto);
     }
 
     track[field.name] = val;
