@@ -1,3 +1,9 @@
+## 1.2.3 (April 11, 2016)
+
+Misc:
+
+  - revert the change meant for detecting never-played songs: [#55](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/55)
+
 ## 1.2.2 (April 10, 2016)
 
 Bugfixes:
