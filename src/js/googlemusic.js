@@ -225,7 +225,7 @@ function deleteEntries(user, playlistId, entries, callback, onError) {
   console.log('deleting', entries.length, 'entries. first 5 are', JSON.stringify(entries.slice(0, 5), null, 2));
   const payload = [
     ['', 1],
-    [playlistId, entries.map(entry => entry.entryId), entries.map(entry => entry.id)],
+    [playlistId, entries.map(entry => entry.id), entries.map(entry => entry.entryId)],
   ];
   authedGMRequest('deleteplaylisttrack', payload, user, 'post', response => {
     console.log('delete response', JSON.stringify(response, null, 2));
