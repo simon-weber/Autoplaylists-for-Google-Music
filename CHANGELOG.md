@@ -1,3 +1,9 @@
+## 1.2.4 (April 28, 2016)
+
+Bugfixes:
+
+  - switch to a new Google endpoint for deleting tracks after the old one was suddenly removed: [#65](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/65)
+
 ## 1.2.3 (April 11, 2016)
 
 Misc:
