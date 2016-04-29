@@ -1,3 +1,9 @@
+## 1.2.5 (April 28, 2016)
+
+Bugfixes:
+
+  - actually fix the bugfix from 1.2.4
+
 ## 1.2.4 (April 28, 2016)
 
 Bugfixes:
