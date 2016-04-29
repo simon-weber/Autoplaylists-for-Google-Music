@@ -223,15 +223,11 @@ function addTracks(user, playlistId, tracks, callback, onError) {
 function deleteEntries(user, playlistId, entries, callback, onError) {
   // Delete entries with id and entryId keys; callback the api response.
   console.log('deleting', entries.length, 'entries. first 5 are', JSON.stringify(entries.slice(0, 5), null, 2));
-  const payload = {
-    songIds: entries.map(entry => entry.id),
-
-    entryIds: entries.map(entry => entry.entryId),
-
-    listId: playlistId,
-    sessionId: '',
-  };
-  authedGMRequest('deletesong', payload, user, 'post', response => {
+  const payload = [
+    ['', 1],
+    [playlistId, entries.map(entry => entry.entryId), entries.map(entry => entry.id)],
+  ];
+  authedGMRequest('deleteplaylisttrack', payload, user, 'post', response => {
     console.log('delete response', JSON.stringify(response, null, 2));
     callback(response);
   }, onError);
