@@ -1,8 +1,22 @@
+## 1.3.0 (April 30, 2016)
+
+Features:
+
+  - show all matching tracks when testing: [#62](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/62)
+
+Bugfixes:
+
+  - fix out of date library information on load when using indexeddb: [#66](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/66)
+
+Misc:
+
+  - fix a lot of error reporting involving the local database
+
 ## 1.2.5 (April 28, 2016)
 
 Bugfixes:
 
-  - actually fix the bugfix from 1.2.4
+  - actually fix the bug from 1.2.4
 
 ## 1.2.4 (April 28, 2016)
 
@@ -30,7 +44,7 @@ Misc:
 
 ## 1.2.1 (April 7, 2016)
 
-Features:
+Bugfixes:
 
   - fix a crash when the sync interval was set to 0
 
