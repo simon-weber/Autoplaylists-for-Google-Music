@@ -46,3 +46,33 @@ exports.toString = function toString(playlist) {
 
   return `${ruleToString(playlist.rules)} sort by ${sorts}`;
 };
+
+function involvedFieldNames(rule) {
+  // Return an object mapping field names to true for any fields involved in this rule.
+  const fieldNames = {};
+
+
+  if (rule.name) {
+    fieldNames[rule.name] = true;
+  } else if (rule.all || rule.any) {
+    const subRules = rule.all || rule.any;
+    const allSubFieldNames = subRules.map(involvedFieldNames);
+
+    for (let i = 0; i < allSubFieldNames.length; i++) {
+      for (const fieldName in allSubFieldNames[i]) {
+        fieldNames[fieldName] = true;
+      }
+    }
+  }
+  return fieldNames;
+}
+
+exports.involvedFields = function involvedFields(playlist) {
+  // Return an object mapping field names to true for any fields involved in this playlist.
+  const fieldNames = involvedFieldNames(playlist.rules);
+  for (let i = 0; i < playlist.sorts.length; i++) {
+    fieldNames[playlist.sorts[i].sortBy] = true;
+  }
+
+  return fieldNames;
+};

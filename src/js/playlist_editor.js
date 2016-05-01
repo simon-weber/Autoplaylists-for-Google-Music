@@ -2,8 +2,10 @@
 
 const Qs = require('qs');
 const Sortable = require('sortablejs');
+require('jquery-modal');
 
 const Chrometools = require('./chrometools.js');
+const Playlist = require('./playlist.js');
 const Storage = require('./storage.js');
 const Track = require('./track.js');
 require('./reporting.js');
@@ -198,16 +200,41 @@ function initializeForm(userId, playlistId, isLocked) {
     // When testing, show the total number of matched tracks.
     playlist.limit = null;
 
-    $('#query-result').text('');
     chrome.runtime.sendMessage({action: 'query', playlist}, response => {
-      const matchedNote = `Matched ${response.tracks.length} tracks.`;
-      let trackDetails = '';
+      const columnNames = new Set();
+      columnNames.add('title');
+      columnNames.add('artist');
+      columnNames.add('album');
 
-      if (response.tracks.length > 0) {
-        trackDetails = `The first was:\n${Track.toString(response.tracks[0])}`;
+
+      for (const fieldName in Playlist.involvedFields(playlist)) {
+        columnNames.add(fieldName);
       }
 
-      $('#query-result').text(`${matchedNote}\n${trackDetails}`);
+      const columns = [];
+      const datetimeRender = val => new Date(val / 1000).toLocaleString();
+      for (const name of columnNames) {
+        const field = Track.fieldsByName[name];
+        const column = {data: name, title: field.label};
+        if (field.is_datetime) {
+          column.render = datetimeRender;
+        }
+        columns.push(column);
+      }
+
+      if ($.fn.DataTable.isDataTable('#query-result')) {
+        // option destroy: true does not work when changing the number of columns,
+        // so clear the table and the dom manually.
+        $('#query-result').dataTable().fnDestroy();
+        $('#query-result').empty();
+      }
+
+      $('#query-result').DataTable({ // eslint-disable-line new-cap
+        data: response.tracks,
+        columns,
+        aaSorting: [],
+      });
+      $('#query-modal').modal();
     });
   });
 
