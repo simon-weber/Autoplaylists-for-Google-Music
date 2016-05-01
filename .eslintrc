@@ -21,6 +21,7 @@
         "no-eval": 0,
         "object-curly-spacing": 0,
         "max-len": [2, 119, 4, {"ignoreComments": true}],
-        "no-alert": 0
+        "no-alert": 0,
+        "no-use-before-define": [2, "nofunc"]
     }
 }

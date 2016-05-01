@@ -37,64 +37,78 @@ function injectCode(code) {
 }
 
 /*
- * Return a list of jsproto tracks from the local indexedDb.
+ * Callback an object with tracks (a list of jsproto tracks)
+ * and timestamp keys from the local indexedDb.
+ * Either may be null.
  */
-function getGtracks(callback) {
+function queryIDB(callback) {
   const dbName = `music_${userId}`;
   const DBOpenRequest = window.indexedDB.open(dbName, 6);
 
   DBOpenRequest.onerror = err => {
     console.error('could not open db', err);
     Reporting.Raven.captureException(err);
-    return callback(null);
+    callback(null);
   };
 
   DBOpenRequest.onsuccess = event => { // eslint-disable-line no-unused-vars
-    console.log('opened');
     const db = DBOpenRequest.result;
 
-    let objectStore = null;
     try {
-      const transaction = db.transaction(['tracks'], 'readonly');
-      objectStore = transaction.objectStore('tracks');
+      const transaction = db.transaction(['tracks', 'info'], 'readonly');
+      queryInfo(transaction.objectStore('info'), timestamp => {
+        queryTracks(transaction.objectStore('tracks'), tracks => {
+          callback({timestamp, tracks});
+        });
+      });
     } catch (e) {
       // Sometimes the indexeddb just isn't written at all.
       // This happens for the very first load of Music, and maybe other cases.
       console.error(e);
       Reporting.Raven.captureException(e);
-      return callback(null);
+      callback(null);
     }
+  };
+}
 
-    const gtracks = [];
-    let cursorRequest;
-    try {
-      cursorRequest = objectStore.openCursor();
-    } catch (e) {
-      console.error(e);
-      Reporting.Raven.captureException(e);
-      return callback(null);
-    }
+// Callback the timestamp from the info object store, or null.
+function queryInfo(infoStore, callback) {
+  const infoRequest = infoStore.get('sync_token');
 
-    cursorRequest.onsuccess = event2 => {
-      const cursor = event2.target.result;
-      if (cursor) {
-        const shard = JSON.parse(cursor.value);
-        for (const id in shard) {
-          gtracks.push(shard[id]);
-        }
+  infoRequest.onerror = err => {
+    console.error(err);
+    Reporting.Raven.captureException(err);
+    callback(null);
+  };
 
-        cursor.continue();
-      } else {
-        console.log('all done');
-        callback(gtracks);
+  infoRequest.onsuccess = event => {
+    callback(event.target.result);
+  };
+}
+
+// Callback a list of jsproto tracks from the tracks object store, or null.
+function queryTracks(tracksStore, callback) {
+  const gtracks = [];
+  const tracksRequest = tracksStore.openCursor();
+
+  tracksRequest.onerror = err => {
+    console.error(err);
+    Reporting.Raven.captureException(err);
+    callback(null);
+  };
+
+  tracksRequest.onsuccess = event => {
+    const cursor = event.target.result;
+    if (cursor) {
+      const shard = JSON.parse(cursor.value);
+      for (const id in shard) {
+        gtracks.push(shard[id]);
       }
-    };
 
-    cursorRequest.onerror = err => {
-      console.error(err);
-      Reporting.Raven.captureException(err);
-      return callback(null);
-    };
+      cursor.continue();
+    } else {
+      callback(gtracks);
+    }
   };
 }
 
@@ -130,14 +144,12 @@ function main() {
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('got message', request);
     if (request.action === 'getLocalTracks') {
-      getGtracks(gtracks => {
-        if (gtracks === null) {
-          console.log('sending null');
-          sendResponse({tracks: null});
-        } else {
-          console.log('sending', gtracks.length);
-          sendResponse({tracks: gtracks.map(Track.fromJsproto)});
+      queryIDB(result => {
+        if (result.tracks !== null) {
+          result.tracks = result.tracks.map(Track.fromJsproto); // eslint-disable-line no-param-reassign
         }
+
+        sendResponse(result);
       });
       return true;
     } else if (request.action === 'getXsrf') {

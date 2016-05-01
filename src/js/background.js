@@ -255,22 +255,21 @@ function initLibrary(userId) {
 
   const message = {action: 'getLocalTracks', userId};
   chrome.tabs.sendMessage(users[userId].tabId, message, Chrometools.unlessError(response => {
-    if (response.tracks === null || response.tracks.length === 0) {
-      console.warn('local idb not available; falling back to diffUpdate(0)');
+    if (response.tracks === null || response.tracks.length === 0 || response.timestamp === null) {
+      console.warn('local idb not helpful; falling back to diffUpdate(0). response:', response);
       diffUpdateLibrary(userId, 0, diffResponse => {
         if (diffResponse.success) {
           forceUpdate(userId);
         }
       });
     } else {
-      console.log('got tracks', response.tracks.length);
+      console.log('got idb tracks:', response.tracks.length);
       Trackcache.upsertTracks(dbs[userId], userId, response.tracks, () => {
-        dbIsInit[userId] = true;
-
-        // we don't want to set the poll timestamp here since
-        // the indexeddb is only written on page load.
-        console.log('found', response.tracks.length, 'tracks locally. syncing now.');
-        forceUpdate(userId);
+        diffUpdateLibrary(userId, response.timestamp, diffResponse => {
+          if (diffResponse.success) {
+            forceUpdate(userId);
+          }
+        });
       });
     }
   }));
