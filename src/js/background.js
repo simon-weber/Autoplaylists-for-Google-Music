@@ -135,14 +135,6 @@ function syncPlaylist(playlist, attempt) {
           } else {
             Reporting.reportSync('failure', 'gave-up');
             console.warn('giving up on syncPlaylist!', response);
-            /*
-            // doesn't give much information beyond what GA tracks.
-            Reporting.Raven.captureMessage('gave up on syncing', {
-              level: 'warning',
-              tags: {playlistId: playlist.remoteId},
-              extra: {playlist},
-            });
-            */
             // Never has the need for promises been so clear.
             Gm.setPlaylistOrder(db, user, playlist, orderResponse => {
               console.log('reorder response', orderResponse);
@@ -151,9 +143,9 @@ function syncPlaylist(playlist, attempt) {
             }, err => {
               Reporting.reportSync('failure', 'failed-reorder');
               console.error('failed to reorder playlist', playlist.title, err);
-              Reporting.Raven.captureException(err, {
+              Reporting.Raven.captureMessage('sync setPlaylistOrder', {
                 tags: {playlistId: playlist.remoteId},
-                extra: {playlist},
+                extra: {playlist, err},
               });
               console.log('unlock', playlist.title);
               playlistIsUpdating[playlist.remoteId] = false;
@@ -168,9 +160,9 @@ function syncPlaylist(playlist, attempt) {
           }, err => {
             Reporting.reportSync('failure', 'failed-reorder');
             console.error('failed to reorder playlist', playlist.title, err);
-            Reporting.Raven.captureException(err, {
+            Reporting.Raven.captureMessage('sync setPlaylistOrder', {
               tags: {playlistId: playlist.remoteId},
-              extra: {playlist},
+              extra: {playlist, err},
             });
             console.log('unlock', playlist.title);
             playlistIsUpdating[playlist.remoteId] = false;
@@ -179,9 +171,9 @@ function syncPlaylist(playlist, attempt) {
       }, err => {
         Reporting.reportSync('failure', 'failed-set');
         console.error('failed to sync playlist', playlist.title, err);
-        Reporting.Raven.captureException(err, {
+        Reporting.Raven.captureMessage('sync setPlaylistContents', {
           tags: {playlistId: playlist.remoteId},
-          extra: {playlist},
+          extra: {playlist, err},
         });
         console.log('unlock', playlist.title);
         playlistIsUpdating[playlist.remoteId] = false;

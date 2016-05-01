@@ -338,9 +338,9 @@ exports.setPlaylistContents = function setPlaylistContents(db, user, playlistId,
           }
         }).catch(e => {
           console.error(e);
-          Reporting.Raven.captureMessage(JSON.stringify(e), {
+          Reporting.Raven.captureMessage('setplaylistcontents.select', {
             tags: {playlistId},
-            extra: {deleteCandidates, deleteCandidateIds, tracksToAdd},
+            extra: {e, deleteCandidates, deleteCandidateIds, tracksToAdd},
           });
         });
       } else {
@@ -399,9 +399,8 @@ exports.setPlaylistOrder = function setPlaylistOrder(db, user, playlist, callbac
           callback(null);
         }
       }, e => {
-        // Lovefield seems to send back exceptions that Sentry can't understand.
         console.error(e);
-        onError(JSON.stringify(e));
+        onError(e);
       });
     } else {
       console.log('no need to reorder empty playlist', playlist.title);

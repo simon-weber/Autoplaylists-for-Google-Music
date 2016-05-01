@@ -47,7 +47,9 @@ function queryIDB(callback) {
 
   DBOpenRequest.onerror = err => {
     console.error('could not open db', err);
-    Reporting.Raven.captureException(err);
+    Reporting.Raven.captureMessage('DBOpenRequest.onerror', {
+      extra: {err},
+    });
     callback(null);
   };
 
@@ -77,7 +79,9 @@ function queryInfo(infoStore, callback) {
 
   infoRequest.onerror = err => {
     console.error(err);
-    Reporting.Raven.captureException(err);
+    Reporting.Raven.captureMessage('infoRequest.onerror', {
+      extra: {err},
+    });
     callback(null);
   };
 
@@ -93,7 +97,9 @@ function queryTracks(tracksStore, callback) {
 
   tracksRequest.onerror = err => {
     console.error(err);
-    Reporting.Raven.captureException(err);
+    Reporting.Raven.captureMessage('tracksRequest.onerror', {
+      extra: {err},
+    });
     callback(null);
   };
 

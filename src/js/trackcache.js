@@ -28,9 +28,11 @@ exports.openDb = function openDb(userId, callback) {
 
   schemaBuilder.connect({storeType: Lf.schema.DataStoreType.MEMORY})
   .then(callback)
-  .catch(e => {
-    console.error(e);
-    Reporting.Raven.captureException(e);
+  .catch(err => {
+    console.error(err);
+    Reporting.Raven.captureMessage('schemaBuilder.connect', {
+      extra: {err},
+    });
   });
 };
 
@@ -44,9 +46,11 @@ exports.upsertTracks = function upsertTracks(db, userId, tracks, callback) {
 
   return db.insertOrReplace().into(track).values(rows).exec()
   .then(callback)
-  .catch(e => {
-    console.error(e);
-    Reporting.Raven.captureException(e);
+  .catch(err => {
+    console.error(err);
+    Reporting.Raven.captureMessage('db.insertOrReplace', {
+      extra: {err},
+    });
   });
 };
 
@@ -54,9 +58,11 @@ exports.deleteTracks = function deleteTracks(db, userId, trackIds, callback) {
   const track = db.getSchema().table('Track');
   db.delete().from(track).where(track.id.in(trackIds)).exec()
   .then(callback)
-  .catch(e => {
-    console.error(e);
-    Reporting.Raven.captureException(e);
+  .catch(err => {
+    console.error(err);
+    Reporting.Raven.captureMessage('db.delete', {
+      extra: {err},
+    });
   });
 };
 
@@ -160,11 +166,11 @@ exports.queryTracks = function queryTracks(db, playlist, callback) {
     return callback(null);
   }
 
-  execQuery(db, track, whereClause, playlist, callback, e => {
-    console.error(e);
-    Reporting.Raven.captureException(e, {
+  execQuery(db, track, whereClause, playlist, callback, err => {
+    console.error(err);
+    Reporting.Raven.captureMessage('execQuery', {
       tags: {playlistId: playlist.remoteId},
-      extra: {playlist},
+      extra: {playlist, err},
     });
     return callback(null);
   });
