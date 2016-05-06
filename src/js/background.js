@@ -59,9 +59,21 @@ function diffUpdateLibrary(userId, timestamp, callback) {
   const user = users[userId];
 
   Gm.getTrackChanges(user, timestamp, changes => {
-    if (!changes.success && changes.reloadXsrf) {
-      console.info('request xsrf reload');
-      chrome.tabs.sendMessage(user.tabId, {action: 'getXsrf'});
+    if (!changes.success) {
+      if (changes.reloadXsrf) {
+        console.info('request xsrf reload');
+        chrome.tabs.sendMessage(user.tabId, {action: 'getXsrf'});
+      } else if (changes.unauthed) {
+        console.info('unauthed; removing user', user);
+        delete users[userId];
+        delete dbs[userId];
+        delete dbIsInit[userId];
+      } else {
+        console.error('unexpected getTrackChanges response', changes);
+        Reporting.Raven.captureMessage('unexpected getTrackChanges response', {
+          extra: {changes, timestamp},
+        });
+      }
       return callback({success: false});
     }
 

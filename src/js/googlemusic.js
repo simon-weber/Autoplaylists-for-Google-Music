@@ -34,7 +34,7 @@ function authedGMRequest(endpoint, data, user, method, callback, onError) {
   let ajaxOnError = onError;
   if (typeof onError === 'undefined') {
     ajaxOnError = res => {
-      console.error('request to failed:', url, data, res);
+      console.error('request failed:', url, data, res);
       Reporting.Raven.captureMessage(`request to ${endpoint} failed`, {
         extra: {url, data, res},
       });
@@ -125,6 +125,14 @@ exports.getTrackChanges = function getTrackChanges(user, sinceTimestamp, callbac
       console.log(parsed[0].length, 'tracks');
     }
 
+    result.success = true;
+    console.log(result);
+    callback(result);
+  }, ajaxError => {
+    const result = {success: false};
+    if (ajaxError.status === 403) {
+      result.unauthed = true;
+    }
     console.log(result);
     callback(result);
   });
