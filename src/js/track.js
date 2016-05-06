@@ -1,5 +1,6 @@
-
 const Lf = require('lovefield');
+
+const Reporting = require('./reporting.js');
 
 function f(requiredItems, optionalItems) {
   const field = {
@@ -17,7 +18,7 @@ function f(requiredItems, optionalItems) {
 
   if (opt.coerce) {
     field.coerce = opt.coerce;
-  } else if (field.type === Lf.Type.STRING && field.transformation === null) {
+  } else if (field.type === Lf.Type.STRING) {
     // Default nulls to the empty string to allow querying, and strip extra whitespace.
     field.coerce = val => (val || '').trim();
   } else {
@@ -65,6 +66,7 @@ exports.fields = [
     // This is a synthetic field created by applying a transformation to field number 23 (rating).
     explanation: 'one of "up", "down", or "none".',
     label: 'rating thumb',
+    coerce: val => val || 0,
     transformation: n => {
       let thumb = 'none';
       if (n > 3) {
@@ -133,7 +135,16 @@ exports.lfToBusinessTypes = lToB;
 exports.fromJsproto = function fromJsproto(jsproto) {
   const track = {};
   exports.fields.forEach(field => {
-    let val = field.coerce(jsproto[field.protoNum]);
+    let val = jsproto[field.protoNum];
+
+    try {
+      val = field.coerce(val);
+    } catch (e) {
+      console.error('error coercing', field.protoNum, jsproto[field.protoNum]);
+      Reporting.Raven.captureException(e, {
+        extra: {jsproto, field, val},
+      });
+    }
 
     if (field.transformation) {
       val = field.transformation(val);
