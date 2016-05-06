@@ -6,7 +6,8 @@
       "__DEVELOPMENT__": true,
       "analytics": true,
       "require": true,
-      "exports": true
+      "exports": true,
+      "Set": true
     },
     "env": {
        "browser": true,
