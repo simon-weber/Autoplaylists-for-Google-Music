@@ -1,4 +1,3 @@
-
 const Qs = require('qs');
 const Sortable = require('sortablejs');
 require('jquery-modal');
@@ -8,31 +7,6 @@ const Playlist = require('./playlist.js');
 const Storage = require('./storage.js');
 const Track = require('./track.js');
 require('./reporting.js');
-
-const operators = {
-  numeric: [
-    {name: 'eq', label: 'equals', input_type: 'numeric'},
-    {name: 'neq', label: "doesn't equal", input_type: 'numeric'},
-    {name: 'lt', label: 'less than', input_type: 'numeric'},
-    {name: 'lte', label: 'less than or equal', input_type: 'numeric'},
-    {name: 'gt', label: 'greater than', input_type: 'numeric'},
-    {name: 'gte', label: 'greater than or equal', input_type: 'numeric'},
-  ],
-  string: [
-    {name: 'eq', label: 'equals', input_type: 'text'},
-    {name: 'eq-insensitive', label: 'equals (case ignored)', input_type: 'text'},
-    {name: 'neq', label: "doesn't equal", input_type: 'text'},
-    {name: 'neq-insensitive', label: "doesn't equal (case ignored)", input_type: 'text'},
-    {name: 'match', label: 'contains', input_type: 'text'},
-    {name: 'match-insensitive', label: 'contains (case ignored)', input_type: 'text'},
-    {name: 'no-match', label: 'does not contain', input_type: 'text'},
-    {name: 'no-match-insensitive', label: 'does not contain (case ignored)', input_type: 'text'},
-  ],
-  datetime: [
-    {name: 'lt', label: 'earlier than', input_type: 'text'},
-    {name: 'gt', label: 'between now and', input_type: 'text'},
-  ],
-};
 
 
 const sortedFields = Track.fields.filter(e => !e.hidden);
@@ -59,7 +33,7 @@ function getRulesData() {
   return {
     variables,
     actions: [],
-    variable_type_operators: operators,
+    variable_type_operators: Track.operators,
   };
 }
 

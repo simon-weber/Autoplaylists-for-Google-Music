@@ -1,3 +1,4 @@
+const Track = require('./track.js');
 
 // playlist fields:
 //   * localId: id in our extension sync data
@@ -8,13 +9,15 @@
 //   * sorts: [{sortBy, sortByOrder}]
 //   * limit
 
-// FIXME: these strings are exposed to the user, so they should use labels instead of direct field names.
-
 function ruleToString(rule) {
   // Return a string representation of a rule, parenthesised if necessary
   if (rule.name) {
-    const operators = {eq: '=', neq: '≠', lt: '<', lte: '≤', gt: '>', gte: '≥', match: 'matches'};
-    return `${rule.name} ${operators[rule.operator] || rule.operator} ${rule.value}`;
+    const field = Track.fieldsByName[rule.name];
+    // FIXME this is duplicated in playlist_editor
+    const type = field.is_datetime ? 'datetime' : Track.lfToBusinessTypes[field.type];
+    const operators = Track.operators[type];
+    const operator = operators.filter(o => o.name === rule.operator)[0];
+    return `${field.label} ${operator.label} ${JSON.stringify(rule.value)}`;
   } else if (rule.all || rule.any) {
     const subRules = rule.all || rule.any;
     if (subRules.length === 1) {
