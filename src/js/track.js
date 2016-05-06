@@ -19,8 +19,8 @@ function f(requiredItems, optionalItems) {
   if (opt.coerce) {
     field.coerce = opt.coerce;
   } else if (field.type === Lf.Type.STRING) {
-    // Default nulls to the empty string to allow querying.
-    field.coerce = val => val || '';
+    // Default nulls to the empty string to allow querying, and strip extra whitespace.
+    field.coerce = val => (val || '').trim();
   } else {
     field.coerce = val => val;
   }
