@@ -1,4 +1,3 @@
-'use strict';
 
 const Raven = require('raven-js');
 

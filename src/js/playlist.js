@@ -1,4 +1,3 @@
-'use strict';
 
 // playlist fields:
 //   * localId: id in our extension sync data

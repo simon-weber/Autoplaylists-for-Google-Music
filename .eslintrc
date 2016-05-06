@@ -4,7 +4,9 @@
       "chrome": true,
       "$": true,
       "__DEVELOPMENT__": true,
-      "analytics": true
+      "analytics": true,
+      "require": true,
+      "exports": true
     },
     "env": {
        "browser": true,
@@ -22,6 +24,15 @@
         "object-curly-spacing": 0,
         "max-len": [2, 119, 4, {"ignoreComments": true}],
         "no-alert": 0,
-        "no-use-before-define": [2, "nofunc"]
+        "no-use-before-define": [2, "nofunc"],
+        "no-restricted-syntax": [
+          2,
+          "DebuggerStatement",
+          "LabeledStatement",
+          "WithStatement",
+        ],
+        "no-underscore-dangle": 0,
+        "prefer-rest-params": 0,
+        "consistent-return": 0
     }
 }

@@ -1,4 +1,3 @@
-'use strict';
 
 const Qs = require('qs');
 const Sortable = require('sortablejs');

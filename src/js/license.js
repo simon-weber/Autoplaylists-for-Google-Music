@@ -1,4 +1,3 @@
-'use strict';
 
 const Chrometools = require('./chrometools.js');
 
