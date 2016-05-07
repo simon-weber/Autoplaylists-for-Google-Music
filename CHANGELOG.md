@@ -1,3 +1,14 @@
+## 1.4.0 (May 6, 2016)
+
+Features:
+
+  - strip extra whitespace from strings, improving matching: [#68](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/68)
+  - improve playlist descriptions: [#59](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/59)
+
+Bugfixes:
+
+  - stop syncing when users become deauthed
+
 ## 1.3.0 (April 30, 2016)
 
 Features:
