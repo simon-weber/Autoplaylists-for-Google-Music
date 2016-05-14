@@ -17,11 +17,11 @@ const users = {};
 // {userId: <lovefield db>}
 const dbs = {};
 
-// {userId: <bool>}
-const dbIsInit = {};
-
 // {playlistId: <bool>}, locks playlists during some updates
 const playlistIsUpdating = {};
+
+// {userId: <timestamp>}
+const pollTimestamps = {};
 
 function userIdForTabId(tabId) {
   for (const userId in users) {
@@ -31,28 +31,7 @@ function userIdForTabId(tabId) {
   }
 }
 
-function timestampKey(userId) {
-  return `lastPoll-${userId}`;
-}
-
-function setPollTimestamp(userId, timestamp) {
-  const storageItems = {};
-  storageItems[timestampKey(userId)] = timestamp;
-  chrome.storage.local.set(storageItems, Chrometools.unlessError(() => {
-    console.log('set poll for', userId, timestamp);
-  }));
-}
-
-function getPollTimestamp(userId, callback) {
-  const key = timestampKey(userId);
-  chrome.storage.local.get(key, Chrometools.unlessError(items => {
-    const timestamp = items[key];
-    console.log('get poll for', userId, timestamp);
-    callback(timestamp);
-  }));
-}
-
-function diffUpdateLibrary(userId, timestamp, callback) {
+function diffUpdateLibrary(userId, db, timestamp, callback) {
   // Update our cache with any changes since our last poll.
   // Callback an object with success = true if we were able to retrieve changes.
 
@@ -67,7 +46,7 @@ function diffUpdateLibrary(userId, timestamp, callback) {
         console.info('unauthed; removing user', user);
         delete users[userId];
         delete dbs[userId];
-        delete dbIsInit[userId];
+        delete pollTimestamps[userId];
       } else {
         console.error('unexpected getTrackChanges response', changes);
         Reporting.Raven.captureMessage('unexpected getTrackChanges response', {
@@ -77,14 +56,15 @@ function diffUpdateLibrary(userId, timestamp, callback) {
       return callback({success: false});
     }
 
-    Trackcache.upsertTracks(dbs[userId], userId, changes.upsertedTracks, () => {
+    Trackcache.upsertTracks(db, userId, changes.upsertedTracks, () => {
       console.log('done with diff upsert of', changes.upsertedTracks.length);
-      Trackcache.deleteTracks(dbs[userId], userId, changes.deletedIds, () => {
+      Trackcache.deleteTracks(db, userId, changes.deletedIds, () => {
         console.log('done with diff delete of', changes.deletedIds.length);
-        dbIsInit[userId] = true;
 
         if (changes.newTimestamp) {
-          setPollTimestamp(userId, changes.newTimestamp);
+          pollTimestamps[userId] = changes.newTimestamp;
+        } else {
+          pollTimestamps[userId] = timestamp;
         }
 
         callback({success: true});
@@ -201,81 +181,101 @@ function renameAndSync(playlist) {
 }
 
 function forceUpdate(userId) {
-  getPollTimestamp(userId, timestamp => {
-    if (!(dbIsInit[userId])) {
-      console.warn('refusing forceUpdate because db is not init');
+  const db = dbs[userId];
+  const timestamp = pollTimestamps[userId];
 
-      // If we've just started up, this error isn't a big deal.
-      // If we've been running for a while, it is: means we've never been able to pull the library.
-      Reporting.Raven.captureMessage('refusing forceUpdate because db is not init', {
-        level: 'warning',
-        extra: {timestamp, users, dbIsInit},
-      });
-      return;
-    } else if (!timestamp) {
-      console.warn('db was init, but no timestamp found');
-      Reporting.Raven.captureMessage('db was init, but no timestamp found', {
-        level: 'warning',
-      });
-      return;
-    }
+  if (!db) {
+    console.warn('refusing forceUpdate because db is not init');
 
-    diffUpdateLibrary(userId, timestamp, response => {
-      if (response.success) {
-        License.hasFullVersion(false, hasFullVersion => {
-          Storage.getPlaylistsForUser(userId, playlists => {
-            for (let i = 0; i < playlists.length; i++) {
-              if (i > 0 && !hasFullVersion) {
-                console.log('skipping sync of locked playlist', playlists[i].title);
-                continue;
-              }
-              // This locking prevents two things:
-              //   * slow periodic syncs from stepping on later periodic syncs
-              //   * periodic syncs from stepping on manual syncs
-              // which is why it's done at this level (and not around eg syncPlaylist).
-              if (playlistIsUpdating[playlists[i].remoteId]) {
-                console.warn('skipping forceUpdate since playlist is being updated:', playlists[i].title);
-              } else {
-                renameAndSync(playlists[i]);
-              }
-            }
-          });
-        });
-      }
+    Reporting.Raven.captureMessage('refusing forceUpdate because db is not init', {
+      level: 'warning',
+      extra: {timestamp, users},
     });
+    return;
+  } else if (!timestamp) {
+    console.warn('invalid poll timestamp', timestamp);
+    Reporting.Raven.captureMessage('invalid poll timestamp', {
+      level: 'warning',
+      tags: {invalidTimestamp: timestamp},
+    });
+    return;
+  }
+
+  diffUpdateLibrary(userId, db, timestamp, response => {
+    if (response.success) {
+      License.hasFullVersion(false, hasFullVersion => {
+        Storage.getPlaylistsForUser(userId, playlists => {
+          for (let i = 0; i < playlists.length; i++) {
+            if (i > 0 && !hasFullVersion) {
+              console.log('skipping sync of locked playlist', playlists[i].title);
+              continue;
+            }
+            // This locking prevents two things:
+            //   * slow periodic syncs from stepping on later periodic syncs
+            //   * periodic syncs from stepping on manual syncs
+            // which is why it's done at this level (and not around eg syncPlaylist).
+            if (playlistIsUpdating[playlists[i].remoteId]) {
+              console.warn('skipping forceUpdate since playlist is being updated:', playlists[i].title);
+            } else {
+              renameAndSync(playlists[i]);
+            }
+          }
+        });
+      });
+    }
   });
 }
 
 function periodicUpdate() {
   for (const userId in users) {
     console.log('periodic update for', userId);
-    forceUpdate(userId);
+    if (dbs[userId]) {
+      forceUpdate(userId);
+    } else {
+      initLibrary(userId);
+    }
   }
 }
 
 function initLibrary(userId) {
   // Initialize our cache from Google's indexeddb, or fall back to a differential update from time 0.
-
-  const message = {action: 'getLocalTracks', userId};
-  chrome.tabs.sendMessage(users[userId].tabId, message, Chrometools.unlessError(response => {
-    if (response.tracks === null || response.tracks.length === 0 || response.timestamp === null) {
-      console.warn('local idb not helpful; falling back to diffUpdate(0). response:', response);
-      diffUpdateLibrary(userId, 0, diffResponse => {
-        if (diffResponse.success) {
-          forceUpdate(userId);
-        }
-      });
-    } else {
-      console.log('got idb tracks:', response.tracks.length);
-      Trackcache.upsertTracks(dbs[userId], userId, response.tracks, () => {
-        diffUpdateLibrary(userId, response.timestamp, diffResponse => {
+  Trackcache.openDb(userId, db => {
+    const message = {action: 'getLocalTracks', userId};
+    chrome.tabs.sendMessage(users[userId].tabId, message, Chrometools.unlessError(response => {
+      if (response === null || response.tracks === null ||
+          response.tracks.length === 0 || response.timestamp === null) {
+        console.warn('local idb not helpful; falling back to diffUpdate(0). response:', response);
+        diffUpdateLibrary(userId, db, 0, diffResponse => {
           if (diffResponse.success) {
+            dbs[userId] = db;
             forceUpdate(userId);
+          } else {
+            console.warn('failed to init library after diffupdate fallback');
+            Reporting.Raven.captureMessage('failed to init library', {
+              extra: {response},
+              tags: {hadToFallback: true},
+            });
           }
         });
-      });
-    }
-  }));
+      } else {
+        console.log('got idb tracks:', response.tracks.length);
+        Trackcache.upsertTracks(db, userId, response.tracks, () => {
+          diffUpdateLibrary(userId, db, response.timestamp, diffResponse => {
+            if (diffResponse.success) {
+              dbs[userId] = db;
+              forceUpdate(userId);
+            } else {
+              console.warn('failed to init library after successful idb read');
+              Reporting.Raven.captureMessage('failed to init library', {
+                extra: {response},
+                tags: {hadToFallback: false},
+              });
+            }
+          });
+        });
+      }
+    }));
+  });
 }
 
 
@@ -355,22 +355,6 @@ function main() {
         return false;
       }
 
-      if (!(request.userId in dbs)) {
-        // init the db.
-        Trackcache.openDb(request.userId, db => {
-          // TODO there's a race condition here between poll timestamp reads and
-          // writes if users manage to forceUpdate before this write finishes.
-          // that seems super unlikely so i haven't addressed it yet.
-          setPollTimestamp(request.userId, new Date().getTime() * 1000);
-          console.log('opened');
-          dbs[request.userId] = db;
-
-          // indexeddb is super slow.
-          // much faster to use memory store and refresh on load.
-          initLibrary(request.userId);
-        });
-      }
-
       // In the case that an existing tab/index was changed to a new user,
       // remove the old entry.
       for (const userId in users) {
@@ -387,6 +371,9 @@ function main() {
       // FIXME store this in sync storage and include it in context?
       // That'd mean we wouldn't get it immediately, though, so maybe this is better.
       Reporting.Raven.setTagsContext({tier: request.tier});
+
+      // init the db regardless of whether it already exists.
+      initLibrary(request.userId);
 
       chrome.pageAction.show(sender.tab.id);
     } else if (request.action === 'query') {

@@ -153,7 +153,7 @@ function main() {
     console.log('got message', request);
     if (request.action === 'getLocalTracks') {
       queryIDB(result => {
-        if (result.tracks !== null) {
+        if (result !== null && result.tracks !== null) {
           result.tracks = result.tracks.map(Track.fromJsproto); // eslint-disable-line no-param-reassign
         }
 

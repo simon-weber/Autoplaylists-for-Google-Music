@@ -6,7 +6,19 @@ const Track = require('./track.js');
 
 const Reporting = require('./reporting.js');
 
+// {userId: <lovefield db>}
+// lovefield docs say to avoid multiple calls to connect, even with a close in between.
+// so, dbs are treated like singletons.
+const _dbs = {};
+
+// Return a lovefield db for this user.
+// Will always return the same reference for a user on multiple calls.
 exports.openDb = function openDb(userId, callback) {
+  if (_dbs[userId]) {
+    callback(_dbs[userId]);
+    return;
+  }
+
   console.log('opening...');
   const schemaBuilder = Lf.schema.create(`ltracks_${userId}`, 1);
 
@@ -26,7 +38,10 @@ exports.openDb = function openDb(userId, callback) {
   });
 
   schemaBuilder.connect({storeType: Lf.schema.DataStoreType.MEMORY})
-  .then(callback)
+  .then(db => {
+    _dbs[userId] = db;
+    callback(db);
+  })
   .catch(err => {
     console.error(err);
     Reporting.Raven.captureMessage('schemaBuilder.connect', {
