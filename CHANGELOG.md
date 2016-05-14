@@ -1,3 +1,10 @@
+## 1.4.1 (May 14, 2016)
+
+Bugfixes:
+
+  - fix library init bugs for users missing a local indexeddb
+  - better handle unauthed states
+
 ## 1.4.0 (May 6, 2016)
 
 Features:
