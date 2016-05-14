@@ -132,6 +132,11 @@ exports.getTrackChanges = function getTrackChanges(user, sinceTimestamp, callbac
     const result = {success: false};
     if (ajaxError.status === 403) {
       result.unauthed = true;
+    } else {
+      console.error('unexpected streamingload response', ajaxError);
+      Reporting.Raven.captureMessage('unexpected streamingload response', {
+        extra: {ajaxError, payload, user},
+      });
     }
     console.log(result);
     callback(result);
