@@ -34,6 +34,7 @@
         ],
         "no-underscore-dangle": 0,
         "prefer-rest-params": 0,
-        "consistent-return": 0
+        "consistent-return": 0,
+        "newline-per-chained-call": 0
     }
 }
