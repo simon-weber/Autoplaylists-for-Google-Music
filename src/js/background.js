@@ -196,7 +196,7 @@ function forceUpdate(userId) {
     console.warn('invalid poll timestamp', timestamp);
     Reporting.Raven.captureMessage('invalid poll timestamp', {
       level: 'warning',
-      tags: {invalidTimestamp: timestamp},
+      extra: {timestamp, users},
     });
     return;
   }
