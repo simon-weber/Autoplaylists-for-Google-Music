@@ -7,17 +7,20 @@ const Reporting = require('./reporting.js');
 let userId;
 
 /*
- * Return a string of javascript that will post a message to us.
+ * Return a string of javascript that will post a message to us if the user is authenticated.
  * isInitial should be true for the very first message, false afterwards.
  */
 function getInjectCode(isInitial) {
   const isInitialRepr = isInitial ? 'true' : 'false';
 
+  // context[12] is the email for authenticated users.
   /* eslint-disable prefer-template */
   const code = '(' + function inject() {
-    window.postMessage(
-      {isInitial: isInitialRepr,
-        userId: window.USER_ID, tier: window.USER_CONTEXT[13], xt: window._GU_getCookie('xt')}, '*');
+    if (window.USER_CONTEXT[12] !== '') {
+      window.postMessage(
+        {isInitial: isInitialRepr,
+          userId: window.USER_ID, tier: window.USER_CONTEXT[13], xt: window._GU_getCookie('xt')}, '*');
+    }
   } + ')()';
   /* eslint-enable prefer-template */
 
