@@ -139,8 +139,8 @@ exports.fields = [
     hidden: true,
     is_datetime: true,
   }),
-  f([37, 'albumPlaybackimestamp', Lf.Type.INTEGER], {
-    hidden: true,
+  f([37, 'albumPlaybackTimestamp', Lf.Type.INTEGER], {
+    label: 'last played (entire album)',
     is_datetime: true,
   }),
   f([38, 'explicitType', Lf.Type.INTEGER], {
