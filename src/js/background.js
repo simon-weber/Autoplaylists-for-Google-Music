@@ -381,6 +381,17 @@ function main() {
         sendResponse({tracks});
       });
       return true; // wait for async response
+    } else if (request.action === 'debugQuery') {
+      const query = eval(request.query);
+
+      query.exec()
+      .then(rows => {
+        sendResponse({tracks: rows});
+      })
+      .catch(e => {
+        console.warn(JSON.stringify(e));
+      });
+      return true;
     } else if (request.action === 'getContext') {
       Context.get(sendResponse);
       return true;

@@ -115,7 +115,8 @@ exports.fields = [
   f([24, 'creationDate', Lf.Type.INTEGER], {
     label: 'date added to library',
     explanation: 'eiher a relative datetime like "30 days ago" or an absolute one like "April 1 2016".',
-    is_datetime: true}),
+    is_datetime: true,
+  }),
   /*
   // This could be readded as something like "last played or modified" if it's useful.
   f([25, 'lastPlayed', Lf.Type.INTEGER], {
@@ -136,9 +137,11 @@ exports.fields = [
   f([34, 'bitrate', Lf.Type.INTEGER]),
   f([35, 'recentTimestamp', Lf.Type.INTEGER], {
     hidden: true,
+    is_datetime: true,
   }),
-  f([37, 'albumPlaylistTimestamp', Lf.Type.INTEGER], {
+  f([37, 'albumPlaybackimestamp', Lf.Type.INTEGER], {
     hidden: true,
+    is_datetime: true,
   }),
   f([38, 'explicitType', Lf.Type.INTEGER], {
     hidden: true,
@@ -154,7 +157,8 @@ exports.fields = [
   }),
   f([48, 'lastPlayed', Lf.Type.INTEGER], {
     label: 'last played',
-    is_datetime: true}),
+    is_datetime: true,
+  }),
 ];
 
 exports.fieldsByName = exports.fields.reduce((obj, x) => {
