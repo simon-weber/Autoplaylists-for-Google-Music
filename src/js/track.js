@@ -48,6 +48,9 @@ function f(requiredItems, optionalItems) {
   } else if (field.type === Lf.Type.STRING) {
     // Default nulls to the empty string to allow querying, and strip extra whitespace.
     field.coerce = val => (val || '').trim();
+  } else if (field.is_datetime) {
+    // Default nulls to 0 to allow querying.
+    field.coerce = val => (val || 0);
   } else {
     field.coerce = val => val;
   }
@@ -113,9 +116,12 @@ exports.fields = [
     label: 'date added to library',
     explanation: 'eiher a relative datetime like "30 days ago" or an absolute one like "April 1 2016".',
     is_datetime: true}),
+  /*
+  // This could be readded as something like "last played or modified" if it's useful.
   f([25, 'lastPlayed', Lf.Type.INTEGER], {
     label: 'last played',
     is_datetime: true}),
+   */
   f([26, 'subjectToCuration', Lf.Type.INTEGER], {
     hidden: true,
   }),
@@ -146,6 +152,9 @@ exports.fields = [
   f([43, 'playlistEntryId', Lf.Type.STRING], {
     hidden: true,
   }),
+  f([48, 'lastPlayed', Lf.Type.INTEGER], {
+    label: 'last played',
+    is_datetime: true}),
 ];
 
 exports.fieldsByName = exports.fields.reduce((obj, x) => {
