@@ -63,7 +63,12 @@ function diffUpdateLibrary(userId, db, timestamp, callback) {
 
         if (changes.newTimestamp) {
           pollTimestamps[userId] = changes.newTimestamp;
+        } else if (timestamp === 0) {
+          // if we're updating from 0 and didn't get a new timestamp, we want to avoid updating from 0 again.
+          // so, use the current time minus a minute to avoid race conditions from when the sync started.
+          pollTimestamps[userId] = (new Date().getTime() * 1000) - (60 * 1000);
         } else {
+          // The safest option is to just use the same timestamp again next time, since we can't race that way.
           pollTimestamps[userId] = timestamp;
         }
 
@@ -182,19 +187,12 @@ function renameAndSync(playlist) {
 
 function forceUpdate(userId) {
   const db = dbs[userId];
-  const timestamp = pollTimestamps[userId];
+  const timestamp = pollTimestamps[userId] || 0;
 
   if (!db) {
     console.warn('refusing forceUpdate because db is not init');
 
     Reporting.Raven.captureMessage('refusing forceUpdate because db is not init', {
-      level: 'warning',
-      extra: {timestamp, users},
-    });
-    return;
-  } else if (!timestamp) {
-    console.warn('invalid poll timestamp', timestamp);
-    Reporting.Raven.captureMessage('invalid poll timestamp', {
       level: 'warning',
       extra: {timestamp, users},
     });
