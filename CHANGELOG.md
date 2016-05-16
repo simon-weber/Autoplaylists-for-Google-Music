@@ -1,3 +1,14 @@
+## 1.5.0 (May 16, 2016)
+
+Features:
+
+  - add "last played (album)" field
+
+Bugfixes:
+
+  - use a more accurate field for "last played", avoiding false positives when tracks are edited: [#8](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/8)
+  - fix a rare problem with syncing
+
 ## 1.4.1 (May 14, 2016)
 
 Bugfixes:
