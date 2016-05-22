@@ -29,9 +29,7 @@ exports.reportSync = function reportSync(action, label) {
   } else {
     let sync = analytics.EventBuilder.builder()
     .category('sync')
-    .action(action)
-    .dimension(1, cachedContext.hasFullVersion ? 'full' : 'free')
-    .dimension(2, cachedContext.isDeveloper ? 'yes' : 'no');
+    .action(action);
 
     if (arguments.length === 2) {
       sync = sync.label(label);
@@ -50,6 +48,8 @@ function setContext(isBackground, context) {
   cachedContext = context;
 
   GATracker.set('userId', context.reportingUUID);
+  GATracker.set('dimension1', cachedContext.hasFullVersion ? 'full' : 'free');
+  GATracker.set('dimension2', cachedContext.isDeveloper ? 'yes' : 'no');
 
   Raven.setUserContext(context.user);
   context.tags.isBackground = isBackground; // eslint-disable-line no-param-reassign
