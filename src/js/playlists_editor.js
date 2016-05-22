@@ -3,7 +3,7 @@ const Qs = require('qs');
 
 const Storage = require('./storage.js');
 const License = require('./license.js');
-require('./reporting.js');
+const Reporting = require('./reporting.js');
 
 // TODO push lengthy ops into the background script
 
@@ -104,6 +104,7 @@ function onReady() {
 }
 
 function main() {
+  Reporting.reportHit('playlists_editor.js');
   $(onReady);
 }
 

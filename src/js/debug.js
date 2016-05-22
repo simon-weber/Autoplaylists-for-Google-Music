@@ -1,7 +1,7 @@
 require('jquery-modal');
 
 const Track = require('./track.js');
-require('./reporting.js');
+const Reporting = require('./reporting.js');
 
 
 const sortedFields = Track.fields.slice();
@@ -13,6 +13,7 @@ function compareByLabel(a, b) {
 sortedFields.sort(compareByLabel);
 
 function main() {
+  Reporting.reportHit('debug.js');
   $('#submit').click(e => {
     e.preventDefault();
 

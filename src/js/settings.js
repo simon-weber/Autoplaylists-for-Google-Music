@@ -3,8 +3,10 @@ const Qs = require('qs');
 
 const Chrometools = require('./chrometools.js');
 const Storage = require('./storage.js');
+const Reporting = require('./reporting.js');
 
 function main() {
+  Reporting.reportHit('settings.js');
   const userId = Qs.parse(location.search.substring(1)).userId;
 
   Storage.getSyncMs(syncMs => {

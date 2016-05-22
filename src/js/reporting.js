@@ -1,4 +1,3 @@
-
 const Raven = require('raven-js');
 
 const Context = require('./context.js');
@@ -25,7 +24,7 @@ exports.reportSync = function reportSync(action, label) {
 
   if (!cachedContext) {
     // setContext should make this available very quickly after loading.
-    setTimeout(reportSync, 5000);
+    setTimeout(reportSync, 1000, action, label);
   } else {
     let sync = analytics.EventBuilder.builder()
     .category('sync')
@@ -36,6 +35,14 @@ exports.reportSync = function reportSync(action, label) {
     }
 
     GATracker.send(sync);
+  }
+};
+
+exports.reportHit = function reportHit(view) {
+  if (!cachedContext) {
+    setTimeout(reportHit, 1000, view);
+  } else {
+    GATracker.sendAppView(view);
   }
 };
 

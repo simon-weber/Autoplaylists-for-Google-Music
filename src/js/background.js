@@ -343,6 +343,7 @@ function main() {
       users[request.userId].xt = request.xt;
       forceUpdate(request.userId);
     } else if (request.action === 'showPageAction') {
+      Reporting.reportHit('showPageAction');
       if (!(request.userId)) {
         console.warn('received falsey user id from page action');
         Reporting.Raven.captureMessage('received falsey user id from page action', {
@@ -401,6 +402,8 @@ function main() {
       });
     }
   });
+
+  Reporting.reportHit('load');
 }
 
 Storage.handleMigrations(main);

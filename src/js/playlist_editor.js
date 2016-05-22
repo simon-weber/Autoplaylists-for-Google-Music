@@ -6,7 +6,7 @@ const Chrometools = require('./chrometools.js');
 const Playlist = require('./playlist.js');
 const Storage = require('./storage.js');
 const Track = require('./track.js');
-require('./reporting.js');
+const Reporting = require('./reporting.js');
 
 
 const sortedFields = Track.fields.filter(e => !e.hidden);
@@ -234,6 +234,7 @@ function initializeForm(userId, playlistId, isLocked) {
 }
 
 function main() {
+  Reporting.reportHit('playlist_editor.js');
   const qstring = Qs.parse(location.search.substring(1));
   initializeForm(qstring.userId, qstring.id, qstring.locked === 'true');
 }

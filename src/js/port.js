@@ -3,6 +3,7 @@ const Qs = require('qs');
 
 const Chrometools = require('./chrometools.js');
 const Storage = require('./storage.js');
+const Reporting = require('./reporting.js');
 
 let userId = null;
 let eventPlaylists = null;
@@ -38,6 +39,7 @@ function onDrop(event) {
 }
 
 function main() {
+  Reporting.reportHit('port.js');
   userId = Qs.parse(location.search.substring(1)).userId;
   const $target = $('#drag-target')[0];
 
