@@ -1,3 +1,10 @@
+## 1.5.1 (May 22, 2016)
+
+Misc:
+
+  - link the new announcement mailing list: https://groups.google.com/forum/#!forum/autoplaylists-for-google-music-announcements
+  - minor Google Analytics changes
+
 ## 1.5.0 (May 16, 2016)
 
 Features:
