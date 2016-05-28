@@ -1,3 +1,4 @@
+'use strict';
 const Track = require('./track.js');
 
 // playlist fields:

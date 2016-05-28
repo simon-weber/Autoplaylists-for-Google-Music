@@ -1,3 +1,4 @@
+'use strict';
 
 const Lf = require('lovefield');
 require('sugar'); // monkeypatches Date

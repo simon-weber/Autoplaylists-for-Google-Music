@@ -1,3 +1,4 @@
+'use strict';
 
 const Reporting = require('./reporting.js');
 

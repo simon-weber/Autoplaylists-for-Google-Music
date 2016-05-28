@@ -1,3 +1,4 @@
+'use strict';
 
 const Lf = require('lovefield');
 const Qs = require('qs');

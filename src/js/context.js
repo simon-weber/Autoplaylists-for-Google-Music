@@ -1,3 +1,4 @@
+'use strict';
 
 const License = require('./license.js');
 const Storage = require('./storage.js');

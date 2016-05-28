@@ -1,3 +1,4 @@
+'use strict';
 const Raven = require('raven-js');
 
 const Context = require('./context.js');

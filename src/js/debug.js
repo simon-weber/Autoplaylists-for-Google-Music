@@ -1,3 +1,4 @@
+'use strict';
 require('jquery-modal');
 
 const Track = require('./track.js');
