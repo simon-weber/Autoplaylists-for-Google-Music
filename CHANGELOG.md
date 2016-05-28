@@ -1,3 +1,9 @@
+## 1.5.2 (May 28, 2016)
+
+Bugfixes:
+
+  - fix a problem preventing the extension from loading in older versions of chrome: [#74](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/74)
+
 ## 1.5.1 (May 22, 2016)
 
 Misc:
