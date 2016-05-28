@@ -17,6 +17,9 @@
     "ecmaFeatures": {
        "modules": false
     },
+    parserOptions: {
+        sourceType: "script"
+    },
     "rules": {
         "no-console": 0,
         "strict": [2, "global"],
