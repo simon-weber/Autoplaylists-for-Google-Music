@@ -344,7 +344,6 @@ function main() {
       users[request.userId].xt = request.xt;
       forceUpdate(request.userId);
     } else if (request.action === 'showPageAction') {
-      Reporting.reportHit('showPageAction');
       if (!(request.userId)) {
         console.warn('received falsey user id from page action');
         Reporting.Raven.captureMessage('received falsey user id from page action', {
@@ -367,13 +366,16 @@ function main() {
       users[request.userId] = {userIndex: request.userIndex, tabId: sender.tab.id, xt: request.xt};
       console.log('see user', request.userId, users);
       License.hasFullVersion(false, hasFullVersion => { console.log('precached license status:', hasFullVersion); });
-      Storage.getPlaylistsForUser(request.userId, playlists => {
-        Reporting.reportPlaylists(playlists.length);
-      });
 
       // FIXME store this in sync storage and include it in context?
       // That'd mean we wouldn't get it immediately, though, so maybe this is better.
       Reporting.Raven.setTagsContext({tier: request.tier});
+      Reporting.GATracker.set('dimension3', request.tier);
+      Reporting.reportHit('showPageAction');
+
+      Storage.getPlaylistsForUser(request.userId, playlists => {
+        Reporting.reportPlaylists(playlists.length);
+      });
 
       // init the db regardless of whether it already exists.
       initLibrary(request.userId);
