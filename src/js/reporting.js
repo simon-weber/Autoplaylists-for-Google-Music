@@ -47,6 +47,17 @@ exports.reportHit = function reportHit(view) {
   }
 };
 
+exports.reportPlaylists = function reportPlaylists(numPlaylists) {
+  if (!cachedContext) {
+    setTimeout(reportPlaylists, 1000, numPlaylists);
+  } else {
+    const playlists = analytics.EventBuilder.builder()
+    .metric({index: 1, value: numPlaylists});
+
+    GATracker.send(playlists);
+  }
+};
+
 
 // FIXME there's a race between doing reporting and setting the context.
 // It won't be attached for very early messages.

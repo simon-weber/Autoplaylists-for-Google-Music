@@ -367,6 +367,9 @@ function main() {
       users[request.userId] = {userIndex: request.userIndex, tabId: sender.tab.id, xt: request.xt};
       console.log('see user', request.userId, users);
       License.hasFullVersion(false, hasFullVersion => { console.log('precached license status:', hasFullVersion); });
+      Storage.getPlaylistsForUser(request.userId, playlists => {
+        Reporting.reportPlaylists(playlists.length);
+      });
 
       // FIXME store this in sync storage and include it in context?
       // That'd mean we wouldn't get it immediately, though, so maybe this is better.
