@@ -1,3 +1,9 @@
+## 1.5.3 (May 29, 2016)
+
+Misc:
+
+  - minor GA changes
+
 ## 1.5.2 (May 28, 2016)
 
 Bugfixes:
