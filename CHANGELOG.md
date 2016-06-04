@@ -1,3 +1,9 @@
+## 1.6.0 (June 4, 2016)
+
+Misc:
+
+  - prompt users with no playlists to create one
+
 ## 1.5.3 (May 29, 2016)
 
 Misc:
