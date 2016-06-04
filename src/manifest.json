@@ -36,6 +36,7 @@
         "*://play.google.com/music/*",
         "https://www.googleapis.com/",
         "https://www.google-analytics.com/",
+        "notifications",
         "identity",
         "identity.email",
         "storage"

@@ -334,6 +334,19 @@ function main() {
     Chrometools.focusOrCreateExtensionTab(`${managerUrl}?${qstring}`);
   });
 
+  chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
+    if (notificationId === 'zeroPlaylists') {
+      chrome.tabs.create({url: 'https://autoplaylists.simon.codes/#usage'});
+      chrome.notifications.clear(notificationId);
+      Reporting.reportHit('zeroPlaylistsHelpButton');
+    } else {
+      Reporting.Raven.captureMessage('unknown notificationId button click', {
+        level: 'warning',
+        extra: {notificationId, buttonIndex, users},
+      });
+    }
+  });
+
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // respond to manager / content script requests.
 
@@ -373,14 +386,24 @@ function main() {
       Reporting.GATracker.set('dimension3', request.tier);
       Reporting.reportHit('showPageAction');
 
-      Storage.getPlaylistsForUser(request.userId, playlists => {
-        Reporting.reportPlaylists(playlists.length);
-      });
-
       // init the db regardless of whether it already exists.
       initLibrary(request.userId);
 
       chrome.pageAction.show(sender.tab.id);
+
+      Storage.getPlaylistsForUser(request.userId, playlists => {
+        Reporting.reportPlaylists(playlists.length);
+        if (playlists.length === 0) {
+          chrome.notifications.create('zeroPlaylists', {
+            type: 'basic',
+            title: 'Create your first autoplaylist!',
+            message: "To get started, click the extension's page action (to the right of the url bar).",
+            iconUrl: 'icon-128.png',
+            buttons: [{title: "Click here if you don't see the page action.", iconUrl: 'question_mark.svg'}],
+          });
+          Reporting.reportHit('zeroPlaylistsNotification');
+        }
+      });
     } else if (request.action === 'query') {
       Trackcache.queryTracks(dbs[request.playlist.userId], request.playlist, tracks => {
         sendResponse({tracks});
