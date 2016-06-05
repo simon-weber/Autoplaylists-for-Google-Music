@@ -393,7 +393,6 @@ function main() {
       chrome.pageAction.show(sender.tab.id);
 
       Storage.getPlaylistsForUser(request.userId, playlists => {
-        Reporting.reportPlaylists(playlists.length);
         if (playlists.length === 0) {
           chrome.notifications.create('zeroPlaylists', {
             type: 'basic',

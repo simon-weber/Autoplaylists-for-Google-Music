@@ -147,6 +147,8 @@ exports.getPlaylistsForUser = function getPlaylistsForUser(userId, callback) {
       }
     }
 
+    Reporting.GATracker.set('dimension4', playlists.length);
+
     callback(playlists);
   }));
 };
