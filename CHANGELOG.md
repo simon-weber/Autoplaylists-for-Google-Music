@@ -1,3 +1,10 @@
+## 1.6.1 (June 5, 2016)
+
+Misc:
+
+  - clear notification on page action click
+  - minor GA changes
+
 ## 1.6.0 (June 4, 2016)
 
 Misc:
