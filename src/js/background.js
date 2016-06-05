@@ -332,6 +332,7 @@ function main() {
     const managerUrl = chrome.extension.getURL('html/playlists.html');
     const qstring = Qs.stringify({userId: userIdForTabId(tab.id)});
     Chrometools.focusOrCreateExtensionTab(`${managerUrl}?${qstring}`);
+    chrome.notifications.clear('zeroPlaylists');
   });
 
   chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
