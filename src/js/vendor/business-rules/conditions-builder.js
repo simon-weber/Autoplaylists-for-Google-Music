@@ -230,7 +230,7 @@
         var options = fieldSelect.find("> :selected").data("options");
         for(var i=0; i < options.length; i++) {
           var opt = options[i];
-          select.append($("<option>", {"text": opt, "value": opt}));
+          select.append($("<option>", {"text": opt.label, "value": opt.value}));
         }
         $this.after(select);
         break;

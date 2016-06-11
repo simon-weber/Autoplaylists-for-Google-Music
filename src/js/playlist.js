@@ -12,7 +12,9 @@ const Track = require('./track.js');
 
 function ruleToString(rule) {
   // Return a string representation of a rule, parenthesised if necessary
-  if (rule.name) {
+  if (rule.name === 'playlist') {
+    return `${rule.name} ${rule.operator} ${JSON.stringify(rule.value)}`;
+  } else if (rule.name) {
     const field = Track.fieldsByName[rule.name];
     // FIXME this is duplicated in playlist_editor
     const type = field.is_datetime ? 'datetime' : Track.lfToBusinessTypes[field.type];
@@ -55,7 +57,7 @@ function involvedFieldNames(rule) {
   const fieldNames = {};
 
 
-  if (rule.name) {
+  if (rule.name && rule.name !== 'playlist') {
     fieldNames[rule.name] = true;
   } else if (rule.all || rule.any) {
     const subRules = rule.all || rule.any;
@@ -78,4 +80,39 @@ exports.involvedFields = function involvedFields(playlist) {
   }
 
   return fieldNames;
+};
+
+function deleteReferences(localId, rules) {
+  let newRules;
+
+  if (Array.isArray(rules)) {
+    newRules = [];
+    for (let i = 0; i < rules.length; i++) {
+      const rule = rules[i];
+      if (!('name' in rule)) {
+        // Recurse on compound rules.
+        newRules.push(deleteReferences(localId, rule));
+      } else if (rule.name !== 'playlist' || rule.value !== localId) {
+        // Keep all atomic rules other than those matching the localId.
+        newRules.push(rule);
+      }
+    }
+  } else if (rules.all) {
+    /* eslint-disable no-param-reassign */
+    rules.all = deleteReferences(localId, rules.all);
+    newRules = rules;
+  } else {
+    rules.any = deleteReferences(localId, rules.any);
+    newRules = rules;
+    /* eslint-enable no-param-reassign */
+  }
+
+  return newRules;
+}
+
+exports.deleteAllReferences = function deleteAllReferences(localId, playlists) {
+  for (let i = 0; i < playlists.length; i++) {
+    const playlist = playlists[i];
+    playlist.rules = deleteReferences(localId, playlist.rules);
+  }
 };

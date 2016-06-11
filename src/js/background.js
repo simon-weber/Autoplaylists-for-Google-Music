@@ -5,6 +5,7 @@ const Qs = require('qs');
 const Chrometools = require('./chrometools.js');
 const Gm = require('./googlemusic.js');
 const License = require('./license.js');
+const Playlist = require('./playlist.js');
 const Storage = require('./storage.js');
 const Trackcache = require('./trackcache.js');
 const Context = require('./context.js');
@@ -286,6 +287,13 @@ function main() {
     if (hasOld && !hasNew) {
       // deletion
       Gm.deleteRemotePlaylist(users[change.oldValue.userId], change.oldValue.remoteId, () => null);
+
+      Storage.getPlaylistsForUser(change.oldValue.userId, playlists => {
+        Playlist.deleteAllReferences(change.oldValue.localId, playlists);
+        for (let i = 0; i < playlists.length; i++) {
+          Storage.savePlaylist(playlists[i], () => {});
+        }
+      });
     } else if (hasOld && hasNew) {
       // update
       if (change.oldValue.title !== change.newValue.title) {

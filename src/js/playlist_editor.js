@@ -18,7 +18,7 @@ function compareByLabel(a, b) {
 }
 sortedFields.sort(compareByLabel);
 
-function getRulesData() {
+function getRulesData(playlists) {
   const variables = [];
   sortedFields.forEach(field => {
     variables.push({
@@ -27,6 +27,19 @@ function getRulesData() {
       field_type: field.is_datetime ? 'datetime' : Track.lfToBusinessTypes[field.type],
       options: [],
     });
+  });
+
+  const playlistOptions = [];
+  for (let i = 0; i < playlists.length; i++) {
+    const playlist = playlists[i];
+    playlistOptions.push({label: playlist.title, value: playlist.localId});
+  }
+
+  variables.push({
+    name: 'playlist',
+    label: 'playlist',
+    field_type: 'select',
+    options: playlistOptions,
   });
 
   variables.sort(compareByLabel);
@@ -82,8 +95,8 @@ function parseSorts($sorts) {
   return sorts;
 }
 
-function initializeForm(userId, playlistId, isLocked) {
-  const initConditions = getRulesData();
+function initializeForm(userId, playlistId, isLocked, playlists) {
+  const initConditions = getRulesData(playlists);
   let initialPlaylist = null;
   const $conditions = $('#conditions');
 
@@ -237,7 +250,10 @@ function initializeForm(userId, playlistId, isLocked) {
 function main() {
   Reporting.reportHit('playlist_editor.js');
   const qstring = Qs.parse(location.search.substring(1));
-  initializeForm(qstring.userId, qstring.id, qstring.locked === 'true');
+
+  Storage.getPlaylistsForUser(qstring.userId, playlists => {
+    initializeForm(qstring.userId, qstring.id, qstring.locked === 'true', playlists);
+  });
 }
 
 $(main);

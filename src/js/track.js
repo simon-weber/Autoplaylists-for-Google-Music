@@ -28,6 +28,10 @@ exports.operators = {
     {name: 'lt', label: 'earlier than', input_type: 'text'},
     {name: 'gt', label: 'between now and', input_type: 'text'},
   ],
+  select: [
+    {label: 'is equal to', name: 'equalTo', input_type: 'select'},
+    {label: 'is not equal to', name: 'notEqualTo', input_type: 'select'},
+  ],
 };
 
 function f(requiredItems, optionalItems) {

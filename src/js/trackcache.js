@@ -4,6 +4,7 @@ const Lf = require('lovefield');
 require('sugar'); // monkeypatches Date
 
 const Track = require('./track.js');
+const Storage = require('./storage.js');
 
 const Reporting = require('./reporting.js');
 
@@ -87,7 +88,7 @@ function escapeForRegex(s) {
   return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 }
 
-function buildWhereClause(track, rule) {
+function buildWhereClause(track, playlistsById, seenIds, rule) {
   // Return a clause for use in a lovefield where() predicate, or null to select all tracks.
   let clause = null;
   let boolOp = null;
@@ -103,7 +104,10 @@ function buildWhereClause(track, rule) {
     const lfOp = boolOp === 'all' ? Lf.op.and : Lf.op.or;
 
     // We need to handle nulls from recursive calls, as well as empty subrule arrays.
-    const subClauses = subrules.map(buildWhereClause.bind(undefined, track)).filter(c => c !== null);
+    const subClauses = subrules
+    .map(buildWhereClause.bind(undefined, track, playlistsById, seenIds))
+    .filter(c => c !== null);
+
     if (subClauses.length > 0) {
       clause = lfOp.apply(Lf.op, subClauses);
     }
@@ -111,32 +115,45 @@ function buildWhereClause(track, rule) {
     let value = rule.value;
     let operator = rule.operator;
 
-    if (Track.fieldsByName[rule.name].is_datetime) {
-      value = Date.create(rule.value).getTime() * 1000;
-    }
+    if (rule.name === 'playlist') {
+      const linkedRules = playlistsById[rule.value].rules;
+      if (seenIds.has(rule.value)) {
+        console.warn('refusing to recurse into a cycle with', rule.value, seenIds);
+      } else {
+        seenIds.add(rule.value);
+        clause = buildWhereClause(track, playlistsById, seenIds, linkedRules);
+        if (rule.operator === 'notEqualTo') {
+          clause = Lf.op.not(clause);
+        }
+      }
+    } else {
+      if (Track.fieldsByName[rule.name].is_datetime) {
+        value = Date.create(rule.value).getTime() * 1000;
+      }
 
-    if (rule.operator === 'match-insensitive') {
-      operator = 'match';
-      value = new RegExp(escapeForRegex(value), 'i');
-    } else if (rule.operator === 'no-match') {
-      operator = 'match';
-      // Negative lookahead on each character.
-      // Source: http://stackoverflow.com/a/957581/1231454
-      value = new RegExp(`^((?!${escapeForRegex(value)}).)*$`);
-    } else if (rule.operator === 'no-match-insensitive') {
-      operator = 'match';
-      value = new RegExp(`^((?!${escapeForRegex(value)}).)*$`, 'i');
-    } else if (rule.operator === 'eq-insensitive') {
-      operator = 'match';
-      value = new RegExp(`^${escapeForRegex(value)}$`, 'i');
-    } else if (rule.operator === 'neq-insensitive') {
-      // Negative lookahead once.
-      // Source: http://stackoverflow.com/a/2964653.
-      operator = 'match';
-      value = new RegExp(`^(?!${escapeForRegex(value)}$)`, 'i');
-    }
+      if (rule.operator === 'match-insensitive') {
+        operator = 'match';
+        value = new RegExp(escapeForRegex(value), 'i');
+      } else if (rule.operator === 'no-match') {
+        operator = 'match';
+        // Negative lookahead on each character.
+        // Source: http://stackoverflow.com/a/957581/1231454
+        value = new RegExp(`^((?!${escapeForRegex(value)}).)*$`);
+      } else if (rule.operator === 'no-match-insensitive') {
+        operator = 'match';
+        value = new RegExp(`^((?!${escapeForRegex(value)}).)*$`, 'i');
+      } else if (rule.operator === 'eq-insensitive') {
+        operator = 'match';
+        value = new RegExp(`^${escapeForRegex(value)}$`, 'i');
+      } else if (rule.operator === 'neq-insensitive') {
+        // Negative lookahead once.
+        // Source: http://stackoverflow.com/a/2964653.
+        operator = 'match';
+        value = new RegExp(`^(?!${escapeForRegex(value)}$)`, 'i');
+      }
 
-    clause = track[rule.name][operator](value);
+      clause = track[rule.name][operator](value);
+    }
   }
 
   return clause;
@@ -168,26 +185,34 @@ function execQuery(db, track, whereClause, playlist, callback, onError) {
 exports.queryTracks = function queryTracks(db, playlist, callback) {
   // Callback a list of tracks that should be in the playlist, or null on problems.
 
-  const track = db.getSchema().table('Track');
-  let whereClause;
-  try {
-    whereClause = buildWhereClause(track, playlist.rules);
-  } catch (e) {
-    console.error(e);
-    Reporting.Raven.captureException(e, {
-      tags: {playlistId: playlist.remoteId},
-      extra: {playlist},
-    });
-    return callback(null);
-  }
+  Storage.getPlaylistsForUser(playlist.userId, playlists => {
+    const playlistsById = {};
+    for (let i = 0; i < playlists.length; i++) {
+      const p = playlists[i];
+      playlistsById[p.localId] = p;
+    }
 
-  execQuery(db, track, whereClause, playlist, callback, err => {
-    console.error(err);
-    Reporting.Raven.captureMessage('execQuery', {
-      tags: {playlistId: playlist.remoteId},
-      extra: {playlist, err},
+    const track = db.getSchema().table('Track');
+    let whereClause;
+    try {
+      whereClause = buildWhereClause(track, playlistsById, new Set([playlist.localId]), playlist.rules);
+    } catch (e) {
+      console.error(e);
+      Reporting.Raven.captureException(e, {
+        tags: {playlistId: playlist.remoteId},
+        extra: {playlist},
+      });
+      return callback(null);
+    }
+
+    execQuery(db, track, whereClause, playlist, callback, err => {
+      console.error('execQuery', err);
+      Reporting.Raven.captureMessage('execQuery', {
+        tags: {playlistId: playlist.remoteId},
+        extra: {playlist, err},
+      });
+      return callback(null);
     });
-    return callback(null);
   });
 };
 
