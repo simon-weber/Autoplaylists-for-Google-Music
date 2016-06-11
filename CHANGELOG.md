@@ -1,3 +1,9 @@
+## 1.7.0 (June 11, 2016)
+
+Features:
+
+  - add "playlist" field, allowing linking of autoplaylists. See [the announcement post](https://groups.google.com/forum/#!topic/autoplaylists-for-google-music-announcements/Z5h9-ANfb1E) for more details.
+
 ## 1.6.1 (June 5, 2016)
 
 Misc:
