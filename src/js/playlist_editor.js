@@ -18,7 +18,7 @@ function compareByLabel(a, b) {
 }
 sortedFields.sort(compareByLabel);
 
-function getRulesData(playlists) {
+function getRulesData(playlists, playlistId) {
   const variables = [];
   sortedFields.forEach(field => {
     variables.push({
@@ -29,18 +29,21 @@ function getRulesData(playlists) {
     });
   });
 
-  const playlistOptions = [];
-  for (let i = 0; i < playlists.length; i++) {
-    const playlist = playlists[i];
-    playlistOptions.push({label: playlist.title, value: playlist.localId});
-  }
+  const otherPlaylists = playlists.filter(p => p.localId !== playlistId);
+  if (otherPlaylists.length > 0) {
+    const playlistOptions = [];
+    for (let i = 0; i < otherPlaylists.length; i++) {
+      const playlist = otherPlaylists[i];
+      playlistOptions.push({label: playlist.title, value: playlist.localId});
+    }
 
-  variables.push({
-    name: 'playlist',
-    label: 'playlist',
-    field_type: 'select',
-    options: playlistOptions,
-  });
+    variables.push({
+      name: 'playlist',
+      label: 'playlist',
+      field_type: 'select',
+      options: playlistOptions,
+    });
+  }
 
   variables.sort(compareByLabel);
 
@@ -96,7 +99,7 @@ function parseSorts($sorts) {
 }
 
 function initializeForm(userId, playlistId, isLocked, playlists) {
-  const initConditions = getRulesData(playlists);
+  const initConditions = getRulesData(playlists, playlistId);
   let initialPlaylist = null;
   const $conditions = $('#conditions');
 
@@ -113,7 +116,8 @@ function initializeForm(userId, playlistId, isLocked, playlists) {
       $('<li>').text(`${field.label}: ${field.explanation}`).appendTo($explanations);
     }
   });
-  $('<li>').text('playlist: another autoplaylist whose contents will be included or excluded.').appendTo($explanations);
+  $('<li>').text('playlist: another autoplaylist whose contents will be included or excluded.' +
+                ' Hidden if no other autoplaylists are available.').appendTo($explanations);
 
   if (playlistId) {
     Storage.getPlaylist(userId, playlistId, loadedPlaylist => {
