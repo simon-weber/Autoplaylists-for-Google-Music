@@ -113,6 +113,7 @@ function initializeForm(userId, playlistId, isLocked, playlists) {
       $('<li>').text(`${field.label}: ${field.explanation}`).appendTo($explanations);
     }
   });
+  $('<li>').text('playlist: another autoplaylist whose contents will be included or excluded.').appendTo($explanations);
 
   if (playlistId) {
     Storage.getPlaylist(userId, playlistId, loadedPlaylist => {

@@ -26,7 +26,7 @@
         "guard-for-in": 0,
         "no-eval": 0,
         "object-curly-spacing": 0,
-        "max-len": [2, 119, 4, {"ignoreComments": true}],
+        "max-len": [2, 140, 4, {"ignoreComments": true}],
         "no-alert": 0,
         "no-use-before-define": [2, "nofunc"],
         "no-restricted-syntax": [
