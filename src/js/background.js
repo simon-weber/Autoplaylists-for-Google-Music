@@ -4,6 +4,7 @@ const Qs = require('qs');
 
 const Chrometools = require('./chrometools.js');
 const Gm = require('./googlemusic.js');
+const Lf = require('lovefield');  // made available for debugQuery eval
 const License = require('./license.js');
 const Playlist = require('./playlist.js');
 const Storage = require('./storage.js');
