@@ -1,3 +1,13 @@
+## 1.7.1 (June 18, 2016)
+
+Bugfixes:
+
+  - hide playlist field when it would have no possible values
+
+Misc:
+
+  - add explanation for playlist field
+
 ## 1.7.0 (June 11, 2016)
 
 Features:
