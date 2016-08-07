@@ -82,7 +82,8 @@ exports.involvedFields = function involvedFields(playlist) {
   return fieldNames;
 };
 
-function deleteReferences(localId, rules) {
+function deleteReferences(id, rules) {
+  // id is either a localID or a remoteId with P prepended.
   let newRules;
 
   if (Array.isArray(rules)) {
@@ -91,18 +92,18 @@ function deleteReferences(localId, rules) {
       const rule = rules[i];
       if (!('name' in rule)) {
         // Recurse on compound rules.
-        newRules.push(deleteReferences(localId, rule));
-      } else if (rule.name !== 'playlist' || rule.value !== localId) {
-        // Keep all atomic rules other than those matching the localId.
+        newRules.push(deleteReferences(id, rule));
+      } else if (rule.name !== 'playlist' || rule.value !== id) {
+        // Keep all atomic rules other than those matching the id.
         newRules.push(rule);
       }
     }
   } else if (rules.all) {
     /* eslint-disable no-param-reassign */
-    rules.all = deleteReferences(localId, rules.all);
+    rules.all = deleteReferences(id, rules.all);
     newRules = rules;
   } else {
-    rules.any = deleteReferences(localId, rules.any);
+    rules.any = deleteReferences(id, rules.any);
     newRules = rules;
     /* eslint-enable no-param-reassign */
   }
@@ -110,9 +111,10 @@ function deleteReferences(localId, rules) {
   return newRules;
 }
 
-exports.deleteAllReferences = function deleteAllReferences(localId, playlists) {
+exports.deleteAllReferences = function deleteAllReferences(id, playlists) {
+  // id is either a localID or a remoteId with P prepended.
   for (let i = 0; i < playlists.length; i++) {
     const playlist = playlists[i];
-    playlist.rules = deleteReferences(localId, playlist.rules);
+    playlist.rules = deleteReferences(id, playlist.rules);
   }
 };

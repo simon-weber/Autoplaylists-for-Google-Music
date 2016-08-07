@@ -88,7 +88,7 @@ function escapeForRegex(s) {
   return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 }
 
-function buildWhereClause(track, playlistsById, seenIds, rule) {
+function buildWhereClause(track, playlistsById, splaylistcache, seenIds, rule) {
   // Return a clause for use in a lovefield where() predicate, or null to select all tracks.
   let clause = null;
   let boolOp = null;
@@ -105,7 +105,7 @@ function buildWhereClause(track, playlistsById, seenIds, rule) {
 
     // We need to handle nulls from recursive calls, as well as empty subrule arrays.
     const subClauses = subrules
-    .map(buildWhereClause.bind(undefined, track, playlistsById, seenIds))
+    .map(buildWhereClause.bind(undefined, track, playlistsById, splaylistcache, seenIds))
     .filter(c => c !== null);
 
     if (subClauses.length > 0) {
@@ -116,14 +116,35 @@ function buildWhereClause(track, playlistsById, seenIds, rule) {
     let operator = rule.operator;
 
     if (rule.name === 'playlist') {
-      const linkedRules = playlistsById[rule.value].rules;
-      if (seenIds.has(rule.value)) {
-        console.warn('refusing to recurse into a cycle with', rule.value, seenIds);
-      } else {
-        seenIds.add(rule.value);
-        clause = buildWhereClause(track, playlistsById, seenIds, linkedRules);
+      if (rule.value[0] === 'P') {
+        // splaylist
+        let trackIds = new Set();
+        try {
+          trackIds = splaylistcache.splaylists[rule.value.substring(1)].trackIds;
+        } catch (e) {
+          // This is likely a desync between the rules and splaylist state.
+          console.error(e);
+          Reporting.Raven.captureException(e, {
+            tags: {playlistId: rule.value},
+            extra: {splaylistcache, rule},
+          });
+        }
+
+        clause = track.id.in(Array.from(trackIds));
         if (rule.operator === 'notEqualTo') {
           clause = Lf.op.not(clause);
+        }
+      } else {
+        // playlist
+        const linkedRules = playlistsById[rule.value].rules;
+        if (seenIds.has(rule.value)) {
+          console.warn('refusing to recurse into a cycle with', rule.value, seenIds);
+        } else {
+          seenIds.add(rule.value);
+          clause = buildWhereClause(track, playlistsById, splaylistcache, seenIds, linkedRules);
+          if (rule.operator === 'notEqualTo') {
+            clause = Lf.op.not(clause);
+          }
         }
       }
     } else {
@@ -182,7 +203,7 @@ function execQuery(db, track, whereClause, playlist, callback, onError) {
     catch(onError);
 }
 
-exports.queryTracks = function queryTracks(db, playlist, callback) {
+exports.queryTracks = function queryTracks(db, splaylistcache, playlist, callback) {
   // Callback a list of tracks that should be in the playlist, or null on problems.
 
   Storage.getPlaylistsForUser(playlist.userId, playlists => {
@@ -195,7 +216,7 @@ exports.queryTracks = function queryTracks(db, playlist, callback) {
     const track = db.getSchema().table('Track');
     let whereClause;
     try {
-      whereClause = buildWhereClause(track, playlistsById, new Set([playlist.localId]), playlist.rules);
+      whereClause = buildWhereClause(track, playlistsById, splaylistcache, new Set([playlist.localId]), playlist.rules);
     } catch (e) {
       console.error(e);
       Reporting.Raven.captureException(e, {

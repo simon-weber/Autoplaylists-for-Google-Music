@@ -18,7 +18,7 @@ function compareByLabel(a, b) {
 }
 sortedFields.sort(compareByLabel);
 
-function getRulesData(playlists, playlistId) {
+function getRulesData(playlists, playlistId, splaylistcache) {
   const variables = [];
   sortedFields.forEach(field => {
     variables.push({
@@ -30,11 +30,22 @@ function getRulesData(playlists, playlistId) {
   });
 
   const otherPlaylists = playlists.filter(p => p.localId !== playlistId);
-  if (otherPlaylists.length > 0) {
+  if (otherPlaylists.length > 0 || Object.keys(splaylistcache.splaylists).length > 0) {
     const playlistOptions = [];
+
+    // Playlists and splaylists are stored under the same label.
+    // They can be distinguished by the first letter of the value:
+    //   splaylists: 'P' (prepended to the remoteId)
+    //   playlists: a digit (localIds are timestamps)
+    // If splaylist support works out, we can unify them by treating them all like splaylists.
     for (let i = 0; i < otherPlaylists.length; i++) {
       const playlist = otherPlaylists[i];
       playlistOptions.push({label: playlist.title, value: playlist.localId});
+    }
+
+    for (const splaylistId in splaylistcache.splaylists) {
+      const splaylist = splaylistcache.splaylists[splaylistId];
+      playlistOptions.push({label: splaylist.title, value: 'P' + splaylist.id});
     }
 
     variables.push({
@@ -98,8 +109,8 @@ function parseSorts($sorts) {
   return sorts;
 }
 
-function initializeForm(userId, playlistId, isLocked, playlists) {
-  const initConditions = getRulesData(playlists, playlistId);
+function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache) {
+  const initConditions = getRulesData(playlists, playlistId, splaylistcache);
   let initialPlaylist = null;
   const $conditions = $('#conditions');
 
@@ -116,8 +127,8 @@ function initializeForm(userId, playlistId, isLocked, playlists) {
       $('<li>').text(`${field.label}: ${field.explanation}`).appendTo($explanations);
     }
   });
-  $('<li>').text('playlist: another autoplaylist whose contents will be included or excluded.' +
-                ' Hidden if no other autoplaylists are available.').appendTo($explanations);
+  $('<li>').text('playlist: a playlist whose contents will be included or excluded.' +
+                ' Hidden if no other playlists are available.').appendTo($explanations);
 
   if (playlistId) {
     Storage.getPlaylist(userId, playlistId, loadedPlaylist => {
@@ -257,7 +268,9 @@ function main() {
   const qstring = Qs.parse(location.search.substring(1));
 
   Storage.getPlaylistsForUser(qstring.userId, playlists => {
-    initializeForm(qstring.userId, qstring.id, qstring.locked === 'true', playlists);
+    chrome.runtime.sendMessage({action: 'getSplaylistcache', userId: qstring.userId}, splaylistcache => {
+      initializeForm(qstring.userId, qstring.id, qstring.locked === 'true', playlists, splaylistcache);
+    });
   });
 }
 

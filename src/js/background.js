@@ -9,8 +9,9 @@ const License = require('./license.js');
 const Playlist = require('./playlist.js');
 const Storage = require('./storage.js');
 const Trackcache = require('./trackcache.js');
-const Context = require('./context.js');
+const Splaylistcache = require('./splaylistcache.js');
 
+const Context = require('./context.js');
 const Reporting = require('./reporting.js');
 
 
@@ -19,6 +20,9 @@ const users = {};
 
 // {userId: <lovefield db>}
 const dbs = {};
+
+// {userId: splaylistCache}
+const splaylistcaches = {};
 
 // {playlistId: <bool>}, locks playlists during some updates
 const playlistIsUpdating = {};
@@ -33,6 +37,7 @@ function userIdForTabId(tabId) {
     }
   }
 }
+
 
 function diffUpdateLibrary(userId, db, timestamp, callback) {
   // Update our cache with any changes since our last poll.
@@ -105,7 +110,8 @@ function syncPlaylist(playlist, attempt) {
     // refresh tracks and write out playlist
 
     const db = dbs[playlist.userId];
-    Trackcache.queryTracks(db, playlist, tracks => {
+    const splaylistcache = splaylistcaches[playlist.userId];
+    Trackcache.queryTracks(db, splaylistcache, playlist, tracks => {
       if (tracks === null) {
         Reporting.reportSync('failure', 'failed-query');
         return;
@@ -227,9 +233,27 @@ function forceUpdate(userId) {
   });
 }
 
+function syncSplaylistcache(userId) {
+  const splaylistcache = splaylistcaches[userId];
+
+  Storage.getPlaylistsForUser(userId, playlists => {
+    Splaylistcache.sync(splaylistcache, users[userId], playlists, deletedIds => {
+      for (const deletedId of deletedIds) {
+        Playlist.deleteAllReferences('P' + deletedId, playlists);
+        for (let i = 0; i < playlists.length; i++) {
+          Storage.savePlaylist(playlists[i], () => {});
+        }
+      }
+    });
+  });
+}
+
 function periodicUpdate() {
   for (const userId in users) {
     console.log('periodic update for', userId);
+
+    syncSplaylistcache(userId);
+
     if (dbs[userId]) {
       forceUpdate(userId);
     } else {
@@ -396,8 +420,10 @@ function main() {
       Reporting.GATracker.set('dimension3', request.tier);
       Reporting.reportHit('showPageAction');
 
-      // init the db regardless of whether it already exists.
+      // init the caches.
       initLibrary(request.userId);
+      splaylistcaches[request.userId] = Splaylistcache.open();
+      syncSplaylistcache(request.userId);
 
       chrome.pageAction.show(sender.tab.id);
 
@@ -414,7 +440,7 @@ function main() {
         }
       });
     } else if (request.action === 'query') {
-      Trackcache.queryTracks(dbs[request.playlist.userId], request.playlist, tracks => {
+      Trackcache.queryTracks(dbs[request.playlist.userId], splaylistcaches[request.playlist.userId], request.playlist, tracks => {
         sendResponse({tracks});
       });
       return true; // wait for async response
@@ -432,6 +458,9 @@ function main() {
     } else if (request.action === 'getContext') {
       Context.get(sendResponse);
       return true;
+    } else if (request.action === 'getSplaylistcache') {
+      sendResponse(splaylistcaches[request.userId]);
+      return;
     } else {
       console.warn('received unknown request', request);
       Reporting.Raven.captureMessage('received unknown request', {

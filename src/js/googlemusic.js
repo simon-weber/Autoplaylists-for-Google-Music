@@ -6,6 +6,7 @@ const Qs = require('qs');
 const Track = require('./track.js');
 const Trackcache = require('./trackcache.js');
 const Playlist = require('./playlist.js');
+const Splaylist = require('./splaylist.js');
 
 const Reporting = require('./reporting.js');
 
@@ -246,13 +247,13 @@ function deleteEntries(user, playlistId, entries, callback, onError) {
   }, onError);
 }
 
-function loadPlaylistContents(db, user, playlistId, callback, onError) {
+exports.getPlaylistContents = function getPlaylistContents(user, playlistId, callback, onError) {
   // Callback a list of objects with entryId and track keys.
 
   const payload = [['', 1], [playlistId]];
   authedGMRequest('loaduserplaylist', payload, user, 'post', response => {
     if (response.length < 2) {
-      return onError(`unexpected loadPlaylistContents response: ${JSON.stringify(response, null, 2)}`);
+      return onError(`unexpected getPlaylistContents response: ${JSON.stringify(response, null, 2)}`);
     }
 
     const contents = [];
@@ -274,6 +275,27 @@ function loadPlaylistContents(db, user, playlistId, callback, onError) {
   }, onError);
 }
 
+exports.getPlaylists = function getPlaylists(user, callback, onError) {
+  // Callback a list of splaylists.
+
+  const payload = [['', 1], []];
+  authedGMRequest('loadplaylists', payload, user, 'post', response => {
+    if (response.length < 2) {
+      return onError(`unexpected loadplaylists response: ${JSON.stringify(response, null, 2)}`);
+    }
+
+    const splaylists = [];
+    const gplaylists = response[1][0];
+    for (let i = 0; i < gplaylists.length; i++) {
+      splaylists.push(Splaylist.fromJsproto(gplaylists[i]));
+    }
+
+    callback(splaylists);
+  }, error => {
+    onError(error);
+  });
+};
+
 exports.setPlaylistContents = function setPlaylistContents(db, user, playlistId, tracks, callback, onError) {
   // Update a remote playlist to contain only the given tracks, in any order.
 
@@ -282,7 +304,7 @@ exports.setPlaylistContents = function setPlaylistContents(db, user, playlistId,
   // 2) delete current - desired
   // 3) add desired - current
 
-  loadPlaylistContents(db, user, playlistId, contents => {
+  exports.getPlaylistContents(user, playlistId, contents => {
     if (contents.length !== 0) {
       const idsToAdd = {};
       for (let i = 0; i < tracks.length; i++) {
@@ -374,7 +396,7 @@ exports.setPlaylistOrder = function setPlaylistOrder(db, user, playlist, callbac
   // This approach handles the maybe-playing tracks that wouldn't be in our tracks
   // if we queried them locally.
 
-  loadPlaylistContents(db, user, playlist.remoteId, contents => {
+  exports.getPlaylistContents(user, playlist.remoteId, contents => {
     if (contents.length !== 0) {
       // Reordering calls deal in entry ids, not track ids.
       const currentOrdering = [];
