@@ -10,6 +10,27 @@
         <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
         <title>Autoplaylists for Google Music™</title>
+
+        <script>
+            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+            ga('create', 'UA-71628085-2', 'auto');
+            ga('send', 'pageview');
+        </script>
+
+        <script>
+            /* https://support.google.com/analytics/answer/1136920?hl=en */
+            var trackOutboundLink = function(url) {
+               ga('send', 'event', 'outbound', 'click', url, {
+                 'transport': 'beacon',
+                 'hitCallback': function(){document.location = url;}
+               });
+            }
+        </script>
+
     </head>
 
     <body>
@@ -31,7 +52,7 @@
                 <p>This Chrome extension adds customizable rule-based autoplaylists to Google Music. They work just like iTunes "smart playlists".</p>
 
                 <p>
-                <a target="_blank" href="https://chrome.google.com/webstore/detail/autoplaylists-for-google/blbompphddfibggfmmfcgjjoadebinem">
+                <a target="_blank" onclick="trackOutboundLink('https://chrome.google.com/webstore/detail/autoplaylists-for-google/blbompphddfibggfmmfcgjjoadebinem'); return false;" href="https://chrome.google.com/webstore/detail/autoplaylists-for-google/blbompphddfibggfmmfcgjjoadebinem">
                     <img src="https://i.imgur.com/NQlu84kl.png" alt="autoplaylist screenshot">
                 </a>
                 </p>
@@ -43,14 +64,14 @@
 
                 <p>
                 You can install from the Chrome Web Store:
-                <a target="_blank" href="https://chrome.google.com/webstore/detail/autoplaylists-for-google/blbompphddfibggfmmfcgjjoadebinem">Autoplaylists for Google Music™</a>.
+                <a target="_blank" onclick="trackOutboundLink('https://chrome.google.com/webstore/detail/autoplaylists-for-google/blbompphddfibggfmmfcgjjoadebinem'); return false;" href="https://chrome.google.com/webstore/detail/autoplaylists-for-google/blbompphddfibggfmmfcgjjoadebinem">Autoplaylists for Google Music™</a>.
                 </p>
 
                 <p>
                 There is both a free limited version and a paid full version.
                 The only difference is that the free version is limited to a single autoplaylist.
                 See the
-                <a target="_blank" href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki/Frequently-Asked-Questions#versions-and-upgrading">the versions and upgrading section of the FAQ</a>
+                <a target="_blank" onclick="trackOutboundLink('https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki/Frequently-Asked-Questions#versions-and-upgrading'); return false;" href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki/Frequently-Asked-Questions#versions-and-upgrading">the versions and upgrading section of the FAQ</a>
                 for all the details.
                 </p>
 
@@ -59,9 +80,9 @@
                     <a id="usage" class="anchor" href="#usage" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Usage</h2>
 
                 <ul>
-                    <li>open a tab to <a target="_blank" href="https://play.google.com/music/listen">https://play.google.com/music/listen</a>.</li>
+                    <li>open a tab to <a target="_blank" onclick="trackOutboundLink('https://play.google.com/music/listen'); return false;" href="https://play.google.com/music/listen">https://play.google.com/music/listen</a>.</li>
                     <li>click the extension's "page action": the small icon to the right of the url.</li>
-                    <li>your autoplaylists will be updated automatically in real time. See <a target="_blank" href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki/Frequently-Asked-Questions#syncing">the FAQ for more details</a>.</li>
+                    <li>your autoplaylists will be updated automatically in real time. See <a target="_blank" onclick="trackOutboundLink('https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki/Frequently-Asked-Questions#syncing'); return false;" href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki/Frequently-Asked-Questions#syncing">the FAQ for more details</a>.</li>
                 </ul>
 
                 <p>
@@ -84,7 +105,7 @@
                     <a id="support" class="anchor" href="#support" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Support</h2>
 
                 <p>
-                Visit <a href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki">the wiki</a> for support and more details on how the extension works.
+                Visit <a onclick="trackOutboundLink('https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki'); return false;" href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki">the wiki</a> for support and more details on how the extension works.
                 </p>
 
                 <h2>
@@ -93,17 +114,17 @@
                 <p>
                 The code powering the extension is open source, and contributors get free lifetime access to the full version (at my discretion).
                 For more details, see
-                <a href="https://github.com/simon-weber/Autoplaylists-for-Google-Music">the GitHub project page</a>.
+                <a onclick="trackOutboundLink('https://github.com/simon-weber/Autoplaylists-for-Google-Music'); return false;" href="https://github.com/simon-weber/Autoplaylists-for-Google-Music">the GitHub project page</a>.
                 </p>
 
                 <h2>
                     <a id="updates" class="anchor" href="#updates" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Updates/Changelog</h2>
 
                 <p>
-                To receive announcements about new features or improvements, join <a href="https://groups.google.com/forum/#!forum/autoplaylists-for-google-music-announcements">the announcement mailing list</a>.
+                To receive announcements about new features or improvements, join <a onclick="trackOutboundLink('https://groups.google.com/forum/#!forum/autoplaylists-for-google-music-announcements'); return false;" href="https://groups.google.com/forum/#!forum/autoplaylists-for-google-music-announcements">the announcement mailing list</a>.
 
                 The changelog on GitHub also has detailed descriptions of what's new in each release:
-                <a href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/blob/master/CHANGELOG.md">CHANGELOG.md</a>.
+                <a onclick="trackOutboundLink('https://github.com/simon-weber/Autoplaylists-for-Google-Music/blob/master/CHANGELOG.md'); return false;" href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/blob/master/CHANGELOG.md">CHANGELOG.md</a>.
                 </p>
 
                 <hr>
@@ -114,22 +135,9 @@
         <!-- FOOTER  -->
         <div id="footer_wrap" class="outer">
             <footer class="inner">
-                <p class="copyright">Autoplaylists for Google Music™ maintained by <a href="https://www.simonmweber.com">Simon Weber</a></p>
+                <p class="copyright">Autoplaylists for Google Music™ maintained by <a onclick="trackOutboundLink('https://www.simonmweber.com'); return false;" href="https://www.simonmweber.com">Simon Weber</a></p>
                 <p>Google Music is a trademark of Google Inc. Use of this trademark is subject to Google Permissions.</p>
             </footer>
         </div>
-
-        <script type="text/javascript">
-var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-        </script>
-        <script type="text/javascript">
-try {
-    var pageTracker = _gat._getTracker("UA-71628085-2");
-    pageTracker._trackPageview();
-} catch(err) {}
-        </script>
-
-
     </body>
 </html>
