@@ -2,9 +2,9 @@
 
 const Qs = require('qs');
 
-const Chrometools = require('./chrometools.js');
-const Storage = require('./storage.js');
-const Reporting = require('./reporting.js');
+const Chrometools = require('./chrometools');
+const Storage = require('./storage');
+const Reporting = require('./reporting');
 
 let userId = null;
 let eventPlaylists = null;

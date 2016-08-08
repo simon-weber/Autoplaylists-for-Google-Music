@@ -2,7 +2,7 @@
 
 const Qs = require('qs');
 
-const Reporting = require('./reporting.js');
+const Reporting = require('./reporting');
 
 function unlessError(func, onError) {
   // Decorate chrome callbacks to notice errors.

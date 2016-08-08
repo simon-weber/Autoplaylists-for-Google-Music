@@ -1,6 +1,6 @@
 'use strict';
 
-const Reporting = require('./reporting.js');
+const Reporting = require('./reporting');
 
 function main() {
   Reporting.reportHit('privacy.js');

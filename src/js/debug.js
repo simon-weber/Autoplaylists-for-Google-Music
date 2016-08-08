@@ -1,8 +1,8 @@
 'use strict';
 require('jquery-modal');
 
-const Track = require('./track.js');
-const Reporting = require('./reporting.js');
+const Track = require('./track');
+const Reporting = require('./reporting');
 
 
 const sortedFields = Track.fields.slice();

@@ -3,10 +3,10 @@
 const Lf = require('lovefield');
 require('sugar'); // monkeypatches Date
 
-const Track = require('./track.js');
-const Storage = require('./storage.js');
+const Track = require('./track');
+const Storage = require('./storage');
 
-const Reporting = require('./reporting.js');
+const Reporting = require('./reporting');
 
 // {userId: <lovefield db>}
 // lovefield docs say to avoid multiple calls to connect, even with a close in between.

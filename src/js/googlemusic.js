@@ -3,12 +3,12 @@
 const Lf = require('lovefield');
 const Qs = require('qs');
 
-const Track = require('./track.js');
-const Trackcache = require('./trackcache.js');
-const Playlist = require('./playlist.js');
-const Splaylist = require('./splaylist.js');
+const Track = require('./track');
+const Trackcache = require('./trackcache');
+const Playlist = require('./playlist');
+const Splaylist = require('./splaylist');
 
-const Reporting = require('./reporting.js');
+const Reporting = require('./reporting');
 
 const GM_BASE_URL = 'https://play.google.com/music/';
 const GM_SERVICE_URL = `${GM_BASE_URL}services/`;

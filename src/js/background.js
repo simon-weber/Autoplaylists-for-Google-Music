@@ -2,17 +2,17 @@
 
 const Qs = require('qs');
 
-const Chrometools = require('./chrometools.js');
-const Gm = require('./googlemusic.js');
+const Chrometools = require('./chrometools');
+const Gm = require('./googlemusic');
 const Lf = require('lovefield');  // made available for debugQuery eval
-const License = require('./license.js');
-const Playlist = require('./playlist.js');
-const Storage = require('./storage.js');
-const Trackcache = require('./trackcache.js');
-const Splaylistcache = require('./splaylistcache.js');
+const License = require('./license');
+const Playlist = require('./playlist');
+const Storage = require('./storage');
+const Trackcache = require('./trackcache');
+const Splaylistcache = require('./splaylistcache');
 
-const Context = require('./context.js');
-const Reporting = require('./reporting.js');
+const Context = require('./context');
+const Reporting = require('./reporting');
 
 
 // {userId: {userIndex: int, tabId: int, xt: string}}

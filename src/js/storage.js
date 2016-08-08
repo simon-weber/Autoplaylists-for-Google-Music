@@ -1,8 +1,8 @@
 'use strict';
 
-const Chrometools = require('./chrometools.js');
+const Chrometools = require('./chrometools');
 
-const Reporting = require('./reporting.js');
+const Reporting = require('./reporting');
 
 
 function playlistKey(userId, playlistLid) {

@@ -1,7 +1,7 @@
 'use strict';
 const Lf = require('lovefield');
 
-const Reporting = require('./reporting.js');
+const Reporting = require('./reporting');
 
 exports.operators = {
   // This is the format expected by business rules,

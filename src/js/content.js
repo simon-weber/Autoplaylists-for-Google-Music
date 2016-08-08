@@ -2,8 +2,8 @@
 
 const Qs = require('qs');
 
-const Track = require('./track.js');
-const Reporting = require('./reporting.js');
+const Track = require('./track');
+const Reporting = require('./reporting');
 
 let userId;
 

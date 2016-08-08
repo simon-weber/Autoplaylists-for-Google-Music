@@ -3,11 +3,11 @@ const Qs = require('qs');
 const Sortable = require('sortablejs');
 require('jquery-modal');
 
-const Chrometools = require('./chrometools.js');
-const Playlist = require('./playlist.js');
-const Storage = require('./storage.js');
-const Track = require('./track.js');
-const Reporting = require('./reporting.js');
+const Chrometools = require('./chrometools');
+const Playlist = require('./playlist');
+const Storage = require('./storage');
+const Track = require('./track');
+const Reporting = require('./reporting');
 
 
 const sortedFields = Track.fields.filter(e => !e.hidden);

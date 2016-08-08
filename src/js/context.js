@@ -1,7 +1,7 @@
 'use strict';
 
-const License = require('./license.js');
-const Storage = require('./storage.js');
+const License = require('./license');
+const Storage = require('./storage');
 
 exports.get = function get(callback) {
   // Callback an object with user and tags keys for use with Raven.

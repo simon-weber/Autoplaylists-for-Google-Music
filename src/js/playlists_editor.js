@@ -2,9 +2,9 @@
 
 const Qs = require('qs');
 
-const Storage = require('./storage.js');
-const License = require('./license.js');
-const Reporting = require('./reporting.js');
+const Storage = require('./storage');
+const License = require('./license');
+const Reporting = require('./reporting');
 
 // TODO push lengthy ops into the background script
 

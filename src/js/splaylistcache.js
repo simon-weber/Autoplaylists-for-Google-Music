@@ -1,5 +1,5 @@
-const Gm = require('./googlemusic.js');
-const Storage = require('./storage.js');
+const Gm = require('./googlemusic');
+const Storage = require('./storage');
 
 // splaylists are cached locally to enable playlist linking.
 // cache fields:

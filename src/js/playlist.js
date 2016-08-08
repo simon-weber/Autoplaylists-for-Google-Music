@@ -1,5 +1,5 @@
 'use strict';
-const Track = require('./track.js');
+const Track = require('./track');
 
 // playlist fields:
 //   * localId: id in our extension sync data
