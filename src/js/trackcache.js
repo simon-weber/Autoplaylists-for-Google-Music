@@ -198,9 +198,7 @@ function execQuery(db, track, whereClause, playlist, callback, onError) {
     query = query.limit(playlist.limit);
   }
 
-  query.exec().
-    then(callback).
-    catch(onError);
+  query.exec().then(callback).catch(onError);
 }
 
 exports.queryTracks = function queryTracks(db, splaylistcache, playlist, callback) {

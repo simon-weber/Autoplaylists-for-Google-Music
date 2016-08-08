@@ -1,5 +1,8 @@
+'use strict';
+
 const Gm = require('./googlemusic');
 const Storage = require('./storage');
+const Reporting = require('./reporting');
 
 // splaylists are cached locally to enable playlist linking.
 // cache fields:
@@ -10,7 +13,7 @@ exports.open = function open() {
   // Return a new, empty cache.
 
   return {splaylists: {}};
-}
+};
 
 exports.sync = function sync(cache, user, playlists, callback) {
   // Update a cache to reflect Google's state for this user.
@@ -24,10 +27,10 @@ exports.sync = function sync(cache, user, playlists, callback) {
 
     const oldSplaylistIds = new Set(Object.keys(cache.splaylists));
 
-    for (let i = 0; i < freshSplaylists.length; i++){
+    for (let i = 0; i < freshSplaylists.length; i++) {
       const freshSplaylist = freshSplaylists[i];
 
-      if (autoPlaylistIds.has(freshSplaylist.id)){
+      if (autoPlaylistIds.has(freshSplaylist.id)) {
         // Skip autoplaylists.
         continue;
       }
@@ -40,12 +43,12 @@ exports.sync = function sync(cache, user, playlists, callback) {
         console.log(`sync splaylist "${freshSplaylist.title}"`);
         Gm.getPlaylistContents(user, freshSplaylist.id, entries => {
           const trackIds = new Set();
-          for (let j = 0; j < entries.length; j++){
+          for (let j = 0; j < entries.length; j++) {
             const entry = entries[j];
             trackIds.add(entry.track.id);
           }
           freshSplaylist.trackIds = trackIds;
-          cache.splaylists[freshSplaylist.id] = freshSplaylist;
+          cache.splaylists[freshSplaylist.id] = freshSplaylist; // eslint-disable-line no-param-reassign
         }, error => {
           Reporting.Raven.captureMessage('error during splaylistcache.sync.getContents', {
             tags: {playlistId: freshSplaylist.id},
@@ -56,10 +59,10 @@ exports.sync = function sync(cache, user, playlists, callback) {
     }
 
     // Delete deleted splaylists (those not seen in the fresh splaylists).
-    for (let oldSplaylistId of oldSplaylistIds) {
+    for (const oldSplaylistId of oldSplaylistIds) {
       const oldTitle = cache.splaylists[oldSplaylistId].title;
       console.log(`splaylist "${oldTitle}" was deleted`);
-      delete cache.splaylists[oldSplaylistId];
+      delete cache.splaylists[oldSplaylistId]; // eslint-disable-line no-param-reassign
     }
 
     callback(oldSplaylistIds);
@@ -71,4 +74,4 @@ exports.sync = function sync(cache, user, playlists, callback) {
 
     callback(new Set());
   });
-}
+};

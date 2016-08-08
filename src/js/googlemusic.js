@@ -106,8 +106,8 @@ exports.getTrackChanges = function getTrackChanges(user, sinceTimestamp, callbac
 
       let end = code.lastIndexOf(endMark);
 
-      start = start + startMark.length;
-      end = end + endMark.length;
+      start += startMark.length;
+      end += endMark.length;
       code = code.slice(start, end);
 
       const parsed = eval(code);
@@ -273,7 +273,7 @@ exports.getPlaylistContents = function getPlaylistContents(user, playlistId, cal
 
     callback(contents);
   }, onError);
-}
+};
 
 exports.getPlaylists = function getPlaylists(user, callback, onError) {
   // Callback a list of splaylists.
@@ -346,9 +346,9 @@ exports.setPlaylistContents = function setPlaylistContents(db, user, playlistId,
           const delayMillis = 0;
 
           rows.forEach(row => {
-            if (delayMillis + row.lastPlayed / 1000 > nowMillis - row.durationMillis) {
+            if (delayMillis + (row.lastPlayed / 1000) > nowMillis - row.durationMillis) {
               console.info('not deleting', row, 'since it may be playing.',
-                           delayMillis + row.lastPlayed / 1000, nowMillis - row.durationMillis
+                           delayMillis + (row.lastPlayed / 1000), nowMillis - row.durationMillis
                           );
               if (row.id in deleteCandidates) {
                 delete deleteCandidates[row.id];

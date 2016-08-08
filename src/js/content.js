@@ -20,7 +20,10 @@ function getInjectCode(isInitial) {
     if (window.USER_CONTEXT[12] !== '') {
       window.postMessage(
         {isInitial: isInitialRepr,
-          userId: window.USER_ID, tier: window.USER_CONTEXT[13], xt: window._GU_getCookie('xt')}, '*');
+          userId: window.USER_ID,
+          tier: window.USER_CONTEXT[13],
+          xt: window._GU_getCookie('xt')},
+        '*');
     }
   } + ')()';
   /* eslint-enable prefer-template */
