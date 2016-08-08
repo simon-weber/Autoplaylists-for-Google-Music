@@ -1,3 +1,9 @@
+## 1.8.0 (August 7, 2016)
+
+Features:
+
+  - the playlist field can now link both normal and autoplaylists. See [the announcement post](https://groups.google.com/d/msg/autoplaylists-for-google-music-announcements/IO_7xKUFW0Q/MYaXXel3AQAJ) for more details.
+
 ## 1.7.1 (June 18, 2016)
 
 Bugfixes:
