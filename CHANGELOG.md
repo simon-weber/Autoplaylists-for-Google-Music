@@ -1,3 +1,9 @@
+## 1.8.1 (August 9, 2016)
+
+Bugfixes:
+
+  - better handle unexpected data when retrieving static playlists
+
 ## 1.8.0 (August 7, 2016)
 
 Features:
