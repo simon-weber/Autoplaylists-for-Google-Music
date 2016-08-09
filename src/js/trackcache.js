@@ -125,6 +125,7 @@ function buildWhereClause(track, playlistsById, splaylistcache, seenIds, rule) {
           // This is likely a desync between the rules and splaylist state.
           console.error(e);
           Reporting.Raven.captureException(e, {
+            level: 'warning',
             tags: {playlistId: rule.value},
             extra: {splaylistcache, rule},
           });
