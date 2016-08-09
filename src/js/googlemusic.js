@@ -280,12 +280,13 @@ exports.getPlaylists = function getPlaylists(user, callback, onError) {
 
   const payload = [['', 1], []];
   authedGMRequest('loadplaylists', payload, user, 'post', response => {
-    if (response.length < 2) {
+    if (response.length < 2 || !response[1][0]) {
       return onError(`unexpected loadplaylists response: ${JSON.stringify(response, null, 2)}`);
     }
 
     const splaylists = [];
     const gplaylists = response[1][0];
+
     for (let i = 0; i < gplaylists.length; i++) {
       splaylists.push(Splaylist.fromJsproto(gplaylists[i]));
     }
