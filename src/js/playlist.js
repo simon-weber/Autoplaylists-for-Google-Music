@@ -10,10 +10,13 @@ const Track = require('./track');
 //   * sorts: [{sortBy, sortByOrder}]
 //   * limit
 
-function ruleToString(rule) {
-  // Return a string representation of a rule, parenthesised if necessary
+function ruleToString(rule, linkedNames) {
+  // Return a string representation of a rule, parenthesised if necessary.
+  // linkedNames maps playlist rule values onto that playlist's title.
   if (rule.name === 'playlist') {
-    return `${rule.name} ${rule.operator} ${JSON.stringify(rule.value)}`;
+    const operators = Track.operators.select;
+    const operator = operators.filter(o => o.name === rule.operator)[0];
+    return `${rule.name} ${operator.label} "${linkedNames[rule.value]}"`;
   } else if (rule.name) {
     const field = Track.fieldsByName[rule.name];
     // FIXME this is duplicated in playlist_editor
@@ -24,9 +27,9 @@ function ruleToString(rule) {
   } else if (rule.all || rule.any) {
     const subRules = rule.all || rule.any;
     if (subRules.length === 1) {
-      return ruleToString(subRules[0]);
+      return ruleToString(subRules[0], linkedNames);
     } else if (subRules.length > 1) {
-      const subRulesStr = subRules.map(r => ruleToString(r)).filter(s => s.length).join(rule.any ? ' or ' : ' and ');
+      const subRulesStr = subRules.map(r => ruleToString(r, linkedNames)).filter(s => s.length).join(rule.any ? ' or ' : ' and ');
       return `(${subRulesStr})`;
     }
   }
@@ -46,10 +49,21 @@ function sortToString(sort) {
   return `${sort.sortBy} ${lfOrderToString(sort.sortByOrder)}`;
 }
 
-exports.toString = function toString(playlist) {
+exports.toString = function toString(playlist, playlists, splaylistcache) {
   const sorts = playlist.sorts.map(sortToString).join(', ');
 
-  return `${ruleToString(playlist.rules)} sort by ${sorts}`;
+  const linkedNames = {};
+  for (let i = 0; i < playlists.length; i++) {
+    const p = playlists[i];
+    linkedNames[p.localId] = p.title;
+  }
+
+  for (const splaylistId in splaylistcache.splaylists) {
+    const s = splaylistcache.splaylists[splaylistId];
+    linkedNames['P' + s.id] = s.title;
+  }
+
+  return `${ruleToString(playlist.rules, linkedNames)} sort by ${sorts}`;
 };
 
 function involvedFieldNames(rule) {

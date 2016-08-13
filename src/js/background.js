@@ -187,9 +187,11 @@ function syncPlaylist(playlist, attempt) {
   }
 }
 
-function renameAndSync(playlist) {
+function renameAndSync(playlist, playlists) {
   console.log('renaming to', playlist.title);
-  Gm.updatePlaylist(users[playlist.userId], playlist.remoteId, playlist.title, playlist, () => {
+  const user = users[playlist.userId];
+  const splaylistcache = splaylistcaches[playlist.userId];
+  Gm.updatePlaylist(user, playlist.remoteId, playlist.title, playlist, playlists, splaylistcache, () => {
     syncPlaylist(playlist);
   });
 }
@@ -224,7 +226,7 @@ function forceUpdate(userId) {
             if (playlistIsUpdating[playlists[i].remoteId]) {
               console.warn('skipping forceUpdate since playlist is being updated:', playlists[i].title);
             } else {
-              renameAndSync(playlists[i]);
+              renameAndSync(playlists[i], playlists);
             }
           }
         });
@@ -322,7 +324,9 @@ function main() {
     } else if (hasOld && hasNew) {
       // update
       if (change.oldValue.title !== change.newValue.title) {
-        renameAndSync(change.newValue);
+        Storage.getPlaylistsForUser(change.newValue.userId, playlists => {
+          renameAndSync(change.newValue, playlists);
+        });
       } else {
         syncPlaylist(change.newValue);
       }
