@@ -2,7 +2,7 @@
 
 This is a Chrome extension to add user-defined autoplaylists in Google Music (iTunes calls these "Smart Playlists").
 
-![autoplaylist screenshot](https://i.imgur.com/NQlu84kl.png)
+![autoplaylist screenshot](autoplaylists_screenshot.png?raw=true)
 
 **This extension is not supported nor endorsed by Google.**
 
