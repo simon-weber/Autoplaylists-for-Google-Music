@@ -82,6 +82,7 @@ function createSort(fields, isLocked) {
   fields.forEach(field => {
     $('<option>').val(field.name).text(field.label).appendTo($sortBy);
   });
+  $('<option>').val('random').text('random (explanation below)').appendTo($sortBy);
 
   $sort.append($sortBy);
   $sort.append($sortByOrder);
@@ -129,6 +130,10 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache)
   });
   $('<li>').text('playlist: a playlist whose contents will be included or excluded.' +
                 ' Hidden if no other playlists are available.').appendTo($explanations);
+  $('<li>').html('random sort: a random total ordering, different on each load.' +
+                ' See <a target="_blank" href="https://github.com/simon-weber/' +
+                'Autoplaylists-for-Google-Music/wiki/Tips-and-Tricks#random-sorting">' +
+                ' the wiki</a> for more details.').appendTo($explanations);
 
   if (playlistId) {
     Storage.getPlaylist(userId, playlistId, loadedPlaylist => {
@@ -211,7 +216,9 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache)
 
 
       for (const fieldName in Playlist.involvedFields(playlist)) {
-        columnNames.add(fieldName);
+        if (fieldName !== 'random') {
+          columnNames.add(fieldName);
+        }
       }
 
       const columns = [];

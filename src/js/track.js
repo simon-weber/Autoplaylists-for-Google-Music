@@ -63,8 +63,17 @@ function f(requiredItems, optionalItems) {
   return field;
 }
 
+const maxint = Math.pow(2, 32);
+
 exports.fields = [
   f([0, 'id', Lf.Type.STRING]),
+  f([0, 'random', Lf.Type.INTEGER], {
+    // This is a synthetic field with a random 32-bit integer.
+    // It's used to make random shuffling easier.
+    // It's not actually formed from field 0.
+    hidden: true,
+    transformation: n => Math.floor(Math.random() * maxint),  // eslint-disable-line no-unused-vars
+  }),
   f([1, 'title', Lf.Type.STRING]),
   f([3, 'artist', Lf.Type.STRING]),
   f([4, 'album', Lf.Type.STRING]),
