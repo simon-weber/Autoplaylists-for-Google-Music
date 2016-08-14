@@ -48,8 +48,15 @@ function diffUpdateLibrary(userId, db, timestamp, callback) {
   Gm.getTrackChanges(user, timestamp, changes => {
     if (!changes.success) {
       if (changes.reloadXsrf) {
-        console.info('request xsrf reload');
-        chrome.tabs.sendMessage(user.tabId, {action: 'getXsrf'});
+        chrome.tabs.sendMessage(user.tabId, {action: 'getXsrf'}, Chrometools.unlessError(r => {
+          console.log('requested xsrf refresh', r);
+        },
+        e => {
+          console.warning('failed to request xsrf refresh; deauthing', JSON.stringify(e));
+          delete users[userId];
+          delete dbs[userId];
+          delete pollTimestamps[userId];
+        }));
       } else if (changes.unauthed) {
         console.info('unauthed; removing user', user);
         delete users[userId];
@@ -268,10 +275,10 @@ function initLibrary(userId) {
   // Initialize our cache from Google's indexeddb, or fall back to a differential update from time 0.
   Trackcache.openDb(userId, db => {
     const message = {action: 'getLocalTracks', userId};
-    chrome.tabs.sendMessage(users[userId].tabId, message, Chrometools.unlessError(response => {
-      if (response === null || response.tracks === null ||
+    chrome.tabs.sendMessage(users[userId].tabId, message, response => {
+      if (chrome.extension.lastError || response === null || response.tracks === null ||
           response.tracks.length === 0 || response.timestamp === null) {
-        console.warn('local idb not helpful; falling back to diffUpdate(0). response:', response);
+        console.warn('local idb not helpful; falling back to diffUpdate(0).', response, chrome.extension.lastError);
         diffUpdateLibrary(userId, db, 0, diffResponse => {
           if (diffResponse.success) {
             dbs[userId] = db;
@@ -279,7 +286,7 @@ function initLibrary(userId) {
           } else {
             console.warn('failed to init library after diffupdate fallback');
             Reporting.Raven.captureMessage('failed to init library', {
-              extra: {response},
+              extra: {response, lastError: chrome.extension.lastError},
               tags: {hadToFallback: true},
             });
           }
@@ -301,7 +308,7 @@ function initLibrary(userId) {
           });
         });
       }
-    }));
+    });
   });
 }
 
