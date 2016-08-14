@@ -1,3 +1,14 @@
+## 1.9.0 (August 14, 2016)
+
+Features:
+
+  - Support random sorting. See [the announcement post](https://groups.google.com/d/msg/autoplaylists-for-google-music-announcements/0DyacGDizKg/4v5Vs4eKAwAJ) for more details.
+
+Bugfixes:
+
+  - show the playlist name in the description for linked playlists
+  - better handle situations where the user's auth has expired
+
 ## 1.8.1 (August 9, 2016)
 
 Bugfixes:
