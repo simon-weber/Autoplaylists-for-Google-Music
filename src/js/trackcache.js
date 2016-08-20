@@ -60,7 +60,7 @@ exports.upsertTracks = function upsertTracks(db, userId, tracks, callback) {
     rows.push(track.createRow(tracks[i]));
   }
 
-  return db.insertOrReplace().into(track).values(rows).exec()
+  db.insertOrReplace().into(track).values(rows).exec()
   .then(callback)
   .catch(err => {
     console.error(err);

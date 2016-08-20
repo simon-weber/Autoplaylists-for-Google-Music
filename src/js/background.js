@@ -8,6 +8,7 @@ const Lf = require('lovefield');  // made available for debugQuery eval
 const License = require('./license');
 const Playlist = require('./playlist');
 const Storage = require('./storage');
+const Track = require('./track');
 const Trackcache = require('./trackcache');
 const Splaylistcache = require('./splaylistcache');
 
@@ -273,11 +274,12 @@ function periodicUpdate() {
 
 function initLibrary(userId) {
   // Initialize our cache from Google's indexeddb, or fall back to a differential update from time 0.
+  Track.resetRandomCache();
   Trackcache.openDb(userId, db => {
     const message = {action: 'getLocalTracks', userId};
     chrome.tabs.sendMessage(users[userId].tabId, message, response => {
-      if (chrome.extension.lastError || response === null || response.tracks === null ||
-          response.tracks.length === 0 || response.timestamp === null) {
+      if (chrome.extension.lastError || response === null || response.gtracks === null ||
+          response.gtracks.length === 0 || response.timestamp === null) {
         console.warn('local idb not helpful; falling back to diffUpdate(0).', response, chrome.extension.lastError);
         diffUpdateLibrary(userId, db, 0, diffResponse => {
           if (diffResponse.success) {
@@ -292,8 +294,9 @@ function initLibrary(userId) {
           }
         });
       } else {
-        console.log('got idb tracks:', response.tracks.length);
-        Trackcache.upsertTracks(db, userId, response.tracks, () => {
+        console.log('got idb gtracks:', response.gtracks.length);
+        const tracks = response.gtracks.map(Track.fromJsproto);
+        Trackcache.upsertTracks(db, userId, tracks, () => {
           diffUpdateLibrary(userId, db, response.timestamp, diffResponse => {
             if (diffResponse.success) {
               dbs[userId] = db;

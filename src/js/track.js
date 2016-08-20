@@ -63,16 +63,33 @@ function f(requiredItems, optionalItems) {
   return field;
 }
 
-const maxint = Math.pow(2, 32);
+// {trackIdPrefix: rand()}
+// maps the first 8 characters of a track id to a random float.
+exports._randomCache = {};
+
+// After calling, upserted tracks will have new random fields.
+exports.resetRandomCache = function resetRandomCache() {
+  console.info('reset random cache');
+  exports._randomCache = {};
+};
 
 exports.fields = [
   f([0, 'id', Lf.Type.STRING]),
   f([0, 'random', Lf.Type.INTEGER], {
-    // This is a synthetic field with a random 32-bit integer.
+    // This is a synthetic field with a random 0-1 float from rand().
     // It's used to make random shuffling easier.
-    // It's not actually formed from field 0.
+    // It will not change after being set unless resetRandomCache is called.
     hidden: true,
-    transformation: n => Math.floor(Math.random() * maxint),  // eslint-disable-line no-unused-vars
+    transformation: id => {
+      const prefix = id.substring(0, 8);
+      let val = exports._randomCache[prefix];
+      if (val === undefined) {
+        val = Math.random();
+        exports._randomCache[prefix] = val;
+      }
+
+      return val;
+    },
   }),
   f([1, 'title', Lf.Type.STRING]),
   f([3, 'artist', Lf.Type.STRING]),
@@ -186,6 +203,8 @@ lToB[Lf.Type.INTEGER] = 'numeric';
 
 exports.lfToBusinessTypes = lToB;
 
+// Since transformations now depend on state (for random),
+// this must only be called from the background script.
 exports.fromJsproto = function fromJsproto(jsproto) {
   const track = {};
   exports.fields.forEach(field => {

@@ -2,7 +2,6 @@
 
 const Qs = require('qs');
 
-const Track = require('./track');
 const Reporting = require('./reporting');
 
 let userId;
@@ -43,7 +42,7 @@ function injectCode(code) {
 }
 
 /*
- * Callback an object with tracks (a list of jsproto tracks)
+ * Callback an object with gtracks (a list of jsproto tracks)
  * and timestamp keys from the local indexedDb.
  * Either may be null.
  */
@@ -65,8 +64,8 @@ function queryIDB(callback) {
     try {
       const transaction = db.transaction(['tracks', 'info'], 'readonly');
       queryInfo(transaction.objectStore('info'), timestamp => {
-        queryTracks(transaction.objectStore('tracks'), tracks => {
-          callback({timestamp, tracks});
+        queryTracks(transaction.objectStore('tracks'), gtracks => {
+          callback({timestamp, gtracks});
         });
       });
     } catch (e) {
@@ -157,10 +156,6 @@ function main() {
     console.log('got message', request);
     if (request.action === 'getLocalTracks') {
       queryIDB(result => {
-        if (result !== null && result.tracks !== null) {
-          result.tracks = result.tracks.map(Track.fromJsproto); // eslint-disable-line no-param-reassign
-        }
-
         sendResponse(result);
       });
       return true;
