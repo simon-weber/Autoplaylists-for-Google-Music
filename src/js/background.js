@@ -56,6 +56,7 @@ function diffUpdateLibrary(userId, db, timestamp, callback) {
 
   Gm.getTrackChanges(user, timestamp, changes => {
     if (!changes.success) {
+      console.warning('failed to getTrackChanges:', JSON.stringify(changes));
       if (changes.reloadXsrf) {
         chrome.tabs.sendMessage(user.tabId, {action: 'getXsrf'}, Chrometools.unlessError(r => {
           console.log('requested xsrf refresh', r);
@@ -63,6 +64,7 @@ function diffUpdateLibrary(userId, db, timestamp, callback) {
         e => {
           console.warning('failed to request xsrf refresh; deauthing', JSON.stringify(e));
           Reporting.Raven.captureMessage('failed to request xsrf refresh; deauthing', {
+            level: 'warning',
             extra: {changes, timestamp, e: JSON.stringify(e)},
           });
           deauthUser(userId);

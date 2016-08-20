@@ -19,7 +19,7 @@ exports.sync = function sync(cache, user, playlists, callback) {
   // Update a cache to reflect Google's state for this user.
   // Callback a set of deleted splaylist ids.
 
-  console.log('syncing splaylist cache. current state:', cache.splaylists);
+  console.log('syncing splaylist cache. current cache has:', Object.keys(cache.splaylists).length);
   const autoPlaylistIds = new Set(playlists.map(p => p.remoteId));
 
   Gm.getPlaylists(user, freshSplaylists => {

@@ -57,7 +57,7 @@ function authedGMRequest(endpoint, data, user, method, callback, onError) {
 }
 
 exports.getTrackChanges = function getTrackChanges(user, sinceTimestamp, callback) {
-  // Callback {newTimestamp: 1234, upsertedTracks: [{}], deletedIds: ['']}, or {success: false, ...} on failure.
+  // Callback {success: true, newTimestamp: 1234, upsertedTracks: [{}], deletedIds: ['']}, or {success: false, ...} on failure.
   // timestamps are in microseconds.
   const payload = {
     lastUpdated: sinceTimestamp,
@@ -73,7 +73,7 @@ exports.getTrackChanges = function getTrackChanges(user, sinceTimestamp, callbac
     try {
       const jsonResponse = JSON.parse(response);
 
-      console.warn('received json response from streamingloadalltracks:', JSON.stringify(jsonResponse));
+      console.warn('received json response from streamingloadalltracks:', response);
 
       if (!(jsonResponse.success === false && jsonResponse.reloadXsrf)) {
         Reporting.Raven.captureMessage('unexpected json response from streamingloadalltracks', {
@@ -128,7 +128,13 @@ exports.getTrackChanges = function getTrackChanges(user, sinceTimestamp, callbac
     }
 
     result.success = true;
-    console.log(result);
+    const summary = {
+      success: result.success,
+      newTimestamp: result.newTimestamp,
+      numUpsertedTracks: result.upsertedTracks.length,
+      numDeletedIds: result.deletedIds.length,
+    };
+    console.log('getTrackChanges success:', JSON.stringify(summary));
     callback(result);
   }, ajaxError => {
     const result = {success: false};
@@ -140,7 +146,7 @@ exports.getTrackChanges = function getTrackChanges(user, sinceTimestamp, callbac
         extra: {ajaxError, payload, user},
       });
     }
-    console.log(result);
+    console.log('getTrackChanges failure:', JSON.stringify(result));
     callback(result);
   });
 };
@@ -156,7 +162,7 @@ exports.updatePlaylist = function updatePlaylist(user, id, title, playlist, play
   console.log('updatePlaylist', playlist);
 
   authedGMRequest('editplaylist', payload, user, 'post', response => {
-    console.log(response);
+    console.log('editPlaylist response:', JSON.stringify(response));
     callback();
   });
 };
@@ -170,7 +176,7 @@ exports.createRemotePlaylist = function createRemotePlaylist(user, title, callba
   // response:
   // [[0,2,0] ,["id","some long base64 string",null,timestamp]]
   authedGMRequest('createplaylist', payload, user, 'post', response => {
-    console.log(response);
+    console.log('createplaylist response:', JSON.stringify(response));
     callback(response[1][0]);
   });
 };
@@ -281,7 +287,7 @@ exports.getPlaylists = function getPlaylists(user, callback, onError) {
 
   const payload = [['', 1], []];
   authedGMRequest('loadplaylists', payload, user, 'post', response => {
-    if (response.length < 2 || !response[1][0]) {
+    if (response.length < 2 || !Array.isArray(response[1][0])) {
       return onError(`unexpected loadplaylists response: ${JSON.stringify(response, null, 2)}`);
     }
 
