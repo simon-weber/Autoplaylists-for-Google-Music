@@ -286,6 +286,8 @@ function periodicUpdate() {
       initLibrary(userId);
     }
   }
+
+  Storage.setLastPSync(new Date());
 }
 
 function initLibrary(userId) {

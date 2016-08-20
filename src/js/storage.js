@@ -47,15 +47,12 @@ const MIGRATIONS = [
   migrateToOne,
 ];
 
+// Callback an int.
 exports.getSyncMs = function getSyncMs(callback) {
   chrome.storage.sync.get('syncMs', Chrometools.unlessError(items => {
     let syncMs = items.syncMs;
 
     if (!Number.isInteger(syncMs)) {
-      Reporting.Raven.captureMessage('resetting syncMs', {
-        level: 'warning',
-        extra: {syncMs},
-      });
       syncMs = 60 * 1000;
       chrome.storage.sync.set({syncMs}, Chrometools.unlessError(() => {
         callback(syncMs);
@@ -66,6 +63,7 @@ exports.getSyncMs = function getSyncMs(callback) {
   }));
 };
 
+// syncMs is an int of milliseconds.
 exports.setSyncMs = function setSyncMs(syncMs, callback) {
   const storageItems = {};
   storageItems.syncMs = syncMs;
@@ -83,6 +81,30 @@ exports.addSyncMsChangeListener = function addSyncMsChangeListener(callback) {
       }
     }
   });
+};
+
+// Callback a Date.
+exports.getLastPSync = function getLastPSync(callback) {
+  chrome.storage.sync.get('lastPSync', Chrometools.unlessError(items => {
+    let lastPSync = items.lastPSync;
+
+    if (!(lastPSync instanceof Date)) {
+      lastPSync = new Date(0);
+      chrome.storage.sync.set({lastPSync}, Chrometools.unlessError(() => {
+        callback(lastPSync);
+      }));
+    } else {
+      callback(lastPSync);
+    }
+  }));
+};
+
+// lastPSync is a Date.
+exports.setLastPSync = function setLastPSync(lastPSync, callback) {
+  const storageItems = {};
+  storageItems.lastPSync = lastPSync;
+
+  chrome.storage.sync.set(storageItems, Chrometools.unlessError(callback));
 };
 
 
