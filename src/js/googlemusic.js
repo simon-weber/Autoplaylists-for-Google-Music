@@ -73,7 +73,7 @@ exports.getTrackChanges = function getTrackChanges(user, sinceTimestamp, callbac
     try {
       const jsonResponse = JSON.parse(response);
 
-      console.warn('received json response from streamingloadalltracks:', jsonResponse);
+      console.warn('received json response from streamingloadalltracks:', JSON.stringify(jsonResponse));
 
       if (!(jsonResponse.success === false && jsonResponse.reloadXsrf)) {
         Reporting.Raven.captureMessage('unexpected json response from streamingloadalltracks', {

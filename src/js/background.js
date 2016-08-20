@@ -39,6 +39,14 @@ function userIdForTabId(tabId) {
   }
 }
 
+function deauthUser(userId) {
+  console.info('deauthing', userId);
+  delete users[userId];
+  delete dbs[userId];
+  delete pollTimestamps[userId];
+  delete splaylistcaches[userId];
+}
+
 
 function diffUpdateLibrary(userId, db, timestamp, callback) {
   // Update our cache with any changes since our last poll.
@@ -54,15 +62,14 @@ function diffUpdateLibrary(userId, db, timestamp, callback) {
         },
         e => {
           console.warning('failed to request xsrf refresh; deauthing', JSON.stringify(e));
-          delete users[userId];
-          delete dbs[userId];
-          delete pollTimestamps[userId];
+          Reporting.Raven.captureMessage('failed to request xsrf refresh; deauthing', {
+            extra: {changes, timestamp, e: JSON.stringify(e)},
+          });
+          deauthUser(userId);
         }));
       } else if (changes.unauthed) {
-        console.info('unauthed; removing user', user);
-        delete users[userId];
-        delete dbs[userId];
-        delete pollTimestamps[userId];
+        console.info('unauthed', userId);
+        deauthUser(userId);
       } else {
         console.error('unexpected getTrackChanges response', changes);
         Reporting.Raven.captureMessage('unexpected getTrackChanges response', {

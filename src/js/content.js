@@ -161,6 +161,7 @@ function main() {
       return true;
     } else if (request.action === 'getXsrf') {
       injectCode(getInjectCode(false));
+      sendResponse('ok');
     }
   });
 
