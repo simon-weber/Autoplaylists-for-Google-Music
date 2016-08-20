@@ -50,12 +50,14 @@ function f(requiredItems, optionalItems) {
 
   if (opt.coerce) {
     field.coerce = opt.coerce;
+
+  // Default types to non-null values to allow querying.
   } else if (field.type === Lf.Type.STRING) {
-    // Default nulls to the empty string to allow querying, and strip extra whitespace.
     field.coerce = val => (val || '').trim();
   } else if (field.is_datetime) {
-    // Default nulls to 0 to allow querying.
     field.coerce = val => (val || 0);
+  } else if (field.type === Lf.Type.INTEGER) {
+    field.coerce = val => (val || -1);
   } else {
     field.coerce = val => val;
   }
@@ -119,7 +121,7 @@ exports.fields = [
   f([22, 'playCount', Lf.Type.INTEGER], {
     label: 'play count'}),
   f([23, 'rating', Lf.Type.INTEGER], {
-    explanation: 'an int between 0 and 5 representing the 5-star rating.',
+    explanation: 'an int between 0 and 5 representing the 5-star rating (see also "rating thumb").',
     // coerce nulls to 0; see https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/15.
     coerce: val => val || 0,
   }),
@@ -176,6 +178,19 @@ exports.fields = [
   }),
   f([38, 'explicitType', Lf.Type.INTEGER], {
     hidden: true,
+  }),
+  f([38, 'explicit', Lf.Type.STRING], {
+    explanation: 'one of "true", "false" or "unknown", representing whether the lyrics are explicit.',
+    coerce: val => val || -1,
+    transformation: n => {
+      let explicit = 'unknown';
+      if (n === 1) {
+        explicit = 'true';
+      } else if (n === 2) {
+        explicit = 'false';
+      }
+      return explicit;
+    },
   }),
   f([41, 'curationSuggested', Lf.Type.INTEGER], {
     hidden: true,
