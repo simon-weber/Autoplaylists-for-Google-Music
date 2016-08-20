@@ -213,12 +213,12 @@ function renameAndSync(playlist, playlists) {
   });
 }
 
-function forceUpdate(userId) {
+function syncPlaylists(userId) {
   const db = dbs[userId];
   const timestamp = pollTimestamps[userId] || 0;
 
   if (!db) {
-    console.warn('refusing forceUpdate because db is not init');
+    console.warn('refusing syncPlaylists because db is not init');
 
     Reporting.Raven.captureMessage('refusing forceUpdate because db is not init', {
       level: 'warning',
@@ -241,7 +241,7 @@ function forceUpdate(userId) {
             //   * periodic syncs from stepping on manual syncs
             // which is why it's done at this level (and not around eg syncPlaylist).
             if (playlistIsUpdating[playlists[i].remoteId]) {
-              console.warn('skipping forceUpdate since playlist is being updated:', playlists[i].title);
+              console.warn('skipping sync since playlist is being updated:', playlists[i].title);
             } else {
               renameAndSync(playlists[i], playlists);
             }
@@ -274,7 +274,7 @@ function periodicUpdate() {
     syncSplaylistcache(userId);
 
     if (dbs[userId]) {
-      forceUpdate(userId);
+      syncPlaylists(userId);
     } else {
       initLibrary(userId);
     }
@@ -293,7 +293,7 @@ function initLibrary(userId) {
         diffUpdateLibrary(userId, db, 0, diffResponse => {
           if (diffResponse.success) {
             dbs[userId] = db;
-            forceUpdate(userId);
+            syncPlaylists(userId);
           } else {
             console.warn('failed to init library after diffupdate fallback');
             Reporting.Raven.captureMessage('failed to init library', {
@@ -309,7 +309,7 @@ function initLibrary(userId) {
           diffUpdateLibrary(userId, db, response.timestamp, diffResponse => {
             if (diffResponse.success) {
               dbs[userId] = db;
-              forceUpdate(userId);
+              syncPlaylists(userId);
             } else {
               console.warn('failed to init library after successful idb read');
               Reporting.Raven.captureMessage('failed to init library', {
@@ -408,11 +408,11 @@ function main() {
     // respond to manager / content script requests.
 
     if (request.action === 'forceUpdate') {
-      forceUpdate(request.userId);
+      syncPlaylists(request.userId);
     } else if (request.action === 'setXsrf') {
       console.info('updating xt:', request);
       users[request.userId].xt = request.xt;
-      forceUpdate(request.userId);
+      syncPlaylists(request.userId);
     } else if (request.action === 'showPageAction') {
       if (!(request.userId)) {
         console.warn('received falsey user id from page action');
