@@ -1,8 +1,21 @@
+## 1.10.0 (August 20, 2016)
+
+Features:
+
+  - add 'explicit' field
+  - add csv export button to debug interface
+
+Bugfixes:
+
+  - prevent random sort from changing when it shouldn't have
+  - improve handling of xsrf refresh requests
+  - prevent a rare situation where the content script wasn't ready to receive messages
+
 ## 1.9.0 (August 14, 2016)
 
 Features:
 
-  - Support random sorting. See [the announcement post](https://groups.google.com/d/msg/autoplaylists-for-google-music-announcements/0DyacGDizKg/4v5Vs4eKAwAJ) for more details.
+  - support random sorting. See [the announcement post](https://groups.google.com/d/msg/autoplaylists-for-google-music-announcements/0DyacGDizKg/4v5Vs4eKAwAJ) for more details.
 
 Bugfixes:
 
