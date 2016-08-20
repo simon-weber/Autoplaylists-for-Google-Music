@@ -47,6 +47,7 @@ function main() {
         columns,
         aaSorting: [],
         buttons: [
+          'csv',
           {
             extend: 'colvis',
             collectionLayout: 'fixed two-column',
