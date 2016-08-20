@@ -127,9 +127,23 @@ function main() {
   // This only exists in a multi-login session.
   const userIndex = Qs.parse(location.search.substring(1)).u || '0';
 
-  // Pull the user id from the page before showing the page action.
-  // Since we can't read window here, we inject code, then post a message back.
+  // Add our self event listeners first to avoid race conditions.
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    console.log('got message', request);
+    if (request.action === 'getLocalTracks') {
+      queryIDB(result => {
+        sendResponse(result);
+      });
+      return true;
+    } else if (request.action === 'getXsrf') {
+      injectCode(getInjectCode(false));
+      sendResponse('ok');
+    }
+  });
 
+
+  // Pull the user id from the page, then show the page action.
+  // Since we can't read window here, we inject code, then post a message back.
   window.addEventListener('message', event => {
     // We only accept messages from ourselves
     if (event.source !== window) {
@@ -151,19 +165,6 @@ function main() {
       userIndex: parseInt(userIndex, 10),
     });
   }, false);
-
-  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log('got message', request);
-    if (request.action === 'getLocalTracks') {
-      queryIDB(result => {
-        sendResponse(result);
-      });
-      return true;
-    } else if (request.action === 'getXsrf') {
-      injectCode(getInjectCode(false));
-      sendResponse('ok');
-    }
-  });
 
   injectCode(getInjectCode(true));
 }
