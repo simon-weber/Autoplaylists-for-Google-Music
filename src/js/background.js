@@ -483,17 +483,36 @@ function main() {
     // respond to manager / content script requests.
 
     if (request.action === 'forceUpdate') {
-      diffUpdateTrackcache(request.userId, dbs[request.userId], response => {
-        console.debug('diffUpdate:', response);
-        syncPlaylists(request.userId);
-      });
+      if (!dbs[request.userId]) {
+        console.warning('forceUpdate requested diffUpdate, but db not init for', request.userId);
+        Reporting.Raven.captureMessage('forceUpdate requested diffUpdate, but db not init', {
+          level: 'warning',
+          extra: {request, users, dbs, syncsHaveStarted},
+        });
+      } else {
+        console.log('forceupdate diffUpdate');
+        diffUpdateTrackcache(request.userId, dbs[request.userId], response => {
+          console.debug('forceupdate diffUpdate res:', response);
+          syncPlaylists(request.userId);
+        });
+      }
     } else if (request.action === 'setXsrf') {
-      console.info('updating xt:', request);
+      console.info('updating xt:', JSON.stringify(request));
       users[request.userId].xt = request.xt;
-      diffUpdateTrackcache(request.userId, dbs[request.userId], response => {
-        console.debug('diffUpdate:', response);
-        syncPlaylists(request.userId);
-      });
+
+      if (!dbs[request.userId]) {
+        console.warning('setXsrf requested diffUpdate, but db not init for', request.userId);
+        Reporting.Raven.captureMessage('setXsrf requested diffUpdate, but db not init', {
+          level: 'warning',
+          extra: {request, users, dbs, syncsHaveStarted},
+        });
+      } else {
+        console.log('xsrf diffUpdate');
+        diffUpdateTrackcache(request.userId, dbs[request.userId], response => {
+          console.debug('xsrf diffUpdate response', response);
+          syncPlaylists(request.userId);
+        });
+      }
     } else if (request.action === 'showPageAction') {
       if (!(request.userId)) {
         console.warn('received falsey user id from page action');
