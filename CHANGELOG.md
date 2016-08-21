@@ -1,3 +1,13 @@
+## 2.0.1 (August 21, 2016)
+
+Bugfixes:
+
+  - fix a rare crash when a deauth happens during library cache init
+
+Misc:
+
+  - add inline explanation for new sync period behavior
+
 ## 2.0.0 (August 20, 2016)
 
 Features:
