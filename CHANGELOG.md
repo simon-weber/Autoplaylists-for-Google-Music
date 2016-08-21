@@ -1,3 +1,13 @@
+## 2.0.0 (August 20, 2016)
+
+Features:
+
+  - *new behavior*: the sync period is now respected during new tabs / refreshed tabs. See [#91](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/91) for more details.
+
+Bugfixes:
+
+  - fix playlist description not being updated for some operations
+
 ## 1.10.0 (August 20, 2016)
 
 Features:
