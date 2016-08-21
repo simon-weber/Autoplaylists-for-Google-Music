@@ -15,7 +15,16 @@
             <div class="row">
                 <div class="column">
                     <h2>Settings</h2>
-                    <label for="sync-minutes">sync period (integer number of minutes, 0 to disable)</label>
+                    <label for="sync-minutes">sync period</label>
+                    <p id="settings-explanation">
+                        The number of minutes to wait between syncing your autoplaylists with Google.
+                        <br/>
+                        Lower numbers sync more often, keeping playlists more accurate at the cost of more ui refreshes and higher mobile battery use.
+                        <br/>
+                        Regardless of this setting, changing an autoplaylist definition will always sync that playlist immediately.
+                        <br/>
+                        Upon changing this setting, a sync will occur immediately (unless set to 0).
+                    </p>
                     <input type="text" id="sync-minutes"/>
                     <br/>
                     <br/>
