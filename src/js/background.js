@@ -103,79 +103,48 @@ function diffUpdateLibrary(userId, db, timestamp, callback) {
   });
 }
 
-function syncPlaylist(playlist, attempt) {
-  // Make Google's playlist match the given one.
+function syncPlaylistContents(playlist, attempt) {
+  // Sync a playlist's tracks and ordering.
+  // A remote playlist must already exist.
 
   const user = users[playlist.userId];
   const _attempt = attempt || 0;
+  const db = dbs[playlist.userId];
+  const splaylistcache = splaylistcaches[playlist.userId];
 
-  console.log('syncPlaylist, attempt', _attempt);
+  console.log('syncPlaylistContents, attempt', _attempt);
 
-  if (!('remoteId' in playlist)) {
-    // Create a remote playlist.
-    Gm.createRemotePlaylist(user, playlist.title, remoteId => {
-      console.log('created remote playlist', remoteId);
-      const playlistToSave = JSON.parse(JSON.stringify(playlist));
-      playlistToSave.remoteId = remoteId;
+  Trackcache.queryTracks(db, splaylistcache, playlist, tracks => {
+    if (tracks === null) {
+      Reporting.reportSync('failure', 'failed-query');
+      return;
+    }
 
-      Storage.savePlaylist(playlistToSave, () => {
-        // nothing else to do. listener will see the change and recall.
-        console.log('wrote remote id');
-      });
-    });
-  } else {
-    // refresh tracks and write out playlist
+    console.log('lock', playlist.title);
+    playlistIsUpdating[playlist.remoteId] = true;
+    console.log(playlist.title, 'found', tracks.length);
+    if (tracks.length > 0) {
+      console.log('first is', tracks[0]);
+    }
+    if (tracks.length > 1000) {
+      console.warn('attempting to sync over 1000 tracks; only first 1k will sync');
+    }
 
-    const db = dbs[playlist.userId];
-    const splaylistcache = splaylistcaches[playlist.userId];
-    Trackcache.queryTracks(db, splaylistcache, playlist, tracks => {
-      if (tracks === null) {
-        Reporting.reportSync('failure', 'failed-query');
-        return;
-      }
+    const desiredTracks = tracks.slice(0, 1000);
 
-      console.log('lock', playlist.title);
-      playlistIsUpdating[playlist.remoteId] = true;
-      console.log(playlist.title, 'found', tracks.length);
-      if (tracks.length > 0) {
-        console.log('first is', tracks[0]);
-      }
-      if (tracks.length > 1000) {
-        console.warn('attempting to sync over 1000 tracks; only first 1k will sync');
-      }
-
-      const desiredTracks = tracks.slice(0, 1000);
-
-      Gm.setPlaylistContents(db, user, playlist.remoteId, desiredTracks, response => {
-        if (response !== null) {
-          // large updates seem to only apply partway sometimes.
-          // retrying like this seems to make even 1k playlists eventually consistent.
-          if (_attempt < 2) {
-            Reporting.reportSync('retry', `retry-${_attempt}`);
-            console.log('not a 0-track add; retrying syncPlaylist', response);
-            setTimeout(syncPlaylist, 10000 * (_attempt + 1), playlist, _attempt + 1);
-          } else {
-            Reporting.reportSync('failure', 'gave-up');
-            console.warn('giving up on syncPlaylist!', response);
-            // Never has the need for promises been so clear.
-            Gm.setPlaylistOrder(db, user, playlist, orderResponse => {
-              console.log('reorder response', orderResponse);
-              console.log('unlock', playlist.title);
-              playlistIsUpdating[playlist.remoteId] = false;
-            }, err => {
-              Reporting.reportSync('failure', 'failed-reorder');
-              console.error('failed to reorder playlist', playlist.title, err);
-              Reporting.Raven.captureMessage('sync setPlaylistOrder', {
-                tags: {playlistId: playlist.remoteId},
-                extra: {playlist, err},
-              });
-              console.log('unlock', playlist.title);
-              playlistIsUpdating[playlist.remoteId] = false;
-            });
-          }
+    Gm.setPlaylistContents(db, user, playlist.remoteId, desiredTracks, response => {
+      if (response !== null) {
+        // large updates seem to only apply partway sometimes.
+        // retrying like this seems to make even 1k playlists eventually consistent.
+        if (_attempt < 2) {
+          Reporting.reportSync('retry', `retry-${_attempt}`);
+          console.log('not a 0-track add; retrying syncPlaylistContents', response);
+          setTimeout(syncPlaylistContents, 10000 * (_attempt + 1), playlist, _attempt + 1);
         } else {
+          Reporting.reportSync('failure', 'gave-up');
+          console.warn('giving up on syncPlaylistContents!', response);
+          // Never has the need for promises been so clear.
           Gm.setPlaylistOrder(db, user, playlist, orderResponse => {
-            Reporting.reportSync('success', `success-${_attempt}`);
             console.log('reorder response', orderResponse);
             console.log('unlock', playlist.title);
             playlistIsUpdating[playlist.remoteId] = false;
@@ -190,27 +159,60 @@ function syncPlaylist(playlist, attempt) {
             playlistIsUpdating[playlist.remoteId] = false;
           });
         }
-      }, err => {
-        Reporting.reportSync('failure', 'failed-set');
-        console.error('failed to sync playlist', playlist.title, err);
-        Reporting.Raven.captureMessage('sync setPlaylistContents', {
-          tags: {playlistId: playlist.remoteId},
-          extra: {playlist, err},
+      } else {
+        Gm.setPlaylistOrder(db, user, playlist, orderResponse => {
+          Reporting.reportSync('success', `success-${_attempt}`);
+          console.log('reorder response', orderResponse);
+          console.log('unlock', playlist.title);
+          playlistIsUpdating[playlist.remoteId] = false;
+        }, err => {
+          Reporting.reportSync('failure', 'failed-reorder');
+          console.error('failed to reorder playlist', playlist.title, err);
+          Reporting.Raven.captureMessage('sync setPlaylistOrder', {
+            tags: {playlistId: playlist.remoteId},
+            extra: {playlist, err},
+          });
+          console.log('unlock', playlist.title);
+          playlistIsUpdating[playlist.remoteId] = false;
         });
-        console.log('unlock', playlist.title);
-        playlistIsUpdating[playlist.remoteId] = false;
+      }
+    }, err => {
+      Reporting.reportSync('failure', 'failed-set');
+      console.error('failed to sync playlist', playlist.title, err);
+      Reporting.Raven.captureMessage('sync setPlaylistContents', {
+        tags: {playlistId: playlist.remoteId},
+        extra: {playlist, err},
       });
+      console.log('unlock', playlist.title);
+      playlistIsUpdating[playlist.remoteId] = false;
     });
-  }
+  });
 }
 
-function renameAndSync(playlist, playlists) {
-  console.log('renaming to', playlist.title);
+function syncPlaylist(playlist, playlists) {
+  // Sync a playlist's metadata and contents.
+  // A remote playlist will be created if one does not exist yet.
+  console.log('syncing', playlist.title);
   const user = users[playlist.userId];
   const splaylistcache = splaylistcaches[playlist.userId];
-  Gm.updatePlaylist(user, playlist.remoteId, playlist.title, playlist, playlists, splaylistcache, () => {
-    syncPlaylist(playlist);
-  });
+
+  if (!('remoteId' in playlist)) {
+    // The remote playlist doesn't exist yet.
+    Gm.createRemotePlaylist(user, playlist.title, remoteId => {
+      console.log('created remote playlist', remoteId);
+      const playlistToSave = JSON.parse(JSON.stringify(playlist));
+      playlistToSave.remoteId = remoteId;
+
+      Storage.savePlaylist(playlistToSave, () => {
+        // nothing else to do. listener will see the change and recall.
+        console.log('wrote remote id');
+      });
+    });
+  } else {
+    Gm.updatePlaylist(user, playlist.remoteId, playlist.title, playlist, playlists, splaylistcache, () => {
+      syncPlaylistContents(playlist);
+    });
+  }
 }
 
 function syncPlaylists(userId) {
@@ -239,11 +241,10 @@ function syncPlaylists(userId) {
             // This locking prevents two things:
             //   * slow periodic syncs from stepping on later periodic syncs
             //   * periodic syncs from stepping on manual syncs
-            // which is why it's done at this level (and not around eg syncPlaylist).
             if (playlistIsUpdating[playlists[i].remoteId]) {
               console.warn('skipping sync since playlist is being updated:', playlists[i].title);
             } else {
-              renameAndSync(playlists[i], playlists);
+              syncPlaylist(playlists[i], playlists);
             }
           }
         });
@@ -330,29 +331,28 @@ function main() {
     const hasOld = 'oldValue' in change;
     const hasNew = 'newValue' in change;
 
+    let operation;
+    let userId;
     if (hasOld && !hasNew) {
-      // deletion
-      Gm.deleteRemotePlaylist(users[change.oldValue.userId], change.oldValue.remoteId, () => null);
+      operation = 'delete';
+      userId = change.oldValue.userId;
+    } else {
+      operation = 'create-or-update';
+      userId = change.newValue.userId;
+    }
 
-      Storage.getPlaylistsForUser(change.oldValue.userId, playlists => {
+    Storage.getPlaylistsForUser(userId, playlists => {
+      if (operation === 'delete') {
+        Gm.deleteRemotePlaylist(users[userId], change.oldValue.remoteId, () => null);
+
         Playlist.deleteAllReferences(change.oldValue.localId, playlists);
         for (let i = 0; i < playlists.length; i++) {
           Storage.savePlaylist(playlists[i], () => {});
         }
-      });
-    } else if (hasOld && hasNew) {
-      // update
-      if (change.oldValue.title !== change.newValue.title) {
-        Storage.getPlaylistsForUser(change.newValue.userId, playlists => {
-          renameAndSync(change.newValue, playlists);
-        });
       } else {
-        syncPlaylist(change.newValue);
+        syncPlaylist(change.newValue, playlists);
       }
-    } else {
-      // creation
-      syncPlaylist(change.newValue);
-    }
+    });
   });
 
   // Update periodically.
