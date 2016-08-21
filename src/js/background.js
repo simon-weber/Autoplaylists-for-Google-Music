@@ -48,22 +48,28 @@ function deauthUser(userId) {
 }
 
 
-function diffUpdateLibrary(userId, db, timestamp, callback) {
-  // Update our cache with any changes since our last poll.
+function diffUpdateTrackcache(userId, db, callback, timestamp) {
+  // Update our cache with any changes since timestamp.
   // Callback an object with success = true if we were able to retrieve changes.
 
+  // If timestamp is not provided, use the last stored timestamp.
+  // If there is no stored timestamp, use 0 (a full sync).
+
   const user = users[userId];
+  if (!Number.isInteger(timestamp)) {
+    timestamp = pollTimestamps[userId] || 0;  // eslint-disable-line no-param-reassign
+  }
 
   console.log('checking for remote track changes');
   Gm.getTrackChanges(user, timestamp, changes => {
     if (!changes.success) {
-      console.warning('failed to getTrackChanges:', JSON.stringify(changes));
+      console.warn('failed to getTrackChanges:', JSON.stringify(changes));
       if (changes.reloadXsrf) {
         chrome.tabs.sendMessage(user.tabId, {action: 'getXsrf'}, Chrometools.unlessError(r => {
           console.info('requested xsrf refresh', r);
         },
         e => {
-          console.warning('failed to request xsrf refresh; deauthing', JSON.stringify(e));
+          console.warn('failed to request xsrf refresh; deauthing', JSON.stringify(e));
           Reporting.Raven.captureMessage('failed to request xsrf refresh; deauthing', {
             level: 'warning',
             extra: {changes, timestamp, e: JSON.stringify(e)},
@@ -86,13 +92,17 @@ function diffUpdateLibrary(userId, db, timestamp, callback) {
       Trackcache.deleteTracks(db, userId, changes.deletedIds, () => {
         if (changes.newTimestamp) {
           pollTimestamps[userId] = changes.newTimestamp;
+          console.log('poll timestamp now Google-provided', changes.newTimestamp);
         } else if (timestamp === 0) {
           // if we're updating from 0 and didn't get a new timestamp, we want to avoid updating from 0 again.
           // so, use the current time minus a minute to avoid race conditions from when the sync started.
           pollTimestamps[userId] = (new Date().getTime() * 1000) - (60 * 1000);
+          console.info('no new poll timestamp; using one minute ago');
         } else {
-          // The safest option is to just use the same timestamp again next time, since we can't race that way.
+          // This happens when the diff update had no changes.
+          // We can just use the same timestamp again next time.
           pollTimestamps[userId] = timestamp;
+          console.log('no new poll timestamp; reusing', timestamp);
         }
 
         callback({success: true});
@@ -215,39 +225,34 @@ function syncPlaylist(playlist, playlists) {
 
 function syncPlaylists(userId) {
   const db = dbs[userId];
-  const timestamp = pollTimestamps[userId] || 0;
 
   if (!db) {
     console.warn('refusing syncPlaylists because db is not init');
 
     Reporting.Raven.captureMessage('refusing forceUpdate because db is not init', {
       level: 'warning',
-      extra: {timestamp, users},
+      extra: {users},
     });
     return;
   }
 
-  diffUpdateLibrary(userId, db, timestamp, response => {
-    if (response.success) {
-      License.hasFullVersion(false, hasFullVersion => {
-        Storage.getPlaylistsForUser(userId, playlists => {
-          for (let i = 0; i < playlists.length; i++) {
-            if (i > 0 && !hasFullVersion) {
-              console.info('skipping sync of locked playlist', playlists[i].title);
-              continue;
-            }
-            // This locking prevents two things:
-            //   * slow periodic syncs from stepping on later periodic syncs
-            //   * periodic syncs from stepping on manual syncs
-            if (playlistIsUpdating[playlists[i].remoteId]) {
-              console.warn('skipping sync since playlist is being updated:', playlists[i].title);
-            } else {
-              syncPlaylist(playlists[i], playlists);
-            }
-          }
-        });
-      });
-    }
+  License.hasFullVersion(false, hasFullVersion => {
+    Storage.getPlaylistsForUser(userId, playlists => {
+      for (let i = 0; i < playlists.length; i++) {
+        if (i > 0 && !hasFullVersion) {
+          console.info('skipping sync of locked playlist', playlists[i].title);
+          continue;
+        }
+        // This locking prevents two things:
+        //   * slow periodic syncs from stepping on later periodic syncs
+        //   * periodic syncs from stepping on manual syncs
+        if (playlistIsUpdating[playlists[i].remoteId]) {
+          console.warn('skipping sync since playlist is being updated:', playlists[i].title);
+        } else {
+          syncPlaylist(playlists[i], playlists);
+        }
+      }
+    });
   });
 }
 
@@ -273,7 +278,10 @@ function periodicUpdate() {
     syncSplaylistcache(userId);
 
     if (dbs[userId]) {
-      syncPlaylists(userId);
+      diffUpdateTrackcache(userId, dbs[userId], response => {
+        console.debug('diffUpdate:', response);
+        syncPlaylists(userId);
+      });
     } else {
       initLibrary(userId);
     }
@@ -289,7 +297,7 @@ function initLibrary(userId) {
       if (chrome.extension.lastError || response === null || response.gtracks === null ||
           response.gtracks.length === 0 || response.timestamp === null) {
         console.warn('local idb not helpful; falling back to diffUpdate(0).', response, chrome.extension.lastError);
-        diffUpdateLibrary(userId, db, 0, diffResponse => {
+        diffUpdateTrackcache(userId, db, diffResponse => {
           if (diffResponse.success) {
             dbs[userId] = db;
             syncPlaylists(userId);
@@ -300,12 +308,12 @@ function initLibrary(userId) {
               tags: {hadToFallback: true},
             });
           }
-        });
+        }, 0);
       } else {
         console.log('got idb gtracks:', response.gtracks.length);
         const tracks = response.gtracks.map(Track.fromJsproto);
         Trackcache.upsertTracks(db, userId, tracks, () => {
-          diffUpdateLibrary(userId, db, response.timestamp, diffResponse => {
+          diffUpdateTrackcache(userId, db, diffResponse => {
             if (diffResponse.success) {
               dbs[userId] = db;
               syncPlaylists(userId);
@@ -316,7 +324,7 @@ function initLibrary(userId) {
                 tags: {hadToFallback: false},
               });
             }
-          });
+          }, response.timestamp);
         });
       }
     });
@@ -406,11 +414,17 @@ function main() {
     // respond to manager / content script requests.
 
     if (request.action === 'forceUpdate') {
-      syncPlaylists(request.userId);
+      diffUpdateTrackcache(request.userId, dbs[request.userId], response => {
+        console.debug('diffUpdate:', response);
+        syncPlaylists(request.userId);
+      });
     } else if (request.action === 'setXsrf') {
       console.info('updating xt:', request);
       users[request.userId].xt = request.xt;
-      syncPlaylists(request.userId);
+      diffUpdateTrackcache(request.userId, dbs[request.userId], response => {
+        console.debug('diffUpdate:', response);
+        syncPlaylists(request.userId);
+      });
     } else if (request.action === 'showPageAction') {
       if (!(request.userId)) {
         console.warn('received falsey user id from page action');
