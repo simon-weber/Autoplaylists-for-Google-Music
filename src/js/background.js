@@ -370,7 +370,7 @@ function periodicUpdate() {
 
     if (dbs[userId]) {
       diffUpdateTrackcache(userId, dbs[userId], response => {
-        console.debug('diffUpdate:', response);
+        console.debug('periodic diffUpdate:', response.success, response);
         syncPlaylists(userId);
       });
     } else {
