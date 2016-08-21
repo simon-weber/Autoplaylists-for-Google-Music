@@ -54,6 +54,7 @@ function diffUpdateLibrary(userId, db, timestamp, callback) {
 
   const user = users[userId];
 
+  console.log('checking for remote track changes');
   Gm.getTrackChanges(user, timestamp, changes => {
     if (!changes.success) {
       console.warning('failed to getTrackChanges:', JSON.stringify(changes));
@@ -82,10 +83,7 @@ function diffUpdateLibrary(userId, db, timestamp, callback) {
     }
 
     Trackcache.upsertTracks(db, userId, changes.upsertedTracks, () => {
-      console.log('done with diff upsert of', changes.upsertedTracks.length);
       Trackcache.deleteTracks(db, userId, changes.deletedIds, () => {
-        console.log('done with diff delete of', changes.deletedIds.length);
-
         if (changes.newTimestamp) {
           pollTimestamps[userId] = changes.newTimestamp;
         } else if (timestamp === 0) {
@@ -304,7 +302,7 @@ function initLibrary(userId) {
           }
         });
       } else {
-        console.debug('got idb gtracks:', response.gtracks.length);
+        console.log('got idb gtracks:', response.gtracks.length);
         const tracks = response.gtracks.map(Track.fromJsproto);
         Trackcache.upsertTracks(db, userId, tracks, () => {
           diffUpdateLibrary(userId, db, response.timestamp, diffResponse => {

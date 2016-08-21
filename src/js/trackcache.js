@@ -53,6 +53,7 @@ exports.openDb = function openDb(userId, callback) {
 };
 
 exports.upsertTracks = function upsertTracks(db, userId, tracks, callback) {
+  console.log('cache: upserting', tracks.length, 'tracks');
   const track = db.getSchema().table('Track');
 
   const rows = [];
@@ -71,6 +72,7 @@ exports.upsertTracks = function upsertTracks(db, userId, tracks, callback) {
 };
 
 exports.deleteTracks = function deleteTracks(db, userId, trackIds, callback) {
+  console.log('cache: deleting', trackIds.length, 'tracks');
   const track = db.getSchema().table('Track');
   db.delete().from(track).where(track.id.in(trackIds)).exec()
   .then(callback)
