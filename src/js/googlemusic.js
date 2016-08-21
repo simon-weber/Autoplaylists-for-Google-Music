@@ -153,10 +153,8 @@ exports.getTrackChanges = function getTrackChanges(user, sinceTimestamp, callbac
 
 exports.updatePlaylist = function updatePlaylist(user, id, title, playlist, playlists, splaylistcache, callback) {
   // Callback no args after updating an existing playlist.
-  const lastSync = new Date().toLocaleString();
-
   const description = Playlist.toString(playlist, playlists, splaylistcache);
-  const syncMsg = `Synced ${lastSync} by Autoplaylists for Google Music™ to contain: ${description}.`;
+  const syncMsg = `Synced ${new Date().toLocaleString()} by Autoplaylists for Google Music™ to contain: ${description}.`;
 
   const payload = [['', 1], [id, null, title, syncMsg]];
   console.debug('updatePlaylist', playlist);
