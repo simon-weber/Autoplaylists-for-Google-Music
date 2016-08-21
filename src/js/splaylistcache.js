@@ -23,7 +23,7 @@ exports.sync = function sync(cache, user, playlists, callback) {
   const autoPlaylistIds = new Set(playlists.map(p => p.remoteId));
 
   Gm.getPlaylists(user, freshSplaylists => {
-    console.log('got splaylists', freshSplaylists);
+    console.debug('got splaylists', freshSplaylists);
 
     const oldSplaylistIds = new Set(Object.keys(cache.splaylists));
 
@@ -40,7 +40,7 @@ exports.sync = function sync(cache, user, playlists, callback) {
 
       // Sync added or modified splaylists.
       if (wasAdded || cache.splaylists[freshSplaylist.id].lastModified < freshSplaylist.lastModified) {
-        console.log(`sync splaylist "${freshSplaylist.title}"`);
+        console.debug(`sync splaylist "${freshSplaylist.title}"`);
         Gm.getPlaylistContents(user, freshSplaylist.id, entries => {
           const trackIds = new Set();
           for (let j = 0; j < entries.length; j++) {
@@ -61,7 +61,7 @@ exports.sync = function sync(cache, user, playlists, callback) {
     // Delete deleted splaylists (those not seen in the fresh splaylists).
     for (const oldSplaylistId of oldSplaylistIds) {
       const oldTitle = cache.splaylists[oldSplaylistId].title;
-      console.log(`splaylist "${oldTitle}" was deleted`);
+      console.debug(`splaylist "${oldTitle}" was deleted`);
       delete cache.splaylists[oldSplaylistId]; // eslint-disable-line no-param-reassign
     }
 

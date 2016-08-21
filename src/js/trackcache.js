@@ -21,7 +21,7 @@ exports.openDb = function openDb(userId, callback) {
     return;
   }
 
-  console.log('opening...');
+  console.log('opening db');
   const schemaBuilder = Lf.schema.create(`ltracks_${userId}`, 1);
 
   let table = schemaBuilder.createTable('Track');

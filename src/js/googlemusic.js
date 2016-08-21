@@ -66,7 +66,7 @@ exports.getTrackChanges = function getTrackChanges(user, sinceTimestamp, callbac
     sessionId: '',
   };
 
-  console.log('getTrackChanges', sinceTimestamp);
+  console.debug('getTrackChanges', sinceTimestamp);
 
   authedGMRequest('streamingloadalltracks', payload, user, 'get', response => {
     // Try to parse a json response first, which is sent for errors.
@@ -124,7 +124,7 @@ exports.getTrackChanges = function getTrackChanges(user, sinceTimestamp, callbac
         }
       }
 
-      console.log(parsed[0].length, 'tracks');
+      console.debug(parsed[0].length, 'tracks');
     }
 
     result.success = true;
@@ -134,7 +134,7 @@ exports.getTrackChanges = function getTrackChanges(user, sinceTimestamp, callbac
       numUpsertedTracks: result.upsertedTracks.length,
       numDeletedIds: result.deletedIds.length,
     };
-    console.log('getTrackChanges success:', JSON.stringify(summary));
+    console.debug('getTrackChanges success:', JSON.stringify(summary));
     callback(result);
   }, ajaxError => {
     const result = {success: false};
@@ -146,7 +146,7 @@ exports.getTrackChanges = function getTrackChanges(user, sinceTimestamp, callbac
         extra: {ajaxError, payload, user},
       });
     }
-    console.log('getTrackChanges failure:', JSON.stringify(result));
+    console.debug('getTrackChanges failure:', JSON.stringify(result));
     callback(result);
   });
 };
@@ -159,10 +159,10 @@ exports.updatePlaylist = function updatePlaylist(user, id, title, playlist, play
   const syncMsg = `Synced ${lastSync} by Autoplaylists for Google Music™ to contain: ${description}.`;
 
   const payload = [['', 1], [id, null, title, syncMsg]];
-  console.log('updatePlaylist', playlist);
+  console.debug('updatePlaylist', playlist);
 
   authedGMRequest('editplaylist', payload, user, 'post', response => {
-    console.log('editPlaylist response:', JSON.stringify(response));
+    console.debug('editPlaylist response:', JSON.stringify(response));
     callback();
   });
 };
@@ -171,12 +171,12 @@ exports.createRemotePlaylist = function createRemotePlaylist(user, title, callba
   // Callback a playlist id for a new, empty playlist.
   const payload = [['', 1], [false, title, null, []]];
 
-  console.log('createRemotePlaylist', title);
+  console.debug('createRemotePlaylist', title);
 
   // response:
   // [[0,2,0] ,["id","some long base64 string",null,timestamp]]
   authedGMRequest('createplaylist', payload, user, 'post', response => {
-    console.log('createplaylist response:', JSON.stringify(response));
+    console.debug('createplaylist response:', JSON.stringify(response));
     callback(response[1][0]);
   });
 };
@@ -191,10 +191,10 @@ exports.deleteRemotePlaylist = function deleteRemotePlaylist(user, remoteId, cal
     sessionId: '',
   };
 
-  console.log('deleteRemotePlaylist', remoteId);
+  console.debug('deleteRemotePlaylist', remoteId);
 
   authedGMRequest('deleteplaylist', payload, user, 'post', response => {
-    console.log('delete playlist response', response);
+    console.debug('delete playlist response', response);
     callback();
   });
 };
@@ -203,11 +203,11 @@ function addTracks(user, playlistId, tracks, callback, onError) {
   // Append these tracks and callback the api response, or null if adding 0 tracks.
 
   if (tracks.length === 0) {
-    console.log('skipping add of 0 tracks');
+    console.debug('skipping add of 0 tracks');
     return callback(null);
   }
 
-  console.log('adding', tracks.length, 'tracks. first 5 are', JSON.stringify(tracks.slice(0, 5), null, 2));
+  console.debug('adding', tracks.length, 'tracks. first 5 are', JSON.stringify(tracks.slice(0, 5), null, 2));
 
   // [["<sessionid>",1],["<listid>",[["<store id or songid>",tracktype]]]]
   const payload = [['', 1],
@@ -218,7 +218,7 @@ function addTracks(user, playlistId, tracks, callback, onError) {
     ],
   ];
   authedGMRequest('addtrackstoplaylist', payload, user, 'post', response => {
-    console.log('add response', JSON.stringify(response, null, 2));
+    console.debug('add response', JSON.stringify(response, null, 2));
     if (response.length <= 1 || response[1].length <= 0 || response[1][0] === 0) {
       // I used to think a [0] response array of 0, 2, 0 signaled errors,
       // but I've seen some successful responses with that recently.
@@ -243,13 +243,13 @@ function addTracks(user, playlistId, tracks, callback, onError) {
 
 function deleteEntries(user, playlistId, entries, callback, onError) {
   // Delete entries with id and entryId keys; callback the api response.
-  console.log('deleting', entries.length, 'entries. first 5 are', JSON.stringify(entries.slice(0, 5), null, 2));
+  console.debug('deleting', entries.length, 'entries. first 5 are', JSON.stringify(entries.slice(0, 5), null, 2));
   const payload = [
     ['', 1],
     [playlistId, entries.map(entry => entry.id), entries.map(entry => entry.entryId)],
   ];
   authedGMRequest('deleteplaylisttrack', payload, user, 'post', response => {
-    console.log('delete response', JSON.stringify(response, null, 2));
+    console.debug('delete response', JSON.stringify(response, null, 2));
     callback(response);
   }, onError);
 }
@@ -267,8 +267,8 @@ exports.getPlaylistContents = function getPlaylistContents(user, playlistId, cal
 
     if (response[1].length !== 0) {
       const gentries = response[1][0];
-      console.log('playlist', playlistId, 'has', gentries.length, 'entries. first 3:',
-                  JSON.stringify(gentries.slice(0, 3), null, 2));
+      console.debug('playlist', playlistId, 'has', gentries.length, 'entries. first 3:',
+                    JSON.stringify(gentries.slice(0, 3), null, 2));
 
       for (let i = 0; i < gentries.length; i++) {
         const gentry = gentries[i];
@@ -376,7 +376,7 @@ exports.setPlaylistContents = function setPlaylistContents(db, user, playlistId,
               addTracks(user, playlistId, tracksToAdd, callback);
             }, onError);
           } else {
-            console.log('no need to delete post-filter; adding');
+            console.debug('no need to delete post-filter; adding');
             addTracks(user, playlistId, tracksToAdd, callback, onError);
           }
         }).catch(e => {
@@ -387,11 +387,11 @@ exports.setPlaylistContents = function setPlaylistContents(db, user, playlistId,
           });
         });
       } else {
-        console.log('no need to delete pre-filter; adding');
+        console.debug('no need to delete pre-filter; adding');
         addTracks(user, playlistId, tracksToAdd, callback, onError);
       }
     } else {
-      console.log('adding to empty');
+      console.debug('adding to empty');
       addTracks(user, playlistId, tracks, callback, onError);
     }
   }, onError);
@@ -438,7 +438,7 @@ exports.setPlaylistOrder = function setPlaylistOrder(db, user, playlist, callbac
           }, onError);
         } else {
           // Avoid triggering a ui refresh on noop reorderings.
-          console.log('no need to reorder playlist', playlist.title);
+          console.debug('no need to reorder playlist', playlist.title);
           callback(null);
         }
       }, e => {
@@ -446,7 +446,7 @@ exports.setPlaylistOrder = function setPlaylistOrder(db, user, playlist, callbac
         onError(e);
       });
     } else {
-      console.log('no need to reorder empty playlist', playlist.title);
+      console.debug('no need to reorder empty playlist', playlist.title);
       callback(null);
     }
   }, onError);

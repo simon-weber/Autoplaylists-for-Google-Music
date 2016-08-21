@@ -31,7 +31,7 @@ function unlessError(func, onError) {
 exports.unlessError = unlessError;
 
 exports.focusOrCreateExtensionTab = function focusOrCreateExtensionTab(url) {
-  chrome.tabs.create({url, active: true}, unlessError(t => console.log('created', t)));
+  chrome.tabs.create({url, active: true}, unlessError(t => console.debug('created', t)));
 
   // There seems to be a bug in Chrome preventing tabs.query from working as expected.
   // chrome.tabs.query({url}, unlessError(tabs => {

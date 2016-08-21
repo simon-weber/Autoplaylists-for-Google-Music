@@ -59,7 +59,7 @@ function diffUpdateLibrary(userId, db, timestamp, callback) {
       console.warning('failed to getTrackChanges:', JSON.stringify(changes));
       if (changes.reloadXsrf) {
         chrome.tabs.sendMessage(user.tabId, {action: 'getXsrf'}, Chrometools.unlessError(r => {
-          console.log('requested xsrf refresh', r);
+          console.info('requested xsrf refresh', r);
         },
         e => {
           console.warning('failed to request xsrf refresh; deauthing', JSON.stringify(e));
@@ -112,7 +112,7 @@ function syncPlaylistContents(playlist, attempt) {
   const db = dbs[playlist.userId];
   const splaylistcache = splaylistcaches[playlist.userId];
 
-  console.log('syncPlaylistContents, attempt', _attempt);
+  console.debug('syncPlaylistContents, attempt', _attempt);
 
   Trackcache.queryTracks(db, splaylistcache, playlist, tracks => {
     if (tracks === null) {
@@ -120,11 +120,11 @@ function syncPlaylistContents(playlist, attempt) {
       return;
     }
 
-    console.log('lock', playlist.title);
+    console.debug('lock', playlist.title);
     playlistIsUpdating[playlist.remoteId] = true;
-    console.log(playlist.title, 'found', tracks.length);
+    console.debug(playlist.title, 'found', tracks.length);
     if (tracks.length > 0) {
-      console.log('first is', tracks[0]);
+      console.debug('first is', tracks[0]);
     }
     if (tracks.length > 1000) {
       console.warn('attempting to sync over 1000 tracks; only first 1k will sync');
@@ -138,15 +138,15 @@ function syncPlaylistContents(playlist, attempt) {
         // retrying like this seems to make even 1k playlists eventually consistent.
         if (_attempt < 2) {
           Reporting.reportSync('retry', `retry-${_attempt}`);
-          console.log('not a 0-track add; retrying syncPlaylistContents', response);
+          console.debug('not a 0-track add; retrying syncPlaylistContents', response);
           setTimeout(syncPlaylistContents, 10000 * (_attempt + 1), playlist, _attempt + 1);
         } else {
           Reporting.reportSync('failure', 'gave-up');
           console.warn('giving up on syncPlaylistContents!', response);
           // Never has the need for promises been so clear.
           Gm.setPlaylistOrder(db, user, playlist, orderResponse => {
-            console.log('reorder response', orderResponse);
-            console.log('unlock', playlist.title);
+            console.debug('reorder response', orderResponse);
+            console.debug('unlock', playlist.title);
             playlistIsUpdating[playlist.remoteId] = false;
           }, err => {
             Reporting.reportSync('failure', 'failed-reorder');
@@ -155,15 +155,15 @@ function syncPlaylistContents(playlist, attempt) {
               tags: {playlistId: playlist.remoteId},
               extra: {playlist, err},
             });
-            console.log('unlock', playlist.title);
+            console.debug('unlock', playlist.title);
             playlistIsUpdating[playlist.remoteId] = false;
           });
         }
       } else {
         Gm.setPlaylistOrder(db, user, playlist, orderResponse => {
           Reporting.reportSync('success', `success-${_attempt}`);
-          console.log('reorder response', orderResponse);
-          console.log('unlock', playlist.title);
+          console.debug('reorder response', orderResponse);
+          console.debug('unlock', playlist.title);
           playlistIsUpdating[playlist.remoteId] = false;
         }, err => {
           Reporting.reportSync('failure', 'failed-reorder');
@@ -172,7 +172,7 @@ function syncPlaylistContents(playlist, attempt) {
             tags: {playlistId: playlist.remoteId},
             extra: {playlist, err},
           });
-          console.log('unlock', playlist.title);
+          console.debug('unlock', playlist.title);
           playlistIsUpdating[playlist.remoteId] = false;
         });
       }
@@ -183,7 +183,7 @@ function syncPlaylistContents(playlist, attempt) {
         tags: {playlistId: playlist.remoteId},
         extra: {playlist, err},
       });
-      console.log('unlock', playlist.title);
+      console.debug('unlock', playlist.title);
       playlistIsUpdating[playlist.remoteId] = false;
     });
   });
@@ -205,7 +205,7 @@ function syncPlaylist(playlist, playlists) {
 
       Storage.savePlaylist(playlistToSave, () => {
         // nothing else to do. listener will see the change and recall.
-        console.log('wrote remote id');
+        console.debug('wrote remote id');
       });
     });
   } else {
@@ -235,7 +235,7 @@ function syncPlaylists(userId) {
         Storage.getPlaylistsForUser(userId, playlists => {
           for (let i = 0; i < playlists.length; i++) {
             if (i > 0 && !hasFullVersion) {
-              console.log('skipping sync of locked playlist', playlists[i].title);
+              console.info('skipping sync of locked playlist', playlists[i].title);
               continue;
             }
             // This locking prevents two things:
@@ -304,7 +304,7 @@ function initLibrary(userId) {
           }
         });
       } else {
-        console.log('got idb gtracks:', response.gtracks.length);
+        console.debug('got idb gtracks:', response.gtracks.length);
         const tracks = response.gtracks.map(Track.fromJsproto);
         Trackcache.upsertTracks(db, userId, tracks, () => {
           diffUpdateLibrary(userId, db, response.timestamp, diffResponse => {
