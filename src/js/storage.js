@@ -83,14 +83,15 @@ exports.addSyncMsChangeListener = function addSyncMsChangeListener(callback) {
   });
 };
 
-// Callback a Date.
+// Callback a ms timestamp.
 exports.getLastPSync = function getLastPSync(callback) {
   chrome.storage.sync.get('lastPSync', Chrometools.unlessError(items => {
     let lastPSync = items.lastPSync;
 
-    if (!(lastPSync instanceof Date)) {
-      lastPSync = new Date(0);
+    if (!Number.isInteger(lastPSync)) {
+      lastPSync = 0;
       chrome.storage.sync.set({lastPSync}, Chrometools.unlessError(() => {
+        console.info('init lastPSync to time 0');
         callback(lastPSync);
       }));
     } else {
@@ -99,7 +100,6 @@ exports.getLastPSync = function getLastPSync(callback) {
   }));
 };
 
-// lastPSync is a Date.
 exports.setLastPSync = function setLastPSync(lastPSync, callback) {
   const storageItems = {};
   storageItems.lastPSync = lastPSync;

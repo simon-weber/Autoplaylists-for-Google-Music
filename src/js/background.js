@@ -31,6 +31,8 @@ const playlistIsUpdating = {};
 // {userId: <timestamp>}
 const pollTimestamps = {};
 
+let syncsHaveStarted = false;
+
 function userIdForTabId(tabId) {
   for (const userId in users) {
     if (users[userId].tabId === tabId) {
@@ -271,7 +273,96 @@ function syncSplaylistcache(userId) {
   });
 }
 
+function initSyncSchedule() {
+  // Set the periodic sync schedule based on the last periodic sync.
+  // This may also sync immediately if we're overdue for a sync.
+  // now >= last-sync + sync-period: sync immediately. Next sync at now + sync-period.
+  // now < last-sync + sync-period: don't sync. Next sync at last-sync + sync-period
+
+  if (syncsHaveStarted) {
+    console.log("request to init syncs, but they're already started");
+    return;
+  }
+
+  Storage.getLastPSync(lastPSync => {
+    console.log('initSyncSchedule. lastPSync was', new Date(lastPSync));
+    Storage.getSyncMs(initSyncMs => {
+      console.info('sync interval initially', initSyncMs);
+      const nextExpectedSync = new Date(lastPSync + initSyncMs);
+      const now = new Date();
+      let startDelayId = null;
+
+      if (nextExpectedSync < now) {
+        // We're overdue; sync now.
+        console.info('sync overdue; starting periodic syncs now');
+        startPeriodicSyncs();
+      } else {
+        // The next sync is in the future.
+        const startDelay = nextExpectedSync.getTime() - now.getTime();
+        console.info(`delaying syncs for ~${Math.round(startDelay / 1000 / 60)} minutes`);
+        startDelayId = setTimeout(startPeriodicSyncs, startDelay);
+
+        // Sync immediately if the startDelay if the sync period changes.
+        // This isn't ideal, but it's much simpler than changing the delay.
+        Storage.addSyncMsChangeListener(change => { // eslint-disable-line no-unused-vars
+          clearTimeout(startDelayId);
+          if (!syncsHaveStarted) {
+            console.info('sync period updated during delay; syncing now');
+            startPeriodicSyncs();
+          }
+        });
+      }
+    });
+  });
+}
+
+function startPeriodicSyncs() {
+  if (syncsHaveStarted) {
+    console.log("request to init syncs, but they're already started");
+    return;
+  }
+
+  syncsHaveStarted = true;
+
+  Storage.getSyncMs(initSyncMs => {
+    let syncIntervalId = null;
+
+    // Don't sync at 0 period or more often than one minute.
+    // (The latter should also be prevented by the ui.)
+    if (initSyncMs >= 60 * 1000) {
+      periodicUpdate();
+      syncIntervalId = setInterval(periodicUpdate, initSyncMs);
+    }
+
+    // Handle updates to the sync period.
+    Storage.addSyncMsChangeListener(change => {
+      const oldSyncMs = change.oldValue;
+      const syncMs = change.newValue;
+      console.info('sync interval changing to', syncMs);
+
+      if (syncIntervalId !== null) {
+        clearInterval(syncIntervalId);
+      }
+
+      syncIntervalId = null;
+      if (syncMs >= 60 * 1000) {
+        syncIntervalId = setInterval(periodicUpdate, syncMs);
+        if (oldSyncMs === 0) {
+          console.info('syncs turning back on; syncing now');
+          periodicUpdate();
+        }
+      }
+    });
+  });
+}
+
+
 function periodicUpdate() {
+  const now = new Date();
+  Storage.setLastPSync(now.getTime(), () => {
+    console.log('set lastPSync to', now);
+  });
+
   for (const userId in users) {
     console.log('periodic update for', userId);
 
@@ -283,15 +374,20 @@ function periodicUpdate() {
         syncPlaylists(userId);
       });
     } else {
-      initLibrary(userId);
+      // Retry to init the library.
+      console.warn('db not init at periodic sync');
+      Reporting.Raven.captureMessage('db not init at periodic sync', {
+        level: 'warning',
+        extra: {users},
+      });
+      initLibrary(userId, () => null);
     }
   }
-
-  Storage.setLastPSync(new Date());
 }
 
-function initLibrary(userId) {
+function initLibrary(userId, callback) {
   // Initialize our cache from Google's indexeddb, or fall back to a differential update from time 0.
+  // Callback nothing when finished.
   Track.resetRandomCache();
   Trackcache.openDb(userId, db => {
     const message = {action: 'getLocalTracks', userId};
@@ -302,7 +398,6 @@ function initLibrary(userId) {
         diffUpdateTrackcache(userId, db, diffResponse => {
           if (diffResponse.success) {
             dbs[userId] = db;
-            syncPlaylists(userId);
           } else {
             console.warn('failed to init library after diffupdate fallback');
             Reporting.Raven.captureMessage('failed to init library', {
@@ -310,6 +405,7 @@ function initLibrary(userId) {
               tags: {hadToFallback: true},
             });
           }
+          callback();
         }, 0);
       } else {
         console.log('got idb gtracks:', response.gtracks.length);
@@ -318,7 +414,6 @@ function initLibrary(userId) {
           diffUpdateTrackcache(userId, db, diffResponse => {
             if (diffResponse.success) {
               dbs[userId] = db;
-              syncPlaylists(userId);
             } else {
               console.warn('failed to init library after successful idb read');
               Reporting.Raven.captureMessage('failed to init library', {
@@ -326,6 +421,7 @@ function initLibrary(userId) {
                 tags: {hadToFallback: false},
               });
             }
+            callback();
           }, response.timestamp);
         });
       }
@@ -359,35 +455,6 @@ function main() {
         }
       } else {
         syncPlaylist(change.newValue, playlists);
-      }
-    });
-  });
-
-  // Update periodically.
-  Storage.getSyncMs(initSyncMs => {
-    console.info('sync interval initially', initSyncMs);
-    let syncIntervalId = null;
-    if (initSyncMs >= 60 * 1000) {
-      syncIntervalId = setInterval(periodicUpdate, initSyncMs);
-    }
-
-    Storage.addSyncMsChangeListener(change => {
-      const hasNew = 'newValue' in change;
-
-      if (!hasNew) {
-        return;
-      }
-
-      const syncMs = change.newValue;
-      console.info('sync interval changing to', syncMs);
-
-      if (syncIntervalId !== null) {
-        clearInterval(syncIntervalId);
-      }
-
-      syncIntervalId = null;
-      if (syncMs >= 60 * 1000) {
-        syncIntervalId = setInterval(periodicUpdate, syncMs);
       }
     });
   });
@@ -458,7 +525,9 @@ function main() {
       Reporting.reportHit('showPageAction');
 
       // init the caches.
-      initLibrary(request.userId);
+      initLibrary(request.userId, () => {
+        initSyncSchedule();
+      });
       splaylistcaches[request.userId] = Splaylistcache.open();
       syncSplaylistcache(request.userId);
 
