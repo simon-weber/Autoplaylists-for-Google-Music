@@ -39,6 +39,19 @@ exports.reportSync = function reportSync(action, label) {
   }
 };
 
+// action is one of 'valid' or 'invalid'.
+exports.reportActivation = function reportActivation(action) {
+  if (!cachedContext) {
+    setTimeout(reportActivation, 1000, action);
+  } else {
+    const activation = analytics.EventBuilder.builder()
+    .category('activation')
+    .action(action);
+
+    GATracker.send(activation);
+  }
+};
+
 exports.reportHit = function reportHit(view) {
   if (!cachedContext) {
     setTimeout(reportHit, 1000, view);
