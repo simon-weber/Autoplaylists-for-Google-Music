@@ -1,3 +1,9 @@
+## 2.0.2 (August 27, 2016)
+
+Misc:
+
+  - add reporting for activations
+
 ## 2.0.1 (August 21, 2016)
 
 Bugfixes:
