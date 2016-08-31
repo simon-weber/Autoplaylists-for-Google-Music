@@ -3,10 +3,26 @@ const Raven = require('raven-js');
 
 const Context = require('./context');
 
+const limiter = {};
+
 Raven
 .config('https://ea691c5833f34aa085df5e5aee9a46f3@app.getsentry.com/66349', {
   release: chrome.runtime.getManifest().version,
-  stacktrace: true,
+  shouldSendCallback: data => {
+    // rate limit error sending.
+    // source: https://github.com/getsentry/raven-js/issues/435#issuecomment-183021031
+    if (data.message in limiter) {
+      return false;
+    }
+
+    limiter[data.message] = true;
+
+    setTimeout(() => {
+      delete limiter[data.message];
+    }, 1000 * 60 * 10);
+
+    return true;
+  },
 })
 .install();
 exports.Raven = Raven;
