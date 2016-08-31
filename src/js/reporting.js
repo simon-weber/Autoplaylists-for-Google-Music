@@ -6,6 +6,7 @@ const Context = require('./context');
 Raven
 .config('https://ea691c5833f34aa085df5e5aee9a46f3@app.getsentry.com/66349', {
   release: chrome.runtime.getManifest().version,
+  stacktrace: true,
 })
 .install();
 exports.Raven = Raven;

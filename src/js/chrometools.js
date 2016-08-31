@@ -13,10 +13,17 @@ function unlessError(func, onError) {
     if (chrome.extension.lastError) {
       console.error('unlessError:', chrome.extension.lastError.message);
       Reporting.Raven.captureMessage(chrome.extension.lastError.message, {
+        tags: {
+          funcName: func.name,
+        },
         extra: {
+          func,
           location: 'chrometools.unlessError',
           error: chrome.extension.lastError,
+          this: this,
+          arguments: arguments,  // eslint-disable-line object-shorthand
         },
+        stacktrace: true,
       });
       if (typeof onError !== 'undefined') {
         onError(chrome.extension.lastError);

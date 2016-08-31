@@ -48,6 +48,7 @@ exports.openDb = function openDb(userId, callback) {
     console.error(err);
     Reporting.Raven.captureMessage('schemaBuilder.connect', {
       extra: {err},
+      stacktrace: true,
     });
   });
 };
@@ -67,6 +68,7 @@ exports.upsertTracks = function upsertTracks(db, userId, tracks, callback) {
     console.error(err);
     Reporting.Raven.captureMessage('db.insertOrReplace', {
       extra: {err},
+      stacktrace: true,
     });
   });
 };
@@ -80,6 +82,7 @@ exports.deleteTracks = function deleteTracks(db, userId, trackIds, callback) {
     console.error(err);
     Reporting.Raven.captureMessage('db.delete', {
       extra: {err},
+      stacktrace: true,
     });
   });
 };
@@ -232,6 +235,7 @@ exports.queryTracks = function queryTracks(db, splaylistcache, playlist, callbac
       Reporting.Raven.captureMessage('execQuery', {
         tags: {playlistId: playlist.remoteId},
         extra: {playlist, err},
+        stacktrace: true,
       });
       return callback(null);
     });

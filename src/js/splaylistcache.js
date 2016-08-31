@@ -53,6 +53,7 @@ exports.sync = function sync(cache, user, playlists, callback) {
           Reporting.Raven.captureMessage('error during splaylistcache.sync.getContents', {
             tags: {playlistId: freshSplaylist.id},
             extra: {error},
+            stacktrace: true,
           });
         });
       }
@@ -70,6 +71,7 @@ exports.sync = function sync(cache, user, playlists, callback) {
   error => {
     Reporting.Raven.captureMessage('error during splaylistcache.sync', {
       extra: {error},
+      stacktrace: true,
     });
 
     callback(new Set());

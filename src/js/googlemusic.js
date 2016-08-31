@@ -39,6 +39,7 @@ function authedGMRequest(endpoint, data, user, method, callback, onError) {
       console.error('request failed:', url, data, res);
       Reporting.Raven.captureMessage(`request to ${endpoint} failed`, {
         extra: {url, data, res},
+        stacktrace: true,
       });
     };
   }
@@ -78,6 +79,7 @@ exports.getTrackChanges = function getTrackChanges(user, sinceTimestamp, callbac
       if (!(jsonResponse.success === false && jsonResponse.reloadXsrf)) {
         Reporting.Raven.captureMessage('unexpected json response from streamingloadalltracks', {
           extra: {jsonResponse},
+          stacktrace: true,
         });
       }
 
@@ -144,6 +146,7 @@ exports.getTrackChanges = function getTrackChanges(user, sinceTimestamp, callbac
       console.error('unexpected streamingload response', JSON.stringify(ajaxError));
       Reporting.Raven.captureMessage('unexpected streamingload response', {
         extra: {ajaxError, payload, user},
+        stacktrace: true,
       });
     }
     console.debug('getTrackChanges failure:', JSON.stringify(result));
@@ -232,6 +235,7 @@ function addTracks(user, playlistId, tracks, callback, onError) {
         Reporting.Raven.captureMessage('probable error from addTracks', {
           tags: {playlistId, responseArray},
           extra: {response, playlistId, tracks},
+          stacktrace: true,
         });
       }
     }
@@ -382,6 +386,7 @@ exports.setPlaylistContents = function setPlaylistContents(db, user, playlistId,
           Reporting.Raven.captureMessage('setplaylistcontents.select', {
             tags: {playlistId},
             extra: {e, deleteCandidates, deleteCandidateIds, tracksToAdd},
+            stacktrace: true,
           });
         });
       } else {
