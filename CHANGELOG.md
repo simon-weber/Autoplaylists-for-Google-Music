@@ -1,3 +1,9 @@
+## 2.0.4 (August 30, 2016)
+
+Misc:
+
+  - rate limit sentry reporting
+
 ## 2.0.3 (August 30, 2016)
 
 Misc:
