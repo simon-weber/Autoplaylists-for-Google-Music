@@ -1,3 +1,9 @@
+## 2.0.5 (November 19, 2016)
+
+Bugfixes:
+
+  - fix subscription (All Access) tracks being omitted from linked playlist rules ("playlist equals...")
+
 ## 2.0.4 (August 30, 2016)
 
 Misc:
