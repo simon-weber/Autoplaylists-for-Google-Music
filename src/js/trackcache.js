@@ -136,7 +136,11 @@ function buildWhereClause(track, playlistsById, splaylistcache, seenIds, rule) {
           });
         }
 
-        clause = track.id.in(Array.from(trackIds));
+        const trackIdList = Array.from(trackIds);
+        clause = Lf.op.or(
+          track.id.in(trackIdList),
+          track.storeId.in(trackIdList)
+        );
         if (rule.operator === 'notEqualTo') {
           clause = Lf.op.not(clause);
         }
