@@ -90,7 +90,7 @@ exports.deleteTracks = function deleteTracks(db, userId, trackIds, callback) {
 function escapeForRegex(s) {
   // Return a copy of the string s with regex control characters escaped.
   // Source: http://stackoverflow.com/a/3561711.
-  return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+  return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');  // eslint-disable-line no-useless-escape
 }
 
 function buildWhereClause(track, playlistsById, splaylistcache, seenIds, rule) {
