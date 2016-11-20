@@ -1,3 +1,9 @@
+## 3.0.0 (November 19, 2016)
+
+Removed Features:
+
+  - remove multi-user support in preparation for a switch to improved Google apis. See [#97](https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/97#issuecomment-261757023) for more details. Feel free to reach out directly if you depended on this feature; I'm happy to help you migrate to a new profile.
+
 ## 2.0.5 (November 19, 2016)
 
 Bugfixes:
