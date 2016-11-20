@@ -21,6 +21,7 @@ function getInjectCode(isInitial) {
         {isInitial: isInitialRepr,
           userId: window.USER_ID,
           tier: window.USER_CONTEXT[13],
+          gaiaId: window.USER_CONTEXT[32],
           xt: window._GU_getCookie('xt')},
         '*');
     }
@@ -155,12 +156,14 @@ function main() {
     userId = event.data.userId;
     const tier = event.data.tier;
     const xt = event.data.xt;
+    const gaiaId = event.data.gaiaId;
     const action = event.data.isInitial ? 'showPageAction' : 'setXsrf';
 
     chrome.runtime.sendMessage({
       action,
       tier,
       xt,
+      gaiaId,
       userId: `${userId}`,
       userIndex: parseInt(userIndex, 10),
     });

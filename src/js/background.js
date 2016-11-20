@@ -31,6 +31,9 @@ const playlistIsUpdating = {};
 // {userId: <timestamp>}
 const pollTimestamps = {};
 
+// set to a string at startup
+let primaryGaiaId = null;
+
 let syncsHaveStarted = false;
 
 function userIdForTabId(tabId) {
@@ -431,6 +434,10 @@ function initLibrary(userId, callback) {
 
 
 function main() {
+  chrome.identity.getProfileUserInfo(userInfo => {
+    primaryGaiaId = userInfo.id;
+  });
+
   Storage.addPlaylistChangeListener(change => {
     const hasOld = 'oldValue' in change;
     const hasNew = 'newValue' in change;
@@ -460,10 +467,23 @@ function main() {
   });
 
   chrome.pageAction.onClicked.addListener(tab => {
-    const managerUrl = chrome.extension.getURL('html/playlists.html');
-    const qstring = Qs.stringify({userId: userIdForTabId(tab.id)});
-    Chrometools.focusOrCreateExtensionTab(`${managerUrl}?${qstring}`);
-    chrome.notifications.clear('zeroPlaylists');
+    const userId = userIdForTabId(tab.id);
+    if (userId) {
+      const qstring = Qs.stringify({userId: userIdForTabId(tab.id)});
+      const url = chrome.extension.getURL('html/playlists.html');
+      Chrometools.focusOrCreateExtensionTab(`${url}?${qstring}`);
+      chrome.notifications.clear('zeroPlaylists');
+    } else {
+      // Only the primary user is ever put into the users array.
+      Reporting.Raven.captureMessage('multiuser page action click', {
+        level: 'warning',
+        extra: {userId, primaryGaiaId, users},
+      });
+      Reporting.reportHit('multiuserPageActionClick');
+
+      const url = chrome.extension.getURL('html/multi-user.html');
+      Chrometools.focusOrCreateExtensionTab(url);
+    }
   });
 
   chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
@@ -533,8 +553,14 @@ function main() {
         }
       }
 
-      users[request.userId] = {userIndex: request.userIndex, tabId: sender.tab.id, xt: request.xt};
       console.log('see user', request.userId, users);
+      if (request.gaiaId !== primaryGaiaId) {
+        console.warn('user is not the primary user');
+        chrome.pageAction.show(sender.tab.id);
+        return;
+      }
+
+      users[request.userId] = {userIndex: request.userIndex, tabId: sender.tab.id, xt: request.xt};
       License.hasFullVersion(false, hasFullVersion => { console.log('precached license status:', hasFullVersion); });
 
       // FIXME store this in sync storage and include it in context?
