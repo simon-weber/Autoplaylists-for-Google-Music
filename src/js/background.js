@@ -591,7 +591,9 @@ function main() {
         }
       });
     } else if (request.action === 'query') {
-      Trackcache.queryTracks(dbs[request.playlist.userId], splaylistcaches[request.playlist.userId], request.playlist, new Set(), tracks => {
+      const db = dbs[request.playlist.userId];
+      const splaylistcache = splaylistcaches[request.playlist.userId];
+      Trackcache.queryTracks(db, splaylistcache, request.playlist, new Set(), tracks => {
         sendResponse({tracks});
       });
       return true; // wait for async response
