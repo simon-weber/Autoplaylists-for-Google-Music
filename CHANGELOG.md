@@ -1,3 +1,9 @@
+## 3.0.1 (November 21, 2016)
+
+Bugfixes:
+
+  - fix limit/sort being ignored when linking other autoplaylists ("playlist equals...")
+
 ## 3.0.0 (November 19, 2016)
 
 Removed Features:
