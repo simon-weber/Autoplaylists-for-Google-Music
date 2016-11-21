@@ -127,7 +127,7 @@ function syncPlaylistContents(playlist, attempt) {
 
   console.debug('syncPlaylistContents, attempt', _attempt);
 
-  Trackcache.queryTracks(db, splaylistcache, playlist, tracks => {
+  Trackcache.queryTracks(db, splaylistcache, playlist, new Set(), tracks => {
     if (tracks === null) {
       Reporting.reportSync('failure', 'failed-query');
       return;
@@ -591,7 +591,7 @@ function main() {
         }
       });
     } else if (request.action === 'query') {
-      Trackcache.queryTracks(dbs[request.playlist.userId], splaylistcaches[request.playlist.userId], request.playlist, tracks => {
+      Trackcache.queryTracks(dbs[request.playlist.userId], splaylistcaches[request.playlist.userId], request.playlist, new Set(), tracks => {
         sendResponse({tracks});
       });
       return true; // wait for async response

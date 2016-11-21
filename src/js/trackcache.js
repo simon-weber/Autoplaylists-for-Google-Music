@@ -93,8 +93,8 @@ function escapeForRegex(s) {
   return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');  // eslint-disable-line no-useless-escape
 }
 
-function buildWhereClause(track, playlistsById, splaylistcache, seenIds, rule) {
-  // Return a clause for use in a lovefield where() predicate, or null to select all tracks.
+function buildWhereClause(track, playlistsById, splaylistcache, seenIds, db, rule) {
+  // Promise a clause for use in a lovefield where() predicate, or null to select all tracks.
   let clause = null;
   let boolOp = null;
 
@@ -105,18 +105,26 @@ function buildWhereClause(track, playlistsById, splaylistcache, seenIds, rule) {
   }
 
   if (boolOp !== null) {
+    // Handle boolean clauses.
     const subrules = rule[boolOp];
     const lfOp = boolOp === 'all' ? Lf.op.and : Lf.op.or;
 
-    // We need to handle nulls from recursive calls, as well as empty subrule arrays.
-    const subClauses = subrules
-    .map(buildWhereClause.bind(undefined, track, playlistsById, splaylistcache, seenIds))
-    .filter(c => c !== null);
+    const subClausePs = subrules
+    .map(buildWhereClause.bind(undefined, track, playlistsById, splaylistcache, seenIds, db));
 
-    if (subClauses.length > 0) {
-      clause = lfOp.apply(Lf.op, subClauses);
-    }
-  } else if ('value' in rule && 'operator' in rule) {
+    return Promise.all(subClausePs)
+    .then(subClauses => {
+      // We need to handle nulls from recursive calls, as well as empty subrule arrays.
+      const validClauses = subClauses.filter(c => c !== null);
+      if (validClauses.length > 0) {
+        clause = lfOp.apply(Lf.op, validClauses);
+      }
+      return clause;
+    });
+  }
+
+  if ('value' in rule && 'operator' in rule) {
+    // Handle leaf clauses.
     let value = rule.value;
     let operator = rule.operator;
 
@@ -128,6 +136,7 @@ function buildWhereClause(track, playlistsById, splaylistcache, seenIds, rule) {
           trackIds = splaylistcache.splaylists[rule.value.substring(1)].trackIds;
         } catch (e) {
           // This is likely a desync between the rules and splaylist state.
+          // It's often triggered on the first sync (since the cache is racing to sync first).
           console.error(e);
           Reporting.Raven.captureException(e, {
             level: 'warning',
@@ -144,50 +153,55 @@ function buildWhereClause(track, playlistsById, splaylistcache, seenIds, rule) {
         if (rule.operator === 'notEqualTo') {
           clause = Lf.op.not(clause);
         }
-      } else {
-        // playlist
-        const linkedRules = playlistsById[rule.value].rules;
-        if (seenIds.has(rule.value)) {
-          console.warn('refusing to recurse into a cycle with', rule.value, seenIds);
-        } else {
-          seenIds.add(rule.value);
-          clause = buildWhereClause(track, playlistsById, splaylistcache, seenIds, linkedRules);
-          if (rule.operator === 'notEqualTo') {
-            clause = Lf.op.not(clause);
-          }
+        return Promise.resolve(clause);
+      }
+      // playlist
+      const linkedPlaylist = playlistsById[rule.value];
+      return new Promise(resolve => {
+        exports.queryTracks(db, splaylistcache, linkedPlaylist, seenIds, resolve);
+      }).then(tracks => {
+        const trackIdList = tracks.map(t => t.id);
+        clause = Lf.op.or(
+          track.id.in(trackIdList),
+          track.storeId.in(trackIdList)
+        );
+        if (rule.operator === 'notEqualTo') {
+          clause = Lf.op.not(clause);
         }
-      }
-    } else {
-      if (Track.fieldsByName[rule.name].is_datetime) {
-        value = Date.create(rule.value).getTime() * 1000;
-      }
 
-      if (rule.operator === 'match-insensitive') {
-        operator = 'match';
-        value = new RegExp(escapeForRegex(value), 'i');
-      } else if (rule.operator === 'no-match') {
-        operator = 'match';
-        // Negative lookahead on each character.
-        // Source: http://stackoverflow.com/a/957581/1231454
-        value = new RegExp(`^((?!${escapeForRegex(value)}).)*$`);
-      } else if (rule.operator === 'no-match-insensitive') {
-        operator = 'match';
-        value = new RegExp(`^((?!${escapeForRegex(value)}).)*$`, 'i');
-      } else if (rule.operator === 'eq-insensitive') {
-        operator = 'match';
-        value = new RegExp(`^${escapeForRegex(value)}$`, 'i');
-      } else if (rule.operator === 'neq-insensitive') {
-        // Negative lookahead once.
-        // Source: http://stackoverflow.com/a/2964653.
-        operator = 'match';
-        value = new RegExp(`^(?!${escapeForRegex(value)}$)`, 'i');
-      }
-
-      clause = track[rule.name][operator](value);
+        return clause;
+      });
     }
-  }
+    // non-playlist leaf
+    if (Track.fieldsByName[rule.name].is_datetime) {
+      value = Date.create(rule.value).getTime() * 1000;
+    }
 
-  return clause;
+    if (rule.operator === 'match-insensitive') {
+      operator = 'match';
+      value = new RegExp(escapeForRegex(value), 'i');
+    } else if (rule.operator === 'no-match') {
+      operator = 'match';
+      // Negative lookahead on each character.
+      // Source: http://stackoverflow.com/a/957581/1231454
+      value = new RegExp(`^((?!${escapeForRegex(value)}).)*$`);
+    } else if (rule.operator === 'no-match-insensitive') {
+      operator = 'match';
+      value = new RegExp(`^((?!${escapeForRegex(value)}).)*$`, 'i');
+    } else if (rule.operator === 'eq-insensitive') {
+      operator = 'match';
+      value = new RegExp(`^${escapeForRegex(value)}$`, 'i');
+    } else if (rule.operator === 'neq-insensitive') {
+      // Negative lookahead once.
+      // Source: http://stackoverflow.com/a/2964653.
+      operator = 'match';
+      value = new RegExp(`^(?!${escapeForRegex(value)}$)`, 'i');
+    }
+
+    clause = track[rule.name][operator](value);
+    return Promise.resolve(clause);
+  }
+  console.error('should have returned already');
 }
 
 function execQuery(db, track, whereClause, playlist, callback, onError) {
@@ -211,9 +225,15 @@ function execQuery(db, track, whereClause, playlist, callback, onError) {
   query.exec().then(callback).catch(onError);
 }
 
-exports.queryTracks = function queryTracks(db, splaylistcache, playlist, callback) {
+exports.queryTracks = function queryTracks(db, splaylistcache, playlist, seenIds, callback) {
   // Callback a list of tracks that should be in the playlist, or null on problems.
 
+  if (seenIds.has(playlist.localId)) {
+    console.warn('refusing to recurse into a cycle with', playlist.localId, seenIds);
+    return callback([]);
+  }
+
+  seenIds.add(playlist.localId);
   Storage.getPlaylistsForUser(playlist.userId, playlists => {
     const playlistsById = {};
     for (let i = 0; i < playlists.length; i++) {
@@ -222,24 +242,23 @@ exports.queryTracks = function queryTracks(db, splaylistcache, playlist, callbac
     }
 
     const track = db.getSchema().table('Track');
-    let whereClause;
-    try {
-      whereClause = buildWhereClause(track, playlistsById, splaylistcache, new Set([playlist.localId]), playlist.rules);
-    } catch (e) {
+    buildWhereClause(track, playlistsById, splaylistcache, seenIds, db, playlist.rules)
+    .then(whereClause => {
+      execQuery(db, track, whereClause, playlist, callback, err => {
+        console.error('execQuery', err);
+        Reporting.Raven.captureMessage('execQuery', {
+          tags: {playlistId: playlist.remoteId},
+          extra: {playlist, err},
+          stacktrace: true,
+        });
+        return callback(null);
+      });
+    })
+    .catch(e => {
       console.error(e);
       Reporting.Raven.captureException(e, {
         tags: {playlistId: playlist.remoteId},
         extra: {playlist},
-      });
-      return callback(null);
-    }
-
-    execQuery(db, track, whereClause, playlist, callback, err => {
-      console.error('execQuery', err);
-      Reporting.Raven.captureMessage('execQuery', {
-        tags: {playlistId: playlist.remoteId},
-        extra: {playlist, err},
-        stacktrace: true,
       });
       return callback(null);
     });
