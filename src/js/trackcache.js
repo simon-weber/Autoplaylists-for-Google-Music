@@ -93,7 +93,7 @@ function escapeForRegex(s) {
   return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');  // eslint-disable-line no-useless-escape
 }
 
-function buildWhereClause(track, playlistsById, splaylistcache, seenIds, db, rule) {
+function buildWhereClause(track, playlistsById, splaylistcache, resultCache, db, rule) {
   // Promise a clause for use in a lovefield where() predicate, or null to select all tracks.
   let clause = null;
   let boolOp = null;
@@ -110,7 +110,7 @@ function buildWhereClause(track, playlistsById, splaylistcache, seenIds, db, rul
     const lfOp = boolOp === 'all' ? Lf.op.and : Lf.op.or;
 
     const subClausePs = subrules
-    .map(buildWhereClause.bind(undefined, track, playlistsById, splaylistcache, seenIds, db));
+    .map(buildWhereClause.bind(undefined, track, playlistsById, splaylistcache, resultCache, db));
 
     return Promise.all(subClausePs)
     .then(subClauses => {
@@ -158,7 +158,7 @@ function buildWhereClause(track, playlistsById, splaylistcache, seenIds, db, rul
       // playlist
       const linkedPlaylist = playlistsById[rule.value];
       return new Promise(resolve => {
-        exports.queryTracks(db, splaylistcache, linkedPlaylist, seenIds, resolve);
+        exports.queryTracks(db, splaylistcache, linkedPlaylist, resultCache, resolve);
       }).then(tracks => {
         const trackIdList = tracks.map(t => t.id);
         clause = Lf.op.or(
@@ -225,15 +225,14 @@ function execQuery(db, track, whereClause, playlist, callback, onError) {
   query.exec().then(callback).catch(onError);
 }
 
-exports.queryTracks = function queryTracks(db, splaylistcache, playlist, seenIds, callback) {
+exports.queryTracks = function queryTracks(db, splaylistcache, playlist, resultCache, callback) {
   // Callback a list of tracks that should be in the playlist, or null on problems.
 
-  if (seenIds.has(playlist.localId)) {
-    console.warn('refusing to recurse into a cycle with', playlist.localId, seenIds);
+  if (playlist.localId in resultCache) {
+    console.info('using cached results for', playlist.localId, resultCache);
     return callback([]);
   }
 
-  seenIds.add(playlist.localId);
   Storage.getPlaylistsForUser(playlist.userId, playlists => {
     const playlistsById = {};
     for (let i = 0; i < playlists.length; i++) {
@@ -242,9 +241,12 @@ exports.queryTracks = function queryTracks(db, splaylistcache, playlist, seenIds
     }
 
     const track = db.getSchema().table('Track');
-    buildWhereClause(track, playlistsById, splaylistcache, seenIds, db, playlist.rules)
+    buildWhereClause(track, playlistsById, splaylistcache, resultCache, db, playlist.rules)
     .then(whereClause => {
-      execQuery(db, track, whereClause, playlist, callback, err => {
+      execQuery(db, track, whereClause, playlist, results => {
+        resultCache[playlist.localId] = results;  // eslint-disable-line no-param-reassign
+        callback(results);
+      }, err => {
         console.error('execQuery', err);
         Reporting.Raven.captureMessage('execQuery', {
           tags: {playlistId: playlist.remoteId},
