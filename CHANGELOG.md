@@ -1,3 +1,9 @@
+## 3.0.2 (November 21, 2016)
+
+Bugfixes:
+
+  - fix a bug in playlist linking cycle detection that broke playlist combinations that referred to a playlist more than once
+
 ## 3.0.1 (November 21, 2016)
 
 Bugfixes:
