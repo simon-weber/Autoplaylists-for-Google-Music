@@ -177,7 +177,10 @@ function buildWhereClause(track, playlistsById, splaylistcache, resultCache, db,
       value = Date.create(rule.value).getTime() * 1000;
     }
 
-    if (rule.operator === 'match-insensitive') {
+    if (rule.operator === 'match') {
+      operator = 'match';
+      value = new RegExp(escapeForRegex(value));
+    } else if (rule.operator === 'match-insensitive') {
       operator = 'match';
       value = new RegExp(escapeForRegex(value), 'i');
     } else if (rule.operator === 'no-match') {
