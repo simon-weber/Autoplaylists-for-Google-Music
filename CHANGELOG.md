@@ -1,3 +1,13 @@
+## 3.0.3 (November 22, 2016)
+
+Bugfixes:
+
+  - fix certain special characters breaking "contains" rules
+
+Misc:
+
+  - remove a workaround that prevented currently-playing subscription tracks from being deleted during a sync (Google fixed the bug causing this)
+
 ## 3.0.2 (November 21, 2016)
 
 Bugfixes:
