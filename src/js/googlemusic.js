@@ -318,13 +318,13 @@ exports.setPlaylistContents = function setPlaylistContents(db, user, playlistId,
         idsToAdd[track.id] = track;
       }
 
-      const deleteCandidates = {};
+      const entriesToDelete = [];
       for (let i = 0; i < contents.length; i++) {
         const remoteTrack = contents[i].track;
         const entryId = contents[i].entryId;
 
         if (!(remoteTrack.id in idsToAdd)) {
-          deleteCandidates[remoteTrack.id] = entryId;
+          entriesToDelete.push({id: remoteTrack.id, entryId});
         } else {
           delete idsToAdd[remoteTrack.id];
         }
@@ -335,58 +335,15 @@ exports.setPlaylistContents = function setPlaylistContents(db, user, playlistId,
         tracksToAdd.push(idsToAdd[id]);
       }
 
-      const entriesToDelete = [];
-      const deleteCandidateIds = Object.keys(deleteCandidates);
-      if (deleteCandidateIds.length > 0) {
-        // Don't delete tracks that may be currently playing.
-        // This requires a query against the track cache, since the lastPlayed
-        // for remote tracks is set to 0 for any recent plays!?
-        // FIXME pull this out to Trackcache.
-        const track = db.getSchema().table('Track');
-        db.select().from(track).where(
-          // We don't know if these entries name a library or store id.
-          Lf.op.or(track.id.in(deleteCandidateIds),
-                   track.storeId.in(deleteCandidateIds))
-        ).exec().then(rows => {
-          const nowMillis = new Date().getTime();
-          const delayMillis = 0;
-
-          rows.forEach(row => {
-            if (delayMillis + (row.lastPlayed / 1000) > nowMillis - row.durationMillis) {
-              console.info('not deleting', row, 'since it may be playing.',
-                           delayMillis + (row.lastPlayed / 1000), nowMillis - row.durationMillis
-                          );
-              if (row.id in deleteCandidates) {
-                delete deleteCandidates[row.id];
-              } else {
-                delete deleteCandidates[row.storeId];
-              }
-            }
-          });
-
-          for (const deleteId in deleteCandidates) {
-            entriesToDelete.push({id: deleteId, entryId: deleteCandidates[deleteId]});
-          }
-
-          if (entriesToDelete.length > 0) {
-            deleteEntries(user, playlistId, entriesToDelete, deleteResponse => { // eslint-disable-line no-unused-vars
-              // We log the delete response inside deleteEntries and have no other need for it here.
-              addTracks(user, playlistId, tracksToAdd, callback);
-            }, onError);
-          } else {
-            console.debug('no need to delete post-filter; adding');
-            addTracks(user, playlistId, tracksToAdd, callback, onError);
-          }
-        }).catch(e => {
-          console.error(e);
-          Reporting.Raven.captureMessage('setplaylistcontents.select', {
-            tags: {playlistId},
-            extra: {e, deleteCandidates, deleteCandidateIds, tracksToAdd},
-            stacktrace: true,
-          });
+      if (entriesToDelete.length > 0) {
+        console.debug('deleting');
+        deleteEntries(user, playlistId, entriesToDelete, deleteResponse => { // eslint-disable-line no-unused-vars
+          // We log the delete response inside deleteEntries and have no other need for it here.
+          console.debug('adding post-delete');
+          addTracks(user, playlistId, tracksToAdd, callback);
         });
       } else {
-        console.debug('no need to delete pre-filter; adding');
+        console.debug('no need to delete; adding');
         addTracks(user, playlistId, tracksToAdd, callback, onError);
       }
     } else {
