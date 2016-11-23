@@ -97,6 +97,7 @@ exports.buildPlaylistUpdates = function buildPlaylistUpdate(updates) {
 exports.runPlaylistMutations = function runPlaylistMutations(user, mutations, callback) {
   if (mutations.length === 0) {
     console.info('skipping empty playlist sync');
+    Reporting.reportNewSync('success', 'Playlist', 0);
     return callback({mutate_response: []});
   }
 
@@ -111,7 +112,11 @@ exports.runPlaylistMutations = function runPlaylistMutations(user, mutations, ca
     },
   };
   authedGMRequest(details, response => {
+    Reporting.reportNewSync('success', 'Playlist', mutations.length);
     callback(response);
+  }, err => {
+    console.error('playlistbatch failed', err);
+    Reporting.reportNewSync('failure', 'Playlist', mutations.length);
   });
 };
 
@@ -262,6 +267,7 @@ exports.buildEntryAppends = function buildEntryAppends(playlistId, trackIds) {
 exports.runEntryMutations = function runEntryMutations(user, mutations, callback) {
   if (mutations.length === 0) {
     console.info('skipping empty entry sync');
+    Reporting.reportNewSync('success', 'Entry', 0);
     return callback({mutate_response: []});
   }
 
@@ -276,6 +282,10 @@ exports.runEntryMutations = function runEntryMutations(user, mutations, callback
     },
   };
   authedGMRequest(details, response => {
+    Reporting.reportNewSync('success', 'Entry', mutations.length);
     callback(response);
+  }, err => {
+    console.error('playlistbatch failed', err);
+    Reporting.reportNewSync('failure', 'Entry', mutations.length);
   });
 };

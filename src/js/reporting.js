@@ -56,6 +56,27 @@ exports.reportSync = function reportSync(action, label) {
   }
 };
 
+// action is 'success' or 'failure'
+// category is 'Playlist' or 'Entry'
+// value is the number of mutations being sent
+exports.reportNewSync = function reportNewSync(action, type, value) {
+  // Note that due to GA's serverside rate limiting, this can drop bursty events.
+  // If this becomes a problem, consider something like http://stackoverflow.com/a/9340290/1231454.
+
+  if (!cachedContext) {
+    // setContext should make this available very quickly after loading.
+    setTimeout(reportNewSync, 1000, action, type, value);
+  } else {
+    const category = 'newSync' + type;
+    const sync = analytics.EventBuilder.builder()
+    .category(category)
+    .action(action)
+    .value(value);
+
+    GATracker.send(sync);
+  }
+};
+
 // action is one of 'valid' or 'invalid'.
 exports.reportActivation = function reportActivation(action) {
   if (!cachedContext) {
