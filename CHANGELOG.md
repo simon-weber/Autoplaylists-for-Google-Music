@@ -1,3 +1,9 @@
+## 3.1.1 (November 23, 2016)
+
+Misc:
+
+  - improve new sync efficiency and GA reporting
+
 ## 3.1.0 (November 22, 2016)
 
 Features:
