@@ -133,7 +133,7 @@ function buildWhereClause(track, playlistsById, splaylistcache, resultCache, db,
         // splaylist
         let entries = {};
         try {
-          entries = splaylistcache.splaylists[rule.value.substring(1)].entries;
+          entries = splaylistcache.splaylists[rule.value.substring(1)].legacyEntries;
         } catch (e) {
           // This is likely a desync between the rules and splaylist state.
           // It's often triggered on the first sync (since the cache is racing to sync first).

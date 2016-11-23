@@ -1,5 +1,7 @@
 'use strict';
 
+const SortedMap = require('collections/sorted-map');
+
 const Gm = require('./googlemusic');
 const Gmoauth = require('./googlemusic_oauth');
 const Storage = require('./storage');
@@ -10,8 +12,10 @@ const Splaylist = require('./splaylist');
 // cache fields:
 //   * splaylists: {id: splaylist}
 // Cached splaylists contain additional fields:
-//   * entries: {entryId: trackId}
 //   * isAutoplaylist: bool
+//   * legacyEntries: {entryId: trackId}
+//   * entries: {entryId: {trackId, absolutePosition}}
+//   * orderedEntries: SortedMap{absolutePosition: {entryId, trackId}}
 
 exports.open = function open() {
   // Return a new, empty cache.
@@ -55,6 +59,8 @@ function newSync(cache, user, playlists, callback) {
         const newSplaylist = Splaylist.fromSJ(mutation);
         newSplaylist.isAutoplaylist = autoPlaylistIds.has(mutation.id);
         newSplaylist.entries = oldSplaylist.entries;
+        newSplaylist.legacyEntries = oldSplaylist.legacyEntries;
+        newSplaylist.orderedEntries = oldSplaylist.orderedEntries;
         cache.splaylists[mutation.id] = newSplaylist;  // eslint-disable-line no-param-reassign
       }
     }
@@ -72,14 +78,24 @@ function newSync(cache, user, playlists, callback) {
 
         if (!('entries' in splaylist)) {
           splaylist.entries = {};
+          splaylist.legacyEntries = {};
+          splaylist.orderedEntries = new SortedMap();
         }
 
         if (mutation.deleted) {
+          const oldEntry = splaylist.entries[mutation.id];
           delete splaylist.entries[mutation.id];
+          delete splaylist.legacyEntries[mutation.id];
+          splaylist.orderedEntries.delete(oldEntry.absolutePosition);
         } else {
-          // I don't know if the update case is actually relevant to us.
-          // I've only ever seen it signify reordering.
-          splaylist.entries[mutation.id] = mutation.trackId;
+          if (mutation.id in splaylist.entries) {
+            const oldPosition = splaylist.entries[mutation.id].absolutePosition;
+            splaylist.orderedEntries.delete(oldPosition);
+          }
+
+          splaylist.entries[mutation.id] = {trackId: mutation.trackId, absolutePosition: mutation.absolutePosition};
+          splaylist.legacyEntries[mutation.id] = mutation.trackId;
+          splaylist.orderedEntries.set(mutation.absolutePosition, {entryId: mutation.id, trackId: mutation.trackId});
         }
       }
       cache._lastSyncMicros = newTimestamp;   // eslint-disable-line no-param-reassign
@@ -115,7 +131,7 @@ function legacySync(cache, user, playlists, callback) {
             const entry = freshEntries[j];
             entries[entry.entryId] = entry.track.id;
           }
-          freshSplaylist.entries = entries;
+          freshSplaylist.legacyEntries = entries;
           cache.splaylists[freshSplaylist.id] = freshSplaylist; // eslint-disable-line no-param-reassign
         }, error => {
           Reporting.Raven.captureMessage('error during splaylistcache.sync.getContents', {

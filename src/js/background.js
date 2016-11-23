@@ -226,8 +226,10 @@ function getPlaylistMutations(playlist, splaylistcache, playlists) {
 function getEntryMutations(playlist, splaylistcache, callback) {
   console.log('cache', playlist.remoteId, splaylistcache);
   let currentEntries = {};
+  let currentOrderedEntries = {};
   if (playlist.remoteId in splaylistcache.splaylists) {
     currentEntries = splaylistcache.splaylists[playlist.remoteId].entries;
+    currentOrderedEntries = splaylistcache.splaylists[playlist.remoteId].orderedEntries;
   } else {
     console.warn('playlist.remoteId', playlist.remoteId, 'not yet cached; assuming empty');
   }
@@ -253,6 +255,23 @@ function getEntryMutations(playlist, splaylistcache, callback) {
   }).then(tracks => {
     const desiredTracks = tracks.slice(0, 1000);
 
+    // Check if the playlist isn't changing.
+    if (currentOrderedEntries.length === desiredTracks.length) {
+      let identical = true;
+      const currentTrackIds = currentOrderedEntries.map(t => t.trackId);
+      for (let i = 0; i < currentTrackIds.length; i++) {
+        const id = currentTrackIds[i];
+        if (!(id === desiredTracks[i].id || id === desiredTracks[i].storeId)) {
+          identical = false;
+          break;
+        }
+      }
+
+      if (identical) {
+        return Promise.reject('identical');
+      }
+    }
+
     // We'll reorder these later.
     tracksToAdd = new Set(desiredTracks.map(t => t.id));
     console.log('query found', tracksToAdd);
@@ -260,7 +279,7 @@ function getEntryMutations(playlist, splaylistcache, callback) {
     tracksToDelete = {};
     entriesToKeep = {};
     for (const entryId in currentEntries) {
-      const remoteTrackId = currentEntries[entryId];
+      const remoteTrackId = currentEntries[entryId].trackId;
 
       if (tracksToAdd.has(remoteTrackId)) {
         tracksToAdd.delete(remoteTrackId);
@@ -343,6 +362,15 @@ function getEntryMutations(playlist, splaylistcache, callback) {
     }
     console.log('mutations', mutations);
     callback(mutations);
+  }).catch(e => {
+    if (e === 'identical') {
+      callback([]);
+    } else {
+      Reporting.Raven.captureMessage('getEntryMutations error', {
+        extra: {e, playlist},
+      });
+      callback([]);
+    }
   });
 }
 

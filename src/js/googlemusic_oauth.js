@@ -95,6 +95,11 @@ exports.buildPlaylistUpdates = function buildPlaylistUpdate(updates) {
 };
 
 exports.runPlaylistMutations = function runPlaylistMutations(user, mutations, callback) {
+  if (mutations.length === 0) {
+    console.info('skipping empty playlist sync');
+    return callback({mutate_response: []});
+  }
+
   const details = {
     endpoint: 'playlistbatch',
     method: 'post',
@@ -255,6 +260,11 @@ exports.buildEntryAppends = function buildEntryAppends(playlistId, trackIds) {
 };
 
 exports.runEntryMutations = function runEntryMutations(user, mutations, callback) {
+  if (mutations.length === 0) {
+    console.info('skipping empty entry sync');
+    return callback({mutate_response: []});
+  }
+
   const details = {
     endpoint: 'plentriesbatch',
     method: 'post',
