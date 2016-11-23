@@ -1,3 +1,13 @@
+## 3.1.0 (November 22, 2016)
+
+Features:
+
+  - add opt-in support for beta testing the new syncing apis. See [the announcement post](https://groups.google.com/forum/#!topic/autoplaylists-for-google-music-announcements/fyQ9j-09GNo) for the details.
+
+Misc:
+
+  - any users upgrading from a previous release will be prompted for auth for the new apis.
+
 ## 3.0.3 (November 22, 2016)
 
 Bugfixes:
