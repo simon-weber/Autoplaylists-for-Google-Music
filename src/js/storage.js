@@ -47,6 +47,22 @@ const MIGRATIONS = [
   migrateToOne,
 ];
 
+// Callback a bool.
+exports.getNewSyncEnabled = function getNewSyncEnabled(callback) {
+  chrome.storage.sync.get('newSyncEnabled', Chrometools.unlessError(items => {
+    callback(Boolean(items.newSyncEnabled));
+  }));
+};
+
+// newSyncEnabled is a bool.
+exports.setNewSyncEnabled = function setNewSyncEnabled(newSyncEnabled, callback) {
+  const storageItems = {};
+  storageItems.newSyncEnabled = newSyncEnabled;
+
+  chrome.storage.sync.set(storageItems, Chrometools.unlessError(callback));
+};
+
+
 // Callback an int.
 exports.getSyncMs = function getSyncMs(callback) {
   chrome.storage.sync.get('syncMs', Chrometools.unlessError(items => {

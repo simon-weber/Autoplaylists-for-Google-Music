@@ -14,8 +14,13 @@ function main() {
     $('#sync-minutes').val(syncMs / 1000 / 60);
   });
 
+  Storage.getNewSyncEnabled(newSyncEnabled => {
+    $('#enable-new-sync-api').prop('checked', newSyncEnabled);
+  });
+
   $('#submit').click(e => {
     e.preventDefault();
+    const newSyncEnabled = Boolean($('#enable-new-sync-api').prop('checked'));
     let syncMinutes = parseFloat($('#sync-minutes').val(), 10);
 
     if (syncMinutes <= 0) {
@@ -29,7 +34,9 @@ function main() {
     const syncMs = syncMinutes * 1000 * 60;
 
     Storage.setSyncMs(syncMs, () => {
-      Chrometools.goToManager(userId);
+      Storage.setNewSyncEnabled(newSyncEnabled, () => {
+        Chrometools.goToManager(userId);
+      });
     });
   });
 }

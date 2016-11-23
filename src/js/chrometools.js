@@ -34,7 +34,6 @@ function unlessError(func, onError) {
   };
 }
 
-// FIXME unlessError should be used everywhere we use chrome.
 exports.unlessError = unlessError;
 
 exports.focusOrCreateExtensionTab = function focusOrCreateExtensionTab(url) {

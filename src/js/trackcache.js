@@ -131,9 +131,9 @@ function buildWhereClause(track, playlistsById, splaylistcache, resultCache, db,
     if (rule.name === 'playlist') {
       if (rule.value[0] === 'P') {
         // splaylist
-        let trackIds = new Set();
+        let entries = {};
         try {
-          trackIds = splaylistcache.splaylists[rule.value.substring(1)].trackIds;
+          entries = splaylistcache.splaylists[rule.value.substring(1)].entries;
         } catch (e) {
           // This is likely a desync between the rules and splaylist state.
           // It's often triggered on the first sync (since the cache is racing to sync first).
@@ -145,7 +145,7 @@ function buildWhereClause(track, playlistsById, splaylistcache, resultCache, db,
           });
         }
 
-        const trackIdList = Array.from(trackIds);
+        const trackIdList = Object.values(entries);
         clause = Lf.op.or(
           track.id.in(trackIdList),
           track.storeId.in(trackIdList)
@@ -270,12 +270,12 @@ exports.queryTracks = function queryTracks(db, splaylistcache, playlist, resultC
   });
 };
 
-exports.orderTracks = function orderTracks(db, playlist, tracks, callback, onError) {
+exports.orderTracks = function orderTracks(db, playlist, trackIds, callback, onError) {
   // Return a copy of tracks, ordered by playlist's sort rules.
   // Tracks that wouldn't normally be in playlist are allowed.
 
   const track = db.getSchema().table('Track');
-  const whereClause = track.id.in(tracks.map(t => t.id));
+  const whereClause = track.id.in(trackIds);
 
   execQuery(db, track, whereClause, playlist, callback, onError);
 };

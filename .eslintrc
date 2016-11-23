@@ -40,6 +40,7 @@
         "consistent-return": 0,
         "newline-per-chained-call": 0,
         "no-continue": 0,
-        "prefer-template": 0
+        "prefer-template": 0,
+        "quote-props": 0
     }
 }

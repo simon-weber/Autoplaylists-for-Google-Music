@@ -28,3 +28,17 @@ exports.fromJsproto = function fromJsproto(jsproto) {
 
   return splaylist;
 };
+
+exports.fromSJ = function fromSJ(sj) {
+  const splaylist = {};
+
+  splaylist.id = sj.id;
+  splaylist.title = sj.name;
+  splaylist.createdAt = new Date(parseInt(sj.creationTimestamp, 10) / 1000);
+  splaylist.lastPlayed = null;  // unavailable from sj
+  splaylist.lastModified = new Date(parseInt(sj.lastModifiedTimestamp, 10) / 1000);
+  splaylist.description = sj.description;
+  splaylist.owner = sj.ownerName;
+
+  return splaylist;
+};

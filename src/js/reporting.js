@@ -69,6 +69,21 @@ exports.reportActivation = function reportActivation(action) {
   }
 };
 
+// action is one of 'valid' or 'invalid'.
+// label describes what triggered the prompt and whether it was interactive, eg startupN, licenseI.
+exports.reportAuth = function reportAuth(action, label) {
+  if (!cachedContext) {
+    setTimeout(reportAuth, 1000, action, label);
+  } else {
+    const auth = analytics.EventBuilder.builder()
+    .category('oauth')
+    .action(action)
+    .label(label);
+
+    GATracker.send(auth);
+  }
+};
+
 exports.reportHit = function reportHit(view) {
   if (!cachedContext) {
     setTimeout(reportHit, 1000, view);

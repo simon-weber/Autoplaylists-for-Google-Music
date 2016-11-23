@@ -102,20 +102,27 @@ exports.fields = [
   f([11, 'genre', Lf.Type.STRING]),
   f([13, 'durationMillis', Lf.Type.INTEGER], {
     label: 'duration (ms)'}),
-  f([14, 'track', Lf.Type.INTEGER]),
+  f([14, 'track', Lf.Type.INTEGER], {
+    sjName: 'trackNumber'}),
   f([15, 'totalTracks', Lf.Type.INTEGER], {
+    sjName: 'totalTrackCount',
     label: 'total tracks'}),
-  f([16, 'disc', Lf.Type.INTEGER]),
+  f([16, 'disc', Lf.Type.INTEGER], {
+    sjName: 'discNumber',
+  }),
   f([17, 'totalDiscs', Lf.Type.INTEGER], {
+    sjName: 'totalDiscCount',
     label: 'total discs'}),
   f([18, 'year', Lf.Type.INTEGER]),
   f([19, 'deleted', Lf.Type.INTEGER], {
     hidden: true,
   }),
   f([20, 'expunged', Lf.Type.INTEGER], {
+    // not in sj
     hidden: true,
   }),
   f([21, 'pending', Lf.Type.INTEGER], {
+    // not in sj
     hidden: true,
   }),
   f([22, 'playCount', Lf.Type.INTEGER], {
@@ -123,13 +130,14 @@ exports.fields = [
   f([23, 'rating', Lf.Type.INTEGER], {
     explanation: 'an int between 0 and 5 representing the 5-star rating (see also "rating thumb").',
     // coerce nulls to 0; see https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/15.
-    coerce: val => val || 0,
+    // coerce strings to ints (sj)
+    coerce: val => parseInt(val, 10) || 0,
   }),
   f([23, 'ratingThumb', Lf.Type.STRING], {
     // This is a synthetic field created by applying a transformation to field number 23 (rating).
     explanation: 'one of "up", "down", or "none".',
     label: 'rating thumb',
-    coerce: val => val || 0,
+    coerce: val => parseInt(val, 10) || 0,
     transformation: n => {
       let thumb = 'none';
       if (n > 3) {
@@ -146,9 +154,12 @@ exports.fields = [
   // It's easier to treat it as an int internally,
   // though it does add some special-casing for datetimes in the view.
   f([24, 'creationDate', Lf.Type.INTEGER], {
+    sjName: 'creationTimestamp',
     label: 'date added to library',
     explanation: 'eiher a relative datetime like "30 days ago" or an absolute one like "April 1 2016".',
     is_datetime: true,
+    // coerce strings (sj)
+    coerce: val => parseInt(val, 10),
   }),
   /*
   // This could be readded as something like "last played or modified" if it's useful.
@@ -157,31 +168,40 @@ exports.fields = [
     is_datetime: true}),
    */
   f([26, 'subjectToCuration', Lf.Type.INTEGER], {
+    // not in sj
     hidden: true,
   }),
   f([27, 'storeId', Lf.Type.STRING], {
     label: 'store id'}),
   f([28, 'matchedId', Lf.Type.STRING], {
+    // not in sj
     hidden: true,
   }),
   f([29, 'type', Lf.Type.INTEGER], {
+    sjName: 'trackType',
+    // coerce strings (sj)
+    coerce: val => parseInt(val, 10),
     explanation: '1: free/purchased, 2: uploaded but not matched, 6: uploaded and matched, 7: All Access.'}),
   f([30, 'comment', Lf.Type.STRING]),
+  // TODO not in sj?
   f([34, 'bitrate', Lf.Type.INTEGER]),
   f([35, 'recentTimestamp', Lf.Type.INTEGER], {
     hidden: true,
     is_datetime: true,
   }),
+  // TODO not in sj?
   f([37, 'albumPlaybackTimestamp', Lf.Type.INTEGER], {
     label: 'last played (entire album)',
     is_datetime: true,
   }),
   f([38, 'explicitType', Lf.Type.INTEGER], {
+    // coerce strings (sj)
+    coerce: val => parseInt(val, 10),
     hidden: true,
   }),
   f([38, 'explicit', Lf.Type.STRING], {
     explanation: 'one of "true", "false" or "unknown", representing whether the lyrics are explicit.',
-    coerce: val => val || -1,
+    coerce: val => parseInt(val, 10) || -1,
     transformation: n => {
       let explicit = 'unknown';
       if (n === 1) {
@@ -193,12 +213,15 @@ exports.fields = [
     },
   }),
   f([41, 'curationSuggested', Lf.Type.INTEGER], {
+    // not in sj
     hidden: true,
   }),
   f([42, 'curatedByUser', Lf.Type.INTEGER], {
+    // not in sj
     hidden: true,
   }),
   f([43, 'playlistEntryId', Lf.Type.STRING], {
+    // not in sj
     hidden: true,
   }),
   f([48, 'lastPlayed', Lf.Type.INTEGER], {

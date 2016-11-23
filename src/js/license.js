@@ -1,5 +1,6 @@
 'use strict';
 
+const Auth = require('./auth');
 const Chrometools = require('./chrometools');
 
 const CWS_LICENSE_API_URL = 'https://www.googleapis.com/chromewebstore/v1.1/userlicenses/';
@@ -51,9 +52,8 @@ exports.setFullForced = function setFullForced(enabled, callback) {
 function cacheLicense(interactive, callback) {
   // Retrieve and callback a cachedLicense, or null if we can't right now.
 
-  chrome.identity.getAuthToken({interactive}, token => {
-    if (chrome.runtime.lastError) {
-      console.warn('error during getAuthToken', chrome.runtime.lastError);
+  Auth.getToken(interactive, 'license', token => {
+    if (!token) {
       return callback(null);
     }
 
@@ -106,6 +106,7 @@ exports.hasFullVersion = function hasFullVersion(interactive, callback) {
 
     if (interactive) {
       // Always invalidate the cache on interactive checks.
+      console.log('invalidating cached license');
       cacheLicense(interactive, cachedLicense => {
         callback(checkCachedLicense(cachedLicense));
       });

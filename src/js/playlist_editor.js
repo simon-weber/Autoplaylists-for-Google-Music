@@ -45,7 +45,9 @@ function getRulesData(playlists, playlistId, splaylistcache) {
 
     for (const splaylistId in splaylistcache.splaylists) {
       const splaylist = splaylistcache.splaylists[splaylistId];
-      playlistOptions.push({label: splaylist.title, value: 'P' + splaylist.id});
+      if (!(splaylist.isAutoplaylist)) {
+        playlistOptions.push({label: splaylist.title, value: 'P' + splaylist.id});
+      }
     }
 
     variables.push({

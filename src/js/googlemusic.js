@@ -372,9 +372,9 @@ exports.setPlaylistOrder = function setPlaylistOrder(db, user, playlist, callbac
         currentOrdering.push(contents[i].entryId);
       }
 
-      const remoteTracks = contents.map(c => c.track);
+      const remoteTrackIds = contents.map(c => c.track.id);
 
-      Trackcache.orderTracks(db, playlist, remoteTracks, orderedTracks => {
+      Trackcache.orderTracks(db, playlist, remoteTrackIds, orderedTracks => {
         for (let i = 0; i < orderedTracks.length; i++) {
           const track = orderedTracks[i];
           desiredOrdering.push(idToEntryId[track.id]);
