@@ -2,7 +2,7 @@
 
 const Qs = require('qs');
 
-const Chrometools = require('./chrometools');
+const utils = require('./utils');
 const Storage = require('./storage');
 const Reporting = require('./reporting');
 
@@ -35,7 +35,7 @@ function main() {
 
     Storage.setSyncMs(syncMs, () => {
       Storage.setNewSyncEnabled(newSyncEnabled, () => {
-        Chrometools.goToManager(userId);
+        utils.goToManager(userId);
       });
     });
   });

@@ -1,7 +1,7 @@
 'use strict';
 
 const Auth = require('./auth');
-const Chrometools = require('./chrometools');
+const utils = require('./utils');
 
 const CWS_LICENSE_API_URL = 'https://www.googleapis.com/chromewebstore/v1.1/userlicenses/';
 const DEVELOPER_ID_WHITELIST = { // eslint-disable-line no-unused-vars
@@ -35,7 +35,7 @@ exports.getDevStatus = function getDevStatus(callback) {
       return callback(devStatus);
     }
 
-    chrome.storage.local.get('devForceFullLicense', Chrometools.unlessError(items => {
+    chrome.storage.local.get('devForceFullLicense', utils.unlessError(items => {
       devStatus.isFullForced = items.devForceFullLicense;
       callback(devStatus);
     }));
@@ -43,7 +43,7 @@ exports.getDevStatus = function getDevStatus(callback) {
 };
 
 exports.setFullForced = function setFullForced(enabled, callback) {
-  chrome.storage.local.set({devForceFullLicense: enabled}, Chrometools.unlessError(() => {
+  chrome.storage.local.set({devForceFullLicense: enabled}, utils.unlessError(() => {
     console.log('wrote fullForced to', enabled);
     callback();
   }));
@@ -68,7 +68,7 @@ function cacheLicense(interactive, callback) {
         const expiration = new Date();
         expiration.setSeconds(expiration.getSeconds() + license.maxAgeSecs);
         const cachedLicense = {license, expiration};
-        chrome.storage.sync.set({cachedLicense}, Chrometools.unlessError(() => {
+        chrome.storage.sync.set({cachedLicense}, utils.unlessError(() => {
           console.log('cached license', cachedLicense);
         }));
         callback(cachedLicense);
@@ -86,7 +86,7 @@ function checkCachedLicense(cachedLicense) {
 function getCachedLicense(callback) {
   // Callback a license, or null if one hasn't been cached.
 
-  chrome.storage.sync.get('cachedLicense', Chrometools.unlessError(items => {
+  chrome.storage.sync.get('cachedLicense', utils.unlessError(items => {
     console.log('got cached license', items);
     if ('cachedLicense' in items) {
       callback(items.cachedLicense);

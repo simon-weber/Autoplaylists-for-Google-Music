@@ -3,7 +3,7 @@
 const Lf = require('lovefield');
 const Qs = require('qs');
 
-const Chrometools = require('./chrometools');
+const utils = require('./utils');
 const Track = require('./track');
 const Trackcache = require('./trackcache');
 const Playlist = require('./playlist');
@@ -13,14 +13,6 @@ const Reporting = require('./reporting');
 
 // const GM_BASE_URL = 'htt[s://mclients.googleapis.com/sj/v1.11/';
 const GM_BASE_URL = 'https://www.googleapis.com/sj/v2.5/';
-
-// TODO dedupe with Storage
-/* eslint-disable */
-// Source: https://gist.github.com/jed/982883.
-function uuidV1(a){
-  return a?(a^Math.random()*16>>a/4).toString(16):([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, uuidV1)
-}
-/* eslint-enable */
 
 function authedGMRequest(options, callback, onError) {
   // Call an endpoint and callback with it's parsed response.
@@ -46,7 +38,7 @@ function authedGMRequest(options, callback, onError) {
     };
   }
 
-  chrome.identity.getAuthToken(Chrometools.unlessError(token => {
+  chrome.identity.getAuthToken(utils.unlessError(token => {
     const request = {
       type: method,
       contentType: 'application/json',
@@ -229,8 +221,8 @@ exports.buildEntryReorders = function buildEntryReorders(reorders) {
 exports.buildEntryAppends = function buildEntryAppends(playlistId, trackIds) {
   const mutations = [];
   let prevId = null;
-  let curId = uuidV1();
-  let nextId = uuidV1();
+  let curId = utils.uuidV1();
+  let nextId = utils.uuidV1();
 
   for (let i = 0; i < trackIds.length; i++) {
     const trackId = trackIds[i];
@@ -258,7 +250,7 @@ exports.buildEntryAppends = function buildEntryAppends(playlistId, trackIds) {
     mutations.push({'create': mutationBody});
     prevId = curId;
     curId = nextId;
-    nextId = uuidV1();
+    nextId = utils.uuidV1();
   }
 
   return mutations;

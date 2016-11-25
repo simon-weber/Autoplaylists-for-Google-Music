@@ -3,7 +3,7 @@
 const Qs = require('qs');
 
 const Auth = require('./auth');
-const Chrometools = require('./chrometools');
+const utils = require('./utils');
 const Gm = require('./googlemusic');
 const Gmoauth = require('./googlemusic_oauth');
 const Lf = require('lovefield');  // made available for debugQuery eval
@@ -36,14 +36,6 @@ const pollTimestamps = {};
 let primaryGaiaId = null;
 
 let syncsHaveStarted = false;
-
-// TODO dedupe
-/* eslint-disable */
-// Source: https://gist.github.com/jed/982883.
-function uuidV1(a){
-  return a?(a^Math.random()*16>>a/4).toString(16):([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, uuidV1)
-}
-/* eslint-enable */
 
 function userIdForTabId(tabId) {
   for (const userId in users) {
@@ -79,7 +71,7 @@ function diffUpdateTrackcache(userId, db, callback, timestamp) {
     if (!changes.success) {
       console.warn('failed to getTrackChanges:', JSON.stringify(changes));
       if (changes.reloadXsrf) {
-        chrome.tabs.sendMessage(user.tabId, {action: 'getXsrf'}, Chrometools.unlessError(r => {
+        chrome.tabs.sendMessage(user.tabId, {action: 'getXsrf'}, utils.unlessError(r => {
           console.info('requested xsrf refresh', r);
         },
         e => {
@@ -225,10 +217,8 @@ function getPlaylistMutations(playlist, splaylistcache, playlists) {
 
 function getEntryMutations(playlist, splaylistcache, callback) {
   console.log('cache', playlist.remoteId, splaylistcache);
-  let currentEntries = {};
   let currentOrderedEntries = {};
   if (playlist.remoteId in splaylistcache.splaylists) {
-    currentEntries = splaylistcache.splaylists[playlist.remoteId].entries;
     currentOrderedEntries = splaylistcache.splaylists[playlist.remoteId].orderedEntries;
   } else {
     console.warn('playlist.remoteId', playlist.remoteId, 'not yet cached; assuming empty');
@@ -249,28 +239,12 @@ function getEntryMutations(playlist, splaylistcache, callback) {
   let tracksToAdd;
   let tracksToDelete;
   let entriesToKeep;
+  const preOrderTrackIds = [];
 
   new Promise(resolve => {
     Trackcache.queryTracks(db, splaylistcache, playlist, {}, resolve);
   }).then(tracks => {
     const desiredTracks = tracks.slice(0, 1000);
-
-    // Check if the playlist isn't changing.
-    if (currentOrderedEntries.length === desiredTracks.length) {
-      let identical = true;
-      const currentTrackIds = currentOrderedEntries.map(t => t.trackId);
-      for (let i = 0; i < currentTrackIds.length; i++) {
-        const id = currentTrackIds[i];
-        if (!(id === desiredTracks[i].id || id === desiredTracks[i].storeId)) {
-          identical = false;
-          break;
-        }
-      }
-
-      if (identical) {
-        return Promise.reject('identical');
-      }
-    }
 
     // We'll reorder these later.
     tracksToAdd = new Set(desiredTracks.map(t => t.id));
@@ -278,17 +252,19 @@ function getEntryMutations(playlist, splaylistcache, callback) {
 
     tracksToDelete = {};
     entriesToKeep = {};
-    for (const entryId in currentEntries) {
-      const remoteTrackId = currentEntries[entryId].trackId;
+    currentOrderedEntries.forEach(entry => {
+      const entryId = entry.entryId;
+      const remoteTrackId = entry.trackId;
 
       if (tracksToAdd.has(remoteTrackId)) {
         tracksToAdd.delete(remoteTrackId);
         entriesToKeep[remoteTrackId] = entryId;
+        preOrderTrackIds.push(remoteTrackId);
       } else {
-        // This assumes that there are no duplicates in the remote, which will probably break eventually.
+        // FIXME This assumes that there are no duplicates in the remote, which will probably break eventually.
         tracksToDelete[remoteTrackId] = entryId;
       }
-    }
+    });
 
     const trackIdsRemaining = Object.keys(entriesToKeep);
     for (const id of tracksToAdd) {
@@ -325,7 +301,7 @@ function getEntryMutations(playlist, splaylistcache, callback) {
 
       if (track.id in entriesToKeep || track.storeId in entriesToKeep) {
         type = 'existing';
-        clientId = uuidV1();
+        clientId = utils.uuidV1();
         entryId = entriesToKeep[track.id] || entriesToKeep[track.storeId];
       } else {
         // We only build appends with library id.
@@ -336,29 +312,43 @@ function getEntryMutations(playlist, splaylistcache, callback) {
       desiredOrdering.push({type, clientId, entryId, append});
     }
 
-    const reorderings = [];
-    for (let i = 0; i < desiredOrdering.length; i++) {
-      const ordering = desiredOrdering[i];
-      let target;
-      if (ordering.type === 'existing') {
-        target = {id: ordering.entryId, clientId: ordering.clientId};
-        reorderings.push(target);
-      } else {
-        target = ordering.append;
-      }
-
-      target.relativePositionIdType = 2;
-      if (i > 0) {
-        target.precedingEntryId = desiredOrdering[i - 1].clientId;
-      }
-      if (i < desiredOrdering.length - 1) {
-        target.followingEntryId = desiredOrdering[i + 1].clientId;
+    let inOrder = false;
+    if (orderedTracks.length === preOrderTrackIds) {
+      inOrder = true;
+      for (let i = 0; i < preOrderTrackIds.length; i++) {
+        const id = preOrderTrackIds[i];
+        if (!(id === orderedTracks[i].id || id === orderedTracks[i].storeId)) {
+          inOrder = false;
+          break;
+        }
       }
     }
 
-    const reorders = Gmoauth.buildEntryReorders(reorderings);
-    for (let i = 0; i < reorders.length; i++) {
-      mutations.push(reorders[i]);
+    if (!inOrder) {
+      const reorderings = [];
+      for (let i = 0; i < desiredOrdering.length; i++) {
+        const ordering = desiredOrdering[i];
+        let target;
+        if (ordering.type === 'existing') {
+          target = {id: ordering.entryId, clientId: ordering.clientId};
+          reorderings.push(target);
+        } else {
+          target = ordering.append;
+        }
+
+        target.relativePositionIdType = 2;
+        if (i > 0) {
+          target.precedingEntryId = desiredOrdering[i - 1].clientId;
+        }
+        if (i < desiredOrdering.length - 1) {
+          target.followingEntryId = desiredOrdering[i + 1].clientId;
+        }
+      }
+
+      const reorders = Gmoauth.buildEntryReorders(reorderings);
+      for (let i = 0; i < reorders.length; i++) {
+        mutations.push(reorders[i]);
+      }
     }
     console.log('mutations', mutations);
     callback(mutations);
@@ -732,7 +722,7 @@ function main() {
   Auth.getToken(false, 'startup', token => {
     // Prompt existing users for auth immediately to avoid missed syncs.
     if (!token) {
-      chrome.storage.sync.get(null, Chrometools.unlessError(items => {
+      chrome.storage.sync.get(null, utils.unlessError(items => {
         let hasPlaylists = false;
         for (const key in items) {
           try {
@@ -749,7 +739,7 @@ function main() {
         if (hasPlaylists) {
           console.info('playlists detected; will prompt for auth');
           const url = chrome.extension.getURL('html/new-syncing.html');
-          Chrometools.focusOrCreateExtensionTab(url);
+          utils.focusOrCreateExtensionTab(url);
         }
       }));
     }
@@ -809,14 +799,14 @@ function main() {
               console.info('got auth on prompt', token2.slice(0, 10));
               const qstring = Qs.stringify({userId: userIdForTabId(tab.id)});
               const url = chrome.extension.getURL('html/playlists.html');
-              Chrometools.focusOrCreateExtensionTab(`${url}?${qstring}`);
+              utils.focusOrCreateExtensionTab(`${url}?${qstring}`);
             }
           });
         } else {
           console.log('already had auth', token.slice(0, 10));
           const qstring = Qs.stringify({userId: userIdForTabId(tab.id)});
           const url = chrome.extension.getURL('html/playlists.html');
-          Chrometools.focusOrCreateExtensionTab(`${url}?${qstring}`);
+          utils.focusOrCreateExtensionTab(`${url}?${qstring}`);
         }
       });
     } else {
@@ -828,7 +818,7 @@ function main() {
       Reporting.reportHit('multiuserPageActionClick');
 
       const url = chrome.extension.getURL('html/multi-user.html');
-      Chrometools.focusOrCreateExtensionTab(url);
+      utils.focusOrCreateExtensionTab(url);
     }
   });
 

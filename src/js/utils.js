@@ -4,6 +4,13 @@ const Qs = require('qs');
 
 const Reporting = require('./reporting');
 
+/* eslint-disable */
+// Source: https://gist.github.com/jed/982883.
+function uuidV1(a){
+  return a?(a^Math.random()*16>>a/4).toString(16):([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, uuidV1)
+}
+/* eslint-enable */
+
 function unlessError(func, onError) {
   // Decorate chrome callbacks to notice errors.
   // If an error occurs, call onError.
@@ -18,7 +25,7 @@ function unlessError(func, onError) {
         },
         extra: {
           func,
-          location: 'chrometools.unlessError',
+          location: 'utils.unlessError',
           error: chrome.extension.lastError,
           this: this,
           arguments: arguments,  // eslint-disable-line object-shorthand
@@ -53,3 +60,44 @@ exports.focusOrCreateExtensionTab = function focusOrCreateExtensionTab(url) {
 exports.goToManager = function goToManager(userId) {
   window.location.href = `/html/playlists.html?${Qs.stringify({userId})}`;
 };
+
+exports.maximumIncreasingSubsequenceIndices = function maximumIncreasingSubsequence(a) {
+  return findSequence(a, findIndex(a));
+}
+
+// Source below here: https://rosettacode.org/wiki/Longest_increasing_subsequence#JavaScript
+function range(len) {
+  const a = [];
+  for (let i = 0; i < len; i++) {
+    a.push(1);
+  }
+  return a;
+}
+
+function findIndex(input) {
+  var len = input.length;
+  var maxSeqEndingHere = range(len).map(function() {
+    return 1;
+  });
+  for (var i = 0; i < len; i++)
+    for (var j = i - 1; j >= 0; j--)
+      if (input[i] > input[j] && maxSeqEndingHere[j] >= maxSeqEndingHere[i])
+        maxSeqEndingHere[i] = maxSeqEndingHere[j] + 1;
+  return maxSeqEndingHere;
+}
+
+function findSequence(input, result) {
+  var maxValue = Math.max.apply(null, result);
+  var maxIndex = result.indexOf(Math.max.apply(Math, result));
+  var output = [];
+  output.push(maxIndex);
+  for (var i = maxIndex; i >= 0; i--) {
+    if (maxValue == 0) break;
+    if (input[maxIndex] > input[i] && result[i] == maxValue - 1) {
+      output.push(i);
+      maxValue--;
+    }
+  }
+  output.reverse();
+  return output;
+}

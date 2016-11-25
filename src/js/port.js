@@ -2,7 +2,7 @@
 
 const Qs = require('qs');
 
-const Chrometools = require('./chrometools');
+const utils = require('./utils');
 const Storage = require('./storage');
 const Reporting = require('./reporting');
 
@@ -32,7 +32,7 @@ function onDrop(event) {
     }
 
     Storage.importPlaylistsForUser(userId, playlists, () => {
-      Chrometools.goToManager(userId);
+      utils.goToManager(userId);
     });
   } else {
     console.log('did not confirm');
