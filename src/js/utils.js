@@ -63,7 +63,7 @@ exports.goToManager = function goToManager(userId) {
 
 exports.maximumIncreasingSubsequenceIndices = function maximumIncreasingSubsequence(a) {
   return findSequence(a, findIndex(a));
-}
+};
 
 // Source below here: https://rosettacode.org/wiki/Longest_increasing_subsequence#JavaScript
 function range(len) {
@@ -74,6 +74,7 @@ function range(len) {
   return a;
 }
 
+/* eslint-disable */
 function findIndex(input) {
   var len = input.length;
   var maxSeqEndingHere = range(len).map(function() {
@@ -101,3 +102,4 @@ function findSequence(input, result) {
   output.reverse();
   return output;
 }
+/* eslint-enable */
