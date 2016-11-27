@@ -180,6 +180,9 @@ function buildWhereClause(track, playlistsById, splaylistcache, resultCache, db,
     if (rule.operator === 'match') {
       operator = 'match';
       value = new RegExp(escapeForRegex(value));
+    } else if (rule.operator === 'match-regex') {
+      operator = 'match';
+      value = new RegExp(value);
     } else if (rule.operator === 'match-insensitive') {
       operator = 'match';
       value = new RegExp(escapeForRegex(value), 'i');

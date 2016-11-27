@@ -20,6 +20,7 @@ exports.operators = {
     {name: 'neq', label: "doesn't equal", input_type: 'text'},
     {name: 'neq-insensitive', label: "doesn't equal (case ignored)", input_type: 'text'},
     {name: 'match', label: 'contains', input_type: 'text'},
+    {name: 'match-regex', label: 'contains regex', input_type: 'text'},
     {name: 'match-insensitive', label: 'contains (case ignored)', input_type: 'text'},
     {name: 'no-match', label: 'does not contain', input_type: 'text'},
     {name: 'no-match-insensitive', label: 'does not contain (case ignored)', input_type: 'text'},
