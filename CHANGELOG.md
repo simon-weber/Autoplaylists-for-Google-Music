@@ -1,3 +1,9 @@
+## 3.2.0 (November 27, 2016)
+
+Features:
+
+  - add a new operator 'contains (regex)' to query strings for a regular expression
+
 ## 3.1.1 (November 23, 2016)
 
 Misc:
