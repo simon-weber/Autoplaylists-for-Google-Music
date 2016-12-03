@@ -1,3 +1,11 @@
+## 3.2.1 (December 3, 2016)
+
+Misc:
+
+  - add the version and a link to the changelog to the interface
+  - improve random sort explanation
+  - clarify that OAuth prompts are once per device
+
 ## 3.2.0 (November 27, 2016)
 
 Features:
