@@ -132,7 +132,7 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache)
   });
   $('<li>').text('playlist: a playlist whose contents will be included or excluded.' +
                 ' Hidden if no other playlists are available.').appendTo($explanations);
-  $('<li>').html('random sort: a random total ordering, different on each load.' +
+  $('<li>').html('random sort: a random total ordering, different on each refresh of the Music tab.' +
                 ' See <a target="_blank" href="https://github.com/simon-weber/' +
                 'Autoplaylists-for-Google-Music/wiki/Tips-and-Tricks#random-sorting">' +
                 ' the wiki</a> for more details.').appendTo($explanations);
