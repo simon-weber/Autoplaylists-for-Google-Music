@@ -90,7 +90,14 @@ function newSync(cache, user, playlists, callback) {
         } else {
           if (mutation.id in splaylist.entries) {
             const oldPosition = splaylist.entries[mutation.id].absolutePosition;
-            splaylist.orderedEntries.delete(oldPosition);
+
+            // This is fiddly. If we blindly delete oldPosition, we may delete a different entry
+            // in the case that eg two entries swapped absolutePositions.
+            // So, we need to also check that the oldPosition is what we expect it to be.
+            const oldValue = splaylist.orderedEntries.get(oldPosition);
+            if (oldValue && oldValue.entryId === mutation.id) {
+              splaylist.orderedEntries.delete(oldPosition);
+            }
           }
 
           splaylist.entries[mutation.id] = {trackId: mutation.trackId, absolutePosition: mutation.absolutePosition};
