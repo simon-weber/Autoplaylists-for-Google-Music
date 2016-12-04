@@ -393,7 +393,8 @@ function getEntryMutations(playlist, splaylistcache, callback) {
   }).catch(e => {
     console.error('getEntryMutations error', e, e.stack);
     Reporting.Raven.captureMessage('getEntryMutations error', {
-      extra: {e, playlist},
+      extra: {e, playlist, stack: e.stack},
+      stacktrace: true,
     });
     callback([]);
   });
