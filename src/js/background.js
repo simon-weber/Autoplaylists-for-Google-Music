@@ -216,7 +216,6 @@ function getPlaylistMutations(playlist, splaylistcache, playlists) {
 
 
 function getEntryMutations(playlist, splaylistcache, callback) {
-  console.log('cache', playlist.remoteId, splaylistcache);
   let currentOrderedEntries = {};
   if (playlist.remoteId in splaylistcache.splaylists) {
     currentOrderedEntries = splaylistcache.splaylists[playlist.remoteId].orderedEntries;
@@ -239,7 +238,7 @@ function getEntryMutations(playlist, splaylistcache, callback) {
   let tracksToAdd;
   let tracksToDelete;
   let entriesToKeep;
-  const preOrderTrackIds = [];
+  const postDeleteEntryIds = [];
 
   new Promise(resolve => {
     Trackcache.queryTracks(db, splaylistcache, playlist, {}, resolve);
@@ -248,7 +247,7 @@ function getEntryMutations(playlist, splaylistcache, callback) {
 
     // We'll reorder these later.
     tracksToAdd = new Set(desiredTracks.map(t => t.id));
-    console.log('query found', tracksToAdd);
+    console.debug('query found', tracksToAdd);
 
     tracksToDelete = {};
     entriesToKeep = {};
@@ -259,7 +258,7 @@ function getEntryMutations(playlist, splaylistcache, callback) {
       if (tracksToAdd.has(remoteTrackId)) {
         tracksToAdd.delete(remoteTrackId);
         entriesToKeep[remoteTrackId] = entryId;
-        preOrderTrackIds.push(remoteTrackId);
+        postDeleteEntryIds.push(entryId);
       } else {
         // FIXME This assumes that there are no duplicates in the remote, which will probably break eventually.
         tracksToDelete[remoteTrackId] = entryId;
@@ -275,10 +274,15 @@ function getEntryMutations(playlist, splaylistcache, callback) {
       Trackcache.orderTracks(db, playlist, trackIdsRemaining, resolve);
     });
   }).then(orderedTracks => {
-    console.log('to add', tracksToAdd);
-    console.log('to keep', entriesToKeep);
-    console.log('to delete', tracksToDelete);
-    console.log('in order', orderedTracks);
+    console.debug('to add', tracksToAdd.size, tracksToAdd);
+    console.debug('to keep', Object.keys(entriesToKeep).length, entriesToKeep);
+    console.debug('to delete', Object.keys(tracksToDelete).length, tracksToDelete);
+    console.debug('in order', orderedTracks.length, orderedTracks);
+
+    const deletes = Gmoauth.buildEntryDeletes(Object.values(tracksToDelete));
+    for (let i = 0; i < deletes.length; i++) {
+      mutations.push(deletes[i]);
+    }
 
     const appends = Gmoauth.buildEntryAppends(playlist.remoteId, Array.from(tracksToAdd));
     const appendsByTrackId = {};
@@ -287,17 +291,15 @@ function getEntryMutations(playlist, splaylistcache, callback) {
       mutations.push(append);
       appendsByTrackId[append.create.trackId] = append.create;
     }
-    const deletes = Gmoauth.buildEntryDeletes(Object.values(tracksToDelete));
-    for (let i = 0; i < deletes.length; i++) {
-      mutations.push(deletes[i]);
-    }
 
+    const idToDesiredPosition = {};
     for (let i = 0; i < orderedTracks.length; i++) {
       const track = orderedTracks[i];
       let clientId;
       let type;
       let entryId;
       let append;
+      const trackId = track.id;
 
       if (track.id in entriesToKeep || track.storeId in entriesToKeep) {
         type = 'existing';
@@ -309,58 +311,88 @@ function getEntryMutations(playlist, splaylistcache, callback) {
         type = 'append';
         clientId = append.clientId;
       }
-      desiredOrdering.push({type, clientId, entryId, append});
-    }
-
-    let inOrder = false;
-    if (orderedTracks.length === preOrderTrackIds) {
-      inOrder = true;
-      for (let i = 0; i < preOrderTrackIds.length; i++) {
-        const id = preOrderTrackIds[i];
-        if (!(id === orderedTracks[i].id || id === orderedTracks[i].storeId)) {
-          inOrder = false;
-          break;
-        }
+      desiredOrdering.push({type, clientId, entryId, append, trackId});
+      if (entryId) {
+        idToDesiredPosition[entryId] = i;
       }
     }
 
-    if (!inOrder) {
-      const reorderings = [];
-      for (let i = 0; i < desiredOrdering.length; i++) {
-        const ordering = desiredOrdering[i];
-        let target;
-        if (ordering.type === 'existing') {
-          target = {id: ordering.entryId, clientId: ordering.clientId};
-          reorderings.push(target);
+    const postDeletePositions = [];
+    for (let i = 0; i < postDeleteEntryIds.length; i++) {
+      postDeletePositions.push(idToDesiredPosition[postDeleteEntryIds[i]]);
+    }
+
+    const maxIncSubPositions = utils.maximumIncreasingSubsequenceIndices(postDeletePositions);
+    const maxIncSubEntryIds = new Set();
+    for (let i = 0; i < maxIncSubPositions.length; i++) {
+      maxIncSubEntryIds.add(postDeleteEntryIds[maxIncSubPositions[i]]);
+    }
+    console.debug('maxIncSub is', maxIncSubEntryIds.size, 'of', postDeletePositions.length);
+
+    const reorderings = [];
+    for (let i = 0; i < desiredOrdering.length; i++) {
+      const ordering = desiredOrdering[i];
+
+      const entryId = ordering.entryId;
+      if (entryId && maxIncSubEntryIds.has(entryId)) {
+        // Only move entries not in the maxIncSub.
+        continue;
+      }
+
+      let target;
+      if (ordering.type === 'existing') {
+        target = {id: ordering.entryId, clientId: ordering.clientId};
+        reorderings.push(target);
+      } else {
+        // Edit the position the track will be added to.
+        target = ordering.append;
+      }
+
+      let surroundingType = null;
+      target.source = 1;
+      target.trackId = ordering.trackId;
+      if (i > 0) {
+        const preceding = desiredOrdering[i - 1];
+        surroundingType = preceding.type;
+        let id = preceding.entryId;
+        if (preceding.type === 'append') {
+          id = preceding.clientId;
+        }
+        target.precedingEntryId = id;
+      }
+      if (i < desiredOrdering.length - 1) {
+        const following = desiredOrdering[i + 1];
+
+        if (surroundingType && surroundingType !== following.type) {
+          // There's nothing we can do about this unless we send a no-op reorder and switch to client ids.
+          // It doesn't seem worth it given that the reorders are already eventually consistent.
+          console.warn('mixed reorder detected for', ordering, desiredOrdering[i - 1], following);
         } else {
-          target = ordering.append;
+          surroundingType = following.type;
         }
 
-        target.relativePositionIdType = 2;
-        if (i > 0) {
-          target.precedingEntryId = desiredOrdering[i - 1].clientId;
+        let id = following.entryId;
+        if (following.type === 'append') {
+          id = following.clientId;
         }
-        if (i < desiredOrdering.length - 1) {
-          target.followingEntryId = desiredOrdering[i + 1].clientId;
-        }
+        target.followingEntryId = id;
       }
-
-      const reorders = Gmoauth.buildEntryReorders(reorderings);
-      for (let i = 0; i < reorders.length; i++) {
-        mutations.push(reorders[i]);
-      }
+      target.relativePositionIdType = (surroundingType === 'existing' ? 1 : 2);
     }
-    console.log('mutations', mutations);
+
+    const reorders = Gmoauth.buildEntryReorders(reorderings);
+    for (let i = 0; i < reorders.length; i++) {
+      mutations.push(reorders[i]);
+    }
+
+    console.debug(mutations.length, 'mutations');
     callback(mutations);
   }).catch(e => {
-    if (e === 'identical') {
-      callback([]);
-    } else {
-      Reporting.Raven.captureMessage('getEntryMutations error', {
-        extra: {e, playlist},
-      });
-      callback([]);
-    }
+    console.error('getEntryMutations error', e);
+    Reporting.Raven.captureMessage('getEntryMutations error', {
+      extra: {e, playlist},
+    });
+    callback([]);
   });
 }
 

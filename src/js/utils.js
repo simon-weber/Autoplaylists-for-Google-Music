@@ -62,6 +62,9 @@ exports.goToManager = function goToManager(userId) {
 };
 
 exports.maximumIncreasingSubsequenceIndices = function maximumIncreasingSubsequence(a) {
+  if (a.length === 0) {
+    return [];
+  }
   return findSequence(a, findIndex(a));
 };
 
@@ -89,7 +92,9 @@ function findIndex(input) {
 
 function findSequence(input, result) {
   var maxValue = Math.max.apply(null, result);
-  var maxIndex = result.indexOf(Math.max.apply(Math, result));
+  // I'm not actually sure if using lastIndexOf here makes a noticeable difference.
+  // It just controls which entry we move when we could pick from multiple.
+  var maxIndex = result.lastIndexOf(maxValue);
   var output = [];
   output.push(maxIndex);
   for (var i = maxIndex; i >= 0; i--) {
