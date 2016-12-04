@@ -1,3 +1,12 @@
+## 3.2.2 (December 4, 2016)
+
+Bugfixes:
+  - fix a rare bug in new sync that could cause strange behavior with very full playlists
+
+Misc:
+  - greatly improve new sync performance
+  - improve new sync reporting
+
 ## 3.2.1 (December 3, 2016)
 
 Misc:
