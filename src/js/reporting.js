@@ -57,12 +57,9 @@ exports.reportSync = function reportSync(action, label) {
 };
 
 // action is 'success' or 'failure'
-// category is 'Playlist' or 'Entry'
+// type is 'Playlist' or 'Entry'
 // value is the number of mutations being sent
 exports.reportNewSync = function reportNewSync(action, type, value) {
-  // Note that due to GA's serverside rate limiting, this can drop bursty events.
-  // If this becomes a problem, consider something like http://stackoverflow.com/a/9340290/1231454.
-
   if (!cachedContext) {
     // setContext should make this available very quickly after loading.
     setTimeout(reportNewSync, 1000, action, type, value);
@@ -76,6 +73,64 @@ exports.reportNewSync = function reportNewSync(action, type, value) {
     GATracker.send(sync);
   }
 };
+
+// type is 'playlist' or 'entry'
+// mutations is a list of mutations
+exports.reportMutationBatch = function reportMutationBatch(type, mutations) {
+  if (!cachedContext) {
+    setTimeout(reportMutationBatch, 1000, type, mutations);
+  } else {
+    const category = type + 'MutationBatch';
+    const counts = getMutationCounts(mutations);
+
+    for (const mutationType in counts) {
+      const count = counts[mutationType];
+      if (count === 0) {
+        // I'm not entirely sure if this is the best way to report this.
+        // It makes comparing batch breakdown a bit harder (the denominator differs across averages),
+        // but gives slightly more information (how often there are no mutations of a type).
+        continue;
+      }
+
+      const batch = analytics.EventBuilder.builder()
+      .category(category)
+      .action(mutationType)
+      .value(count);
+
+      GATracker.send(batch);
+    }
+  }
+};
+
+function getMutationCounts(mutations) {
+  const counts = {
+    'create': 0,
+    'update': 0,
+    'delete': 0,
+  };
+  mutations.forEach(mutation => {
+    // Mutations will only have one key at the top level.
+    const type = Object.keys(mutation)[0];
+    counts[type]++;
+  });
+
+  return counts;
+}
+
+// num is the number of mixed reorders present in the sync.
+exports.reportMixedReorders = function reportMixedReorders(num) {
+  if (!cachedContext) {
+    setTimeout(reportMixedReorders, 1000, num);
+  } else if (num > 0) {
+    const reorders = analytics.EventBuilder.builder()
+    .category('mixedReorders')
+    .action('present')
+    .value(num);
+
+    GATracker.send(reorders);
+  }
+};
+
 
 // action is one of 'valid' or 'invalid'.
 exports.reportActivation = function reportActivation(action) {

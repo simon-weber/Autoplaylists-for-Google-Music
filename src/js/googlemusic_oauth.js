@@ -87,6 +87,8 @@ exports.buildPlaylistUpdates = function buildPlaylistUpdate(updates) {
 };
 
 exports.runPlaylistMutations = function runPlaylistMutations(user, mutations, callback) {
+  Reporting.reportMutationBatch('playlist', mutations);
+
   if (mutations.length === 0) {
     console.info('skipping empty playlist sync');
     Reporting.reportNewSync('success', 'Playlist', 0);
@@ -257,6 +259,8 @@ exports.buildEntryAppends = function buildEntryAppends(playlistId, trackIds) {
 };
 
 exports.runEntryMutations = function runEntryMutations(user, mutations, callback) {
+  Reporting.reportMutationBatch('entry', mutations);
+
   if (mutations.length === 0) {
     console.info('skipping empty entry sync');
     Reporting.reportNewSync('success', 'Entry', 0);

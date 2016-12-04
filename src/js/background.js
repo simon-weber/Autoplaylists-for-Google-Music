@@ -216,6 +216,7 @@ function getPlaylistMutations(playlist, splaylistcache, playlists) {
 
 
 function getEntryMutations(playlist, splaylistcache, callback) {
+  // Callback {mutations: [], mixedReorders: int}
   let currentOrderedEntries = {};
   if (playlist.remoteId in splaylistcache.splaylists) {
     currentOrderedEntries = splaylistcache.splaylists[playlist.remoteId].orderedEntries;
@@ -239,6 +240,7 @@ function getEntryMutations(playlist, splaylistcache, callback) {
   let tracksToDelete;
   let entriesToKeep;
   const postDeleteEntryIds = [];
+  let mixedReorders = 0;
 
   new Promise(resolve => {
     Trackcache.queryTracks(db, splaylistcache, playlist, {}, resolve);
@@ -367,6 +369,7 @@ function getEntryMutations(playlist, splaylistcache, callback) {
           // There's nothing we can do about this unless we send a no-op reorder and switch to client ids.
           // It doesn't seem worth it given that the reorders are already eventually consistent.
           console.warn('mixed reorder detected for', ordering, desiredOrdering[i - 1], following);
+          mixedReorders++;
         } else {
           surroundingType = following.type;
         }
@@ -386,9 +389,9 @@ function getEntryMutations(playlist, splaylistcache, callback) {
     }
 
     console.debug(mutations.length, 'mutations');
-    callback(mutations);
+    callback({mutations, mixedReorders});
   }).catch(e => {
-    console.error('getEntryMutations error', e);
+    console.error('getEntryMutations error', e, e.stack);
     Reporting.Raven.captureMessage('getEntryMutations error', {
       extra: {e, playlist},
     });
@@ -425,7 +428,8 @@ function syncPlaylist(playlist, playlists) {
             console.log('update res', response);
           });
 
-          getEntryMutations(playlist, splaylistcache, mutations => {
+          getEntryMutations(playlist, splaylistcache, ({mutations, mixedReorders}) => {
+            Reporting.reportMixedReorders(mixedReorders);
             Gmoauth.runEntryMutations(user, mutations, response => {
               console.log('entry res', response);
             });
@@ -459,15 +463,18 @@ function legacyPostCreate(playlist, remoteId) {
 
 function syncEntryMutations(hasFullVersion, splaylistcache, user, playlists) {
   const entryMutations = [];
+  let sumMixedReorders = 0;  // eslint-disable-line no-unused-vars
   let callbacksRemaining = playlists.length;
 
-  function processMutations(mutations) {
+  function processMutations({mutations, mixedReorders}) {
+    sumMixedReorders += mixedReorders;
     for (let j = 0; j < mutations.length; j++) {
       entryMutations.push(mutations[j]);
     }
     callbacksRemaining--;
 
     if (callbacksRemaining <= 0) {
+      Reporting.reportMixedReorders(sumMixedReorders);
       Gmoauth.runEntryMutations(user, entryMutations, response => {
         console.log('combined entry res', response);
       });
@@ -606,7 +613,7 @@ function initSyncSchedule() {
   Storage.getLastPSync(lastPSync => {
     console.log('initSyncSchedule. lastPSync was', new Date(lastPSync));
     Storage.getSyncMs(initSyncMs => {
-      console.info('sync interval initially', initSyncMs);
+      console.info(`sync interval initially ${initSyncMs}ms, ${initSyncMs / 1000 / 60}s`);
       const nextExpectedSync = new Date(lastPSync + initSyncMs);
       const now = new Date();
       let startDelayId = null;
