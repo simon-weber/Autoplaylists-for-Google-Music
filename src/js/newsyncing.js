@@ -10,7 +10,7 @@ function main() {
     e.preventDefault();
 
     Auth.getToken(true, 'upgrade', token => {
-      console.log(token.slice(0, 10));
+      console.log((token || '<falsey>').slice(0, 10));
       chrome.tabs.getCurrent(tab => {
         chrome.tabs.remove(tab.id, () => {});
       });
