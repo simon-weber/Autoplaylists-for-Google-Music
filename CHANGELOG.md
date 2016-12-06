@@ -1,9 +1,17 @@
+## 3.2.3 (December 5, 2016)
+
+Bugfixes:
+
+  - fix a few minor bugs with new sync and the auth prompt
+
 ## 3.2.2 (December 4, 2016)
 
 Bugfixes:
+
   - fix a rare bug in new sync that could cause strange behavior with very full playlists
 
 Misc:
+
   - greatly improve new sync performance
   - improve new sync reporting
 
