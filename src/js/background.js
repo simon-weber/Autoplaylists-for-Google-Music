@@ -280,7 +280,6 @@ function getEntryMutations(playlist, splaylistcache, callback) {
     console.debug('to add', tracksToAdd.size, tracksToAdd);
     console.debug('to keep', Object.keys(entriesToKeep).length, entriesToKeep);
     console.debug('to delete', Object.keys(tracksToDelete).length, tracksToDelete);
-    console.debug('in order', orderedTracks.length, orderedTracks);
 
     const deletes = Gmoauth.buildEntryDeletes(Object.values(tracksToDelete));
     for (let i = 0; i < deletes.length; i++) {
