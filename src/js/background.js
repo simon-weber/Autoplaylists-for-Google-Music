@@ -1,6 +1,7 @@
 'use strict';
 
 const Qs = require('qs');
+const SortedMap = require('collections/sorted-map');
 
 const Auth = require('./auth');
 const utils = require('./utils');
@@ -217,7 +218,7 @@ function getPlaylistMutations(playlist, splaylistcache, playlists) {
 
 function getEntryMutations(playlist, splaylistcache, callback) {
   // Callback {mutations: [], mixedReorders: int}
-  let currentOrderedEntries = {};
+  let currentOrderedEntries = new SortedMap();
   if (playlist.remoteId in splaylistcache.splaylists) {
     currentOrderedEntries = splaylistcache.splaylists[playlist.remoteId].orderedEntries;
   } else {
