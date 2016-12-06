@@ -780,7 +780,10 @@ function main() {
         if (hasPlaylists) {
           console.info('playlists detected; will prompt for auth');
           const url = chrome.extension.getURL('html/new-syncing.html');
-          utils.focusOrCreateExtensionTab(url);
+
+          // This happens right at startup, so often there's no window to put the tab in yet.
+          // That why the pause is here.
+          setTimeout(utils.focusOrCreateExtensionTab, 5 * 1000, url);
         }
       }));
     }
