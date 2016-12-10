@@ -882,7 +882,7 @@ function main() {
 
     if (request.action === 'forceUpdate') {
       if (!dbs[request.userId]) {
-        console.warning('forceUpdate requested diffUpdate, but db not init for', request.userId);
+        console.warn('forceUpdate requested diffUpdate, but db not init for', request.userId);
         Reporting.Raven.captureMessage('forceUpdate requested diffUpdate, but db not init', {
           level: 'warning',
           extra: {request, users, dbs, syncsHaveStarted},
@@ -899,7 +899,7 @@ function main() {
       users[request.userId].xt = request.xt;
 
       if (!dbs[request.userId]) {
-        console.warning('setXsrf requested diffUpdate, but db not init for', request.userId);
+        console.warn('setXsrf requested diffUpdate, but db not init for', request.userId);
         Reporting.Raven.captureMessage('setXsrf requested diffUpdate, but db not init', {
           level: 'warning',
           extra: {request, users, dbs, syncsHaveStarted},
