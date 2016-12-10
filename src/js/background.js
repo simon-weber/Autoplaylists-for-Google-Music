@@ -621,7 +621,7 @@ function initSyncs(userId) {
     Storage.getLastPSync(lastPSync => {
       console.log('initSyncSchedule. lastPSync was', new Date(lastPSync));
       Storage.getSyncMs(initSyncMs => {
-        console.info(`sync interval initially ${initSyncMs}ms, ${initSyncMs / 1000 / 60}s`);
+        console.info(`sync interval initially ${initSyncMs}ms, ${initSyncMs / 1000 / 60}m`);
         const nextExpectedSync = new Date(lastPSync + initSyncMs);
         const now = new Date();
         let startDelayId = null;
