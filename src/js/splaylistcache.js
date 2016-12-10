@@ -53,6 +53,9 @@ function newSync(cache, user, playlists, callback) {
       } else if (!(mutation.id in cache.splaylists)) {
         const splaylist = Splaylist.fromSJ(mutation);
         splaylist.isAutoplaylist = autoPlaylistIds.has(mutation.id);
+        splaylist.entries = {};
+        splaylist.legacyEntries = {};
+        splaylist.orderedEntries = new SortedMap();
         cache.splaylists[mutation.id] = splaylist;  // eslint-disable-line no-param-reassign
       } else {
         const oldSplaylist = cache.splaylists[mutation.id];
@@ -74,12 +77,6 @@ function newSync(cache, user, playlists, callback) {
         if (!splaylist) {
           // These orphaned entries usually belong to a playlist that was recently deleted.
           continue;
-        }
-
-        if (!('entries' in splaylist)) {
-          splaylist.entries = {};
-          splaylist.legacyEntries = {};
-          splaylist.orderedEntries = new SortedMap();
         }
 
         if (mutation.deleted) {
