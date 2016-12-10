@@ -34,11 +34,37 @@ function migrateToOne(items) {
   return items;
 }
 
-const SCHEMA_VERSION = 1;
+function migrateToTwo(items) {
+  // Enable new sync.
+
+  /* eslint-disable no-param-reassign */
+  items.newSyncEnabled = true;
+  /* eslint-enable no-param-reassign */
+  return items;
+}
+
+const SCHEMA_VERSION = 2;
 const MIGRATIONS = [
   // Migrations receive all items and transform them.
   migrateToOne,
+  migrateToTwo,
 ];
+
+// Callback a bool.
+// Note that this is in local storage, since it's per machine.
+exports.getShouldNotWelcome = function getShouldNotWelcome(callback) {
+  chrome.storage.local.get('shouldNotWelcome', utils.unlessError(items => {
+    callback(Boolean(items.shouldNotWelcome));
+  }));
+};
+
+// shouldNotWelcome is a bool.
+exports.setShouldNotWelcome = function setShouldNotWelcome(shouldNotWelcome, callback) {
+  const storageItems = {};
+  storageItems.shouldNotWelcome = shouldNotWelcome;
+
+  chrome.storage.local.set(storageItems, utils.unlessError(callback));
+};
 
 // Callback a bool.
 exports.getNewSyncEnabled = function getNewSyncEnabled(callback) {

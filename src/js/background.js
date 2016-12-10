@@ -600,8 +600,8 @@ function syncSplaylistcache(userId) {
   });
 }
 
-function initSyncSchedule() {
-  // Set the periodic sync schedule based on the last periodic sync.
+function initSyncs(userId) {
+  // Fill caches, then set the periodic sync schedule based on the last periodic sync.
   // This may also sync immediately if we're overdue for a sync.
   // now >= last-sync + sync-period: sync immediately. Next sync at now + sync-period.
   // now < last-sync + sync-period: don't sync. Next sync at last-sync + sync-period
@@ -611,34 +611,42 @@ function initSyncSchedule() {
     return;
   }
 
-  Storage.getLastPSync(lastPSync => {
-    console.log('initSyncSchedule. lastPSync was', new Date(lastPSync));
-    Storage.getSyncMs(initSyncMs => {
-      console.info(`sync interval initially ${initSyncMs}ms, ${initSyncMs / 1000 / 60}s`);
-      const nextExpectedSync = new Date(lastPSync + initSyncMs);
-      const now = new Date();
-      let startDelayId = null;
+  new Promise(resolve => {
+    initLibrary(userId, resolve);
+  }).then(() => {
+    splaylistcaches[userId] = Splaylistcache.open();
+    return syncSplaylistcache(userId);
+  }).then(() => {
+    // This must be done after the caches are set up to avoid periodic updates racing them.
+    Storage.getLastPSync(lastPSync => {
+      console.log('initSyncSchedule. lastPSync was', new Date(lastPSync));
+      Storage.getSyncMs(initSyncMs => {
+        console.info(`sync interval initially ${initSyncMs}ms, ${initSyncMs / 1000 / 60}s`);
+        const nextExpectedSync = new Date(lastPSync + initSyncMs);
+        const now = new Date();
+        let startDelayId = null;
 
-      if (nextExpectedSync < now) {
-        // We're overdue; sync now.
-        console.info('sync overdue; starting periodic syncs now');
-        startPeriodicSyncs();
-      } else {
-        // The next sync is in the future.
-        const startDelay = nextExpectedSync.getTime() - now.getTime();
-        console.info(`delaying syncs for ~${Math.round(startDelay / 1000 / 60)} minutes`);
-        startDelayId = setTimeout(startPeriodicSyncs, startDelay);
+        if (nextExpectedSync < now) {
+          // We're overdue; sync now.
+          console.info('sync overdue; starting periodic syncs now');
+          startPeriodicSyncs();
+        } else {
+          // The next sync is in the future.
+          const startDelay = nextExpectedSync.getTime() - now.getTime();
+          console.info(`delaying syncs for ~${Math.round(startDelay / 1000 / 60)} minutes`);
+          startDelayId = setTimeout(startPeriodicSyncs, startDelay);
 
-        // Sync immediately if the startDelay if the sync period changes.
-        // This isn't ideal, but it's much simpler than changing the delay.
-        Storage.addSyncMsChangeListener(change => { // eslint-disable-line no-unused-vars
-          clearTimeout(startDelayId);
-          if (!syncsHaveStarted) {
-            console.info('sync period updated during delay; syncing now');
-            startPeriodicSyncs();
-          }
-        });
-      }
+          // Sync immediately if the startDelay if the sync period changes.
+          // This isn't ideal, but it's much simpler than changing the delay.
+          Storage.addSyncMsChangeListener(change => { // eslint-disable-line no-unused-vars
+            clearTimeout(startDelayId);
+            if (!syncsHaveStarted) {
+              console.info('sync period updated during delay; syncing now');
+              startPeriodicSyncs();
+            }
+          });
+        }
+      });
     });
   });
 }
@@ -760,32 +768,19 @@ function initLibrary(userId, callback) {
 
 function main() {
   Auth.getToken(false, 'startup', token => {
-    // Prompt existing users for auth immediately to avoid missed syncs.
-    if (!token) {
-      chrome.storage.sync.get(null, utils.unlessError(items => {
-        let hasPlaylists = false;
-        for (const key in items) {
-          try {
-            const parsedKey = JSON.parse(key);
-            if (parsedKey[0] === 'playlist') {
-              hasPlaylists = true;
-              break;
-            }
-          } catch (SyntaxError) {
-            // eslint-disable-line no-empty
+    Auth.verifyToken(token, verifiedToken => {
+      if (!verifiedToken) {
+        Storage.getShouldNotWelcome(shouldNotWelcome => {
+          if (!shouldNotWelcome) {
+            console.info('welcoming');
+            const url = chrome.extension.getURL('html/welcome.html');
+
+            // Pause to give Chrome time to launch a window.
+            setTimeout(utils.focusOrCreateExtensionTab, 5 * 1000, url);
           }
-        }
-
-        if (hasPlaylists) {
-          console.info('playlists detected; will prompt for auth');
-          const url = chrome.extension.getURL('html/new-syncing.html');
-
-          // This happens right at startup, so often there's no window to put the tab in yet.
-          // That why the pause is here.
-          setTimeout(utils.focusOrCreateExtensionTab, 5 * 1000, url);
-        }
-      }));
-    }
+        });
+      }
+    });
   });
 
   Storage.getNewSyncEnabled(newSyncEnabled => {
@@ -835,22 +830,26 @@ function main() {
     const userId = userIdForTabId(tab.id);
     if (userId) {
       Auth.getToken(false, 'pageAction', token => {
-        if (!token) {
-          console.info('asking for auth');
-          Auth.getToken(true, 'pageAction', token2 => {
-            if (token2) {
-              console.info('got auth on prompt', token2.slice(0, 10));
-              const qstring = Qs.stringify({userId: userIdForTabId(tab.id)});
-              const url = chrome.extension.getURL('html/playlists.html');
-              utils.focusOrCreateExtensionTab(`${url}?${qstring}`);
-            }
-          });
-        } else {
-          console.log('already had auth', token.slice(0, 10));
-          const qstring = Qs.stringify({userId: userIdForTabId(tab.id)});
-          const url = chrome.extension.getURL('html/playlists.html');
-          utils.focusOrCreateExtensionTab(`${url}?${qstring}`);
-        }
+        Auth.verifyToken(token, verifiedToken => {
+          if (!verifiedToken) {
+            console.info('asking for auth');
+            Auth.getToken(true, 'pageAction', token2 => {
+              if (token2) {
+                console.info('got auth on prompt', token2.slice(0, 10));
+                // FIXME the sync can race playlist creation.
+                initSyncs(userId);
+                const qstring = Qs.stringify({userId: userIdForTabId(tab.id)});
+                const url = chrome.extension.getURL('html/playlists.html');
+                utils.focusOrCreateExtensionTab(`${url}?${qstring}`);
+              }
+            });
+          } else {
+            console.log('already had auth', verifiedToken.slice(0, 10));
+            const qstring = Qs.stringify({userId: userIdForTabId(tab.id)});
+            const url = chrome.extension.getURL('html/playlists.html');
+            utils.focusOrCreateExtensionTab(`${url}?${qstring}`);
+          }
+        });
       });
     } else {
       // Only the primary user is ever put into the users array.
@@ -954,13 +953,13 @@ function main() {
       Reporting.GATracker.set('dimension3', request.tier);
       Reporting.reportHit('showPageAction');
 
-      // init the caches.
-      initLibrary(request.userId, () => {
-        splaylistcaches[request.userId] = Splaylistcache.open();
-        console.log('see user update');
-        syncSplaylistcache(request.userId).then(() => {
-          // This must be done after the caches are set up to avoid periodic updates racing them.
-          initSyncSchedule();
+      Auth.getToken(false, 'userDetected', token => {
+        Auth.verifyToken(token, verifiedToken => {
+          if (verifiedToken) {
+            // Only start syncs if we already have auth.
+            // If we don't, they'll be forced to provide it when clicking the page action.
+            initSyncs(request.userId);
+          }
         });
       });
 

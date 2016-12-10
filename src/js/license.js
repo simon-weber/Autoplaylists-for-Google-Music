@@ -3,6 +3,8 @@
 const Auth = require('./auth');
 const utils = require('./utils');
 
+const Reporting = require('./reporting');
+
 const CWS_LICENSE_API_URL = 'https://www.googleapis.com/chromewebstore/v1.1/userlicenses/';
 const DEVELOPER_ID_WHITELIST = { // eslint-disable-line no-unused-vars
   '103350848301234480355': true,  // me
@@ -62,16 +64,26 @@ function cacheLicense(interactive, callback) {
     req.setRequestHeader('Authorization', `Bearer ${token}`);
     req.onreadystatechange = () => {
       if (req.readyState === 4) {
-        const license = JSON.parse(req.responseText);
-        console.info('got license:', license);
+        const response = JSON.parse(req.responseText);
+        console.info('got license response:', response);
 
-        const expiration = new Date();
-        expiration.setSeconds(expiration.getSeconds() + license.maxAgeSecs);
-        const cachedLicense = {license, expiration};
-        chrome.storage.sync.set({cachedLicense}, utils.unlessError(() => {
-          console.log('cached license', cachedLicense);
-        }));
-        callback(cachedLicense);
+        if (response.error) {
+          // The token was likely invalid.
+          Reporting.Raven.captureMessage('license api error response', {
+            level: 'warning',
+            extra: {response, interactive},
+          });
+          chrome.identity.removeCachedAuthToken({token});
+          callback(null);
+        } else {
+          const expiration = new Date();
+          expiration.setSeconds(expiration.getSeconds() + response.maxAgeSecs);
+          const cachedLicense = {license: response, expiration};
+          chrome.storage.sync.set({cachedLicense}, utils.unlessError(() => {
+            console.log('cached license', cachedLicense);
+          }));
+          callback(cachedLicense);
+        }
       }
     };
     req.send();
