@@ -1,3 +1,17 @@
+## 4.0.0 (December 9, 2016)
+
+Features:
+
+  - activate the new syncing apis by default! See [the announcement post](https://groups.google.com/forum/#!topic/autoplaylists-for-google-music-announcements/fyQ9j-09GNo) for all the details. In case of trouble, they can still be deactivated through the settings menu.
+
+Bugfixes:
+
+  - fix a bug affecting creation of playlists with new sync
+
+Misc:
+
+  - raise default sync interval from 1 minute to 5 minutes to lessen load on Google's servers
+
 ## 3.2.3 (December 5, 2016)
 
 Bugfixes:
