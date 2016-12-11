@@ -1,13 +1,8 @@
 'use strict';
 
-const Lf = require('lovefield');
 const Qs = require('qs');
 
 const Utils = require('./utils');
-const Track = require('./track');
-const Trackcache = require('./trackcache');
-const Playlist = require('./playlist');
-const Splaylist = require('./splaylist');
 
 const Reporting = require('./reporting');
 
