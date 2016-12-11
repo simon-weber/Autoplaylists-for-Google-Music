@@ -75,7 +75,7 @@ exports.buildPlaylistAdd = function buildPlaylistAdd(name, description) {
   };
 };
 
-exports.buildPlaylistUpdates = function buildPlaylistUpdate(updates) {
+exports.buildPlaylistUpdates = function buildPlaylistUpdates(updates) {
   // updates is a list of objects. Each must have 'id', and at least one of 'name', 'description', or 'shareState'.
   const mutations = [];
   for (let i = 0; i < updates.length; i++) {

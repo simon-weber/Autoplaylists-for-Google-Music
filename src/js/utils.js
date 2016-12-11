@@ -61,7 +61,7 @@ exports.goToManager = function goToManager(userId) {
   window.location.href = `/html/playlists.html?${Qs.stringify({userId})}`;
 };
 
-exports.maximumIncreasingSubsequenceIndices = function maximumIncreasingSubsequence(a) {
+exports.maximumIncreasingSubsequenceIndices = function maximumIncreasingSubsequenceIndices(a) {
   if (a.length === 0) {
     return [];
   }

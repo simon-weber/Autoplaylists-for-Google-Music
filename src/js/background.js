@@ -670,6 +670,7 @@ function main() {
 
     Storage.getPlaylistsForUser(userId, playlists => {
       if (operation === 'delete') {
+        // TODO switch this to oauth
         Gm.deleteRemotePlaylist(users[userId], change.oldValue.remoteId, () => null);
 
         Playlist.deleteAllReferences(change.oldValue.localId, playlists);

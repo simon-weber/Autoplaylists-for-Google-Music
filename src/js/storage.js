@@ -66,22 +66,6 @@ exports.setShouldNotWelcome = function setShouldNotWelcome(shouldNotWelcome, cal
   chrome.storage.local.set(storageItems, utils.unlessError(callback));
 };
 
-// Callback a bool.
-exports.getNewSyncEnabled = function getNewSyncEnabled(callback) {
-  chrome.storage.sync.get('newSyncEnabled', utils.unlessError(items => {
-    callback(Boolean(items.newSyncEnabled));
-  }));
-};
-
-// newSyncEnabled is a bool.
-exports.setNewSyncEnabled = function setNewSyncEnabled(newSyncEnabled, callback) {
-  const storageItems = {};
-  storageItems.newSyncEnabled = newSyncEnabled;
-
-  chrome.storage.sync.set(storageItems, utils.unlessError(callback));
-};
-
-
 // Callback an int.
 exports.getSyncMs = function getSyncMs(callback) {
   chrome.storage.sync.get('syncMs', utils.unlessError(items => {
