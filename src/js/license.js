@@ -1,7 +1,7 @@
 'use strict';
 
 const Auth = require('./auth');
-const utils = require('./utils');
+const Utils = require('./utils');
 
 const Reporting = require('./reporting');
 
@@ -37,7 +37,7 @@ exports.getDevStatus = function getDevStatus(callback) {
       return callback(devStatus);
     }
 
-    chrome.storage.local.get('devForceFullLicense', utils.unlessError(items => {
+    chrome.storage.local.get('devForceFullLicense', Utils.unlessError(items => {
       devStatus.isFullForced = items.devForceFullLicense;
       callback(devStatus);
     }));
@@ -45,7 +45,7 @@ exports.getDevStatus = function getDevStatus(callback) {
 };
 
 exports.setFullForced = function setFullForced(enabled, callback) {
-  chrome.storage.local.set({devForceFullLicense: enabled}, utils.unlessError(() => {
+  chrome.storage.local.set({devForceFullLicense: enabled}, Utils.unlessError(() => {
     console.log('wrote fullForced to', enabled);
     callback();
   }));
@@ -79,7 +79,7 @@ function cacheLicense(interactive, callback) {
           const expiration = new Date();
           expiration.setSeconds(expiration.getSeconds() + response.maxAgeSecs);
           const cachedLicense = {license: response, expiration};
-          chrome.storage.sync.set({cachedLicense}, utils.unlessError(() => {
+          chrome.storage.sync.set({cachedLicense}, Utils.unlessError(() => {
             console.log('cached license', cachedLicense);
           }));
           callback(cachedLicense);
@@ -98,7 +98,7 @@ function checkCachedLicense(cachedLicense) {
 function getCachedLicense(callback) {
   // Callback a license, or null if one hasn't been cached.
 
-  chrome.storage.sync.get('cachedLicense', utils.unlessError(items => {
+  chrome.storage.sync.get('cachedLicense', Utils.unlessError(items => {
     console.log('got cached license', items);
     if ('cachedLicense' in items) {
       callback(items.cachedLicense);

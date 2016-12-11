@@ -25,7 +25,7 @@ function unlessError(func, onError) {
         },
         extra: {
           func,
-          location: 'utils.unlessError',
+          location: 'Utils.unlessError',
           error: chrome.extension.lastError,
           this: this,
           arguments: arguments,  // eslint-disable-line object-shorthand

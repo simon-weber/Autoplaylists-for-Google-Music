@@ -2,7 +2,7 @@
 
 const Qs = require('qs');
 
-const utils = require('./utils');
+const Utils = require('./utils');
 const Storage = require('./storage');
 const Reporting = require('./reporting');
 
@@ -32,7 +32,7 @@ function onDrop(event) {
     }
 
     Storage.importPlaylistsForUser(userId, playlists, () => {
-      utils.goToManager(userId);
+      Utils.goToManager(userId);
     });
   } else {
     console.log('did not confirm');

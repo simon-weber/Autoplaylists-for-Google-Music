@@ -2,7 +2,7 @@
 
 const Qs = require('qs');
 
-const utils = require('./utils');
+const Utils = require('./utils');
 const Storage = require('./storage');
 const Reporting = require('./reporting');
 
@@ -29,7 +29,7 @@ function main() {
     const syncMs = syncMinutes * 1000 * 60;
 
     Storage.setSyncMs(syncMs, () => {
-      utils.goToManager(userId);
+      Utils.goToManager(userId);
     });
   });
 }

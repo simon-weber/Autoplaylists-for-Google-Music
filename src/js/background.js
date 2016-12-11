@@ -4,7 +4,7 @@ const Qs = require('qs');
 const SortedMap = require('collections/sorted-map');
 
 const Auth = require('./auth');
-const utils = require('./utils');
+const Utils = require('./utils');
 const Gm = require('./googlemusic');
 const Gmoauth = require('./googlemusic_oauth');
 const Lf = require('lovefield');  // made available for debugQuery eval
@@ -69,7 +69,7 @@ function diffUpdateTrackcache(userId, db, callback, timestamp) {
     if (!changes.success) {
       console.warn('failed to getTrackChanges:', JSON.stringify(changes));
       if (changes.reloadXsrf) {
-        chrome.tabs.sendMessage(user.tabId, {action: 'getXsrf'}, utils.unlessError(r => {
+        chrome.tabs.sendMessage(user.tabId, {action: 'getXsrf'}, Utils.unlessError(r => {
           console.info('requested xsrf refresh', r);
         },
         e => {
@@ -216,7 +216,7 @@ function getEntryMutations(playlist, splaylistcache, callback) {
 
       if (track.id in entriesToKeep || track.storeId in entriesToKeep) {
         type = 'existing';
-        clientId = utils.uuidV1();
+        clientId = Utils.uuidV1();
         entryId = entriesToKeep[track.id] || entriesToKeep[track.storeId];
       } else {
         // We only build appends with library id.
@@ -235,7 +235,7 @@ function getEntryMutations(playlist, splaylistcache, callback) {
       postDeletePositions.push(idToDesiredPosition[postDeleteEntryIds[i]]);
     }
 
-    const maxIncSubPositions = utils.maximumIncreasingSubsequenceIndices(postDeletePositions);
+    const maxIncSubPositions = Utils.maximumIncreasingSubsequenceIndices(postDeletePositions);
     const maxIncSubEntryIds = new Set();
     for (let i = 0; i < maxIncSubPositions.length; i++) {
       maxIncSubEntryIds.add(postDeleteEntryIds[maxIncSubPositions[i]]);
@@ -643,7 +643,7 @@ function main() {
             const url = chrome.extension.getURL('html/welcome.html');
 
             // Pause to give Chrome time to launch a window.
-            setTimeout(utils.focusOrCreateExtensionTab, 5 * 1000, url);
+            setTimeout(Utils.focusOrCreateExtensionTab, 5 * 1000, url);
           }
         });
       }
@@ -698,14 +698,14 @@ function main() {
                 initSyncs(userId);
                 const qstring = Qs.stringify({userId: userIdForTabId(tab.id)});
                 const url = chrome.extension.getURL('html/playlists.html');
-                utils.focusOrCreateExtensionTab(`${url}?${qstring}`);
+                Utils.focusOrCreateExtensionTab(`${url}?${qstring}`);
               }
             });
           } else {
             console.log('already had auth', verifiedToken.slice(0, 10));
             const qstring = Qs.stringify({userId: userIdForTabId(tab.id)});
             const url = chrome.extension.getURL('html/playlists.html');
-            utils.focusOrCreateExtensionTab(`${url}?${qstring}`);
+            Utils.focusOrCreateExtensionTab(`${url}?${qstring}`);
           }
         });
       });
@@ -718,7 +718,7 @@ function main() {
       Reporting.reportHit('multiuserPageActionClick');
 
       const url = chrome.extension.getURL('html/multi-user.html');
-      utils.focusOrCreateExtensionTab(url);
+      Utils.focusOrCreateExtensionTab(url);
     }
   });
 

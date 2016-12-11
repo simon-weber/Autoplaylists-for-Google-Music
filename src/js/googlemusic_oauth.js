@@ -3,7 +3,7 @@
 const Lf = require('lovefield');
 const Qs = require('qs');
 
-const utils = require('./utils');
+const Utils = require('./utils');
 const Track = require('./track');
 const Trackcache = require('./trackcache');
 const Playlist = require('./playlist');
@@ -38,7 +38,7 @@ function authedGMRequest(options, callback, onError) {
     };
   }
 
-  chrome.identity.getAuthToken(utils.unlessError(token => {
+  chrome.identity.getAuthToken(Utils.unlessError(token => {
     const request = {
       type: method,
       contentType: 'application/json',
@@ -223,8 +223,8 @@ exports.buildEntryReorders = function buildEntryReorders(reorders) {
 exports.buildEntryAppends = function buildEntryAppends(playlistId, trackIds) {
   const mutations = [];
   let prevId = null;
-  let curId = utils.uuidV1();
-  let nextId = utils.uuidV1();
+  let curId = Utils.uuidV1();
+  let nextId = Utils.uuidV1();
 
   for (let i = 0; i < trackIds.length; i++) {
     const trackId = trackIds[i];
@@ -252,7 +252,7 @@ exports.buildEntryAppends = function buildEntryAppends(playlistId, trackIds) {
     mutations.push({'create': mutationBody});
     prevId = curId;
     curId = nextId;
-    nextId = utils.uuidV1();
+    nextId = Utils.uuidV1();
   }
 
   return mutations;
