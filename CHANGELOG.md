@@ -1,3 +1,14 @@
+## 5.0.0 (December 29, 2016)
+
+Features:
+
+  - activate the new syncing apis for all users and remove the option to use the old apis. See the previous release for more details.
+
+Bugfixes:
+
+  - prevent a rare crash caused by strange Google api responses
+
+
 ## 4.0.0 (December 9, 2016)
 
 Features:
