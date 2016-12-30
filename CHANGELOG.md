@@ -1,3 +1,9 @@
+## 5.0.1 (December 30, 2016)
+
+Bugfixes:
+
+  - fix a bug causing duplicates of the same song in autoplaylists
+
 ## 5.0.0 (December 29, 2016)
 
 Features:
