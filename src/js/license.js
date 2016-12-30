@@ -64,9 +64,19 @@ function cacheLicense(interactive, callback) {
     req.setRequestHeader('Authorization', `Bearer ${token}`);
     req.onreadystatechange = () => {
       if (req.readyState === 4) {
-        const response = JSON.parse(req.responseText);
-        console.info('got license response:', response);
+        let response;
+        try {
+          response = JSON.parse(req.responseText);
+        } catch (e) {
+          console.warn('invalid response from license');
+          Reporting.Raven.captureException(e, {
+            level: 'warning',
+            extra: {req},
+          });
+          return callback(null);
+        }
 
+        console.info('got license response:', response);
         if (response.error) {
           // The token was likely invalid.
           Reporting.Raven.captureMessage('license api error response', {

@@ -183,7 +183,7 @@ exports.getPlaylistsForUser = function getPlaylistsForUser(userId, callback) {
         if (parsedKey[0] === 'playlist' && parsedKey[1] === userId) {
           playlists.push(items[key]);
         }
-      } catch (SyntaxError) {
+      } catch (e) {
         // eslint-disable-line no-empty
       }
     }

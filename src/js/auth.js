@@ -55,9 +55,20 @@ exports.verifyToken = function verifyToken(token, callback) {
   req.open('GET', `${TOKEN_VERIFY_URL}?access_token=${token}`);
   req.onreadystatechange = () => {
     if (req.readyState === 4) {
-      const response = JSON.parse(req.responseText);
-      console.info('got verifyToken response:', response);
+      let response;
+      try {
+        response = JSON.parse(req.responseText);
+      } catch (e) {
+        console.warn('invalid response from token; revoking');
+        Reporting.Raven.captureException(e, {
+          level: 'warning',
+          extra: {req},
+        });
+        chrome.identity.removeCachedAuthToken({token});
+        return callback(null);
+      }
 
+      console.info('got verifyToken response:', response);
       if (response.scope === EXPECTED_SCOPE) {
         callback(token);
       } else {
