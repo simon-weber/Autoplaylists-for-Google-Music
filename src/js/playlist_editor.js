@@ -3,7 +3,7 @@ const Qs = require('qs');
 const Sortable = require('sortablejs');
 require('jquery-modal');
 
-const utils = require('./utils');
+const Utils = require('./utils');
 const Playlist = require('./playlist');
 const Storage = require('./storage');
 const Track = require('./track');
@@ -197,7 +197,7 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache)
     console.log('writing', playlist);
 
     Storage.savePlaylist(playlist, () => {
-      utils.goToManager(userId);
+      Utils.goToManager(userId);
     });
   });
 
@@ -253,7 +253,7 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache)
   $('#delete').click(e => {
     e.preventDefault();
     Storage.deletePlaylist(userId, playlistId, () => {
-      utils.goToManager(userId);
+      Utils.goToManager(userId);
     });
   });
 

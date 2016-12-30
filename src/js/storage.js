@@ -1,6 +1,6 @@
 'use strict';
 
-const utils = require('./utils');
+const Utils = require('./utils');
 
 const Reporting = require('./reporting');
 
@@ -53,7 +53,7 @@ const MIGRATIONS = [
 // Callback a bool.
 // Note that this is in local storage, since it's per machine.
 exports.getShouldNotWelcome = function getShouldNotWelcome(callback) {
-  chrome.storage.local.get('shouldNotWelcome', utils.unlessError(items => {
+  chrome.storage.local.get('shouldNotWelcome', Utils.unlessError(items => {
     callback(Boolean(items.shouldNotWelcome));
   }));
 };
@@ -63,33 +63,17 @@ exports.setShouldNotWelcome = function setShouldNotWelcome(shouldNotWelcome, cal
   const storageItems = {};
   storageItems.shouldNotWelcome = shouldNotWelcome;
 
-  chrome.storage.local.set(storageItems, utils.unlessError(callback));
+  chrome.storage.local.set(storageItems, Utils.unlessError(callback));
 };
-
-// Callback a bool.
-exports.getNewSyncEnabled = function getNewSyncEnabled(callback) {
-  chrome.storage.sync.get('newSyncEnabled', utils.unlessError(items => {
-    callback(Boolean(items.newSyncEnabled));
-  }));
-};
-
-// newSyncEnabled is a bool.
-exports.setNewSyncEnabled = function setNewSyncEnabled(newSyncEnabled, callback) {
-  const storageItems = {};
-  storageItems.newSyncEnabled = newSyncEnabled;
-
-  chrome.storage.sync.set(storageItems, utils.unlessError(callback));
-};
-
 
 // Callback an int.
 exports.getSyncMs = function getSyncMs(callback) {
-  chrome.storage.sync.get('syncMs', utils.unlessError(items => {
+  chrome.storage.sync.get('syncMs', Utils.unlessError(items => {
     let syncMs = items.syncMs;
 
     if (!Number.isInteger(syncMs)) {
       syncMs = 60 * 1000 * 5;
-      chrome.storage.sync.set({syncMs}, utils.unlessError(() => {
+      chrome.storage.sync.set({syncMs}, Utils.unlessError(() => {
         callback(syncMs);
       }));
     } else {
@@ -103,7 +87,7 @@ exports.setSyncMs = function setSyncMs(syncMs, callback) {
   const storageItems = {};
   storageItems.syncMs = syncMs;
 
-  chrome.storage.sync.set(storageItems, utils.unlessError(callback));
+  chrome.storage.sync.set(storageItems, Utils.unlessError(callback));
 };
 
 exports.addSyncMsChangeListener = function addSyncMsChangeListener(callback) {
@@ -120,12 +104,12 @@ exports.addSyncMsChangeListener = function addSyncMsChangeListener(callback) {
 
 // Callback a ms timestamp.
 exports.getLastPSync = function getLastPSync(callback) {
-  chrome.storage.sync.get('lastPSync', utils.unlessError(items => {
+  chrome.storage.sync.get('lastPSync', Utils.unlessError(items => {
     let lastPSync = items.lastPSync;
 
     if (!Number.isInteger(lastPSync)) {
       lastPSync = 0;
-      chrome.storage.sync.set({lastPSync}, utils.unlessError(() => {
+      chrome.storage.sync.set({lastPSync}, Utils.unlessError(() => {
         console.info('init lastPSync to time 0');
         callback(lastPSync);
       }));
@@ -139,17 +123,17 @@ exports.setLastPSync = function setLastPSync(lastPSync, callback) {
   const storageItems = {};
   storageItems.lastPSync = lastPSync;
 
-  chrome.storage.sync.set(storageItems, utils.unlessError(callback));
+  chrome.storage.sync.set(storageItems, Utils.unlessError(callback));
 };
 
 
 exports.getOrCreateReportingUUID = function getOrCreateReportingUUID(callback) {
-  chrome.storage.sync.get('reportingUUID', utils.unlessError(items => {
+  chrome.storage.sync.get('reportingUUID', Utils.unlessError(items => {
     let reportingUUID = items.reportingUUID;
 
     if (!reportingUUID) {
-      reportingUUID = utils.uuidV1();
-      chrome.storage.sync.set({reportingUUID}, utils.unlessError(() => {
+      reportingUUID = Utils.uuidV1();
+      chrome.storage.sync.set({reportingUUID}, Utils.unlessError(() => {
         callback(reportingUUID);
       }));
     } else {
@@ -161,7 +145,7 @@ exports.getOrCreateReportingUUID = function getOrCreateReportingUUID(callback) {
 exports.getPlaylist = function getPlaylist(userId, playlistLid, callback) {
   const key = playlistKey(userId, playlistLid);
 
-  chrome.storage.sync.get(key, utils.unlessError(items => {
+  chrome.storage.sync.get(key, Utils.unlessError(items => {
     const playlist = items[key];
     callback(playlist);
   }));
@@ -171,11 +155,11 @@ exports.savePlaylist = function savePlaylist(playlist, callback) {
   const storageItems = {};
   storageItems[playlistKey(playlist.userId, playlist.localId)] = playlist;
 
-  chrome.storage.sync.set(storageItems, utils.unlessError(callback));
+  chrome.storage.sync.set(storageItems, Utils.unlessError(callback));
 };
 
 exports.deletePlaylist = function deletePlaylist(userId, playlistLid, callback) {
-  chrome.storage.sync.remove(playlistKey(userId, playlistLid), utils.unlessError(callback));
+  chrome.storage.sync.remove(playlistKey(userId, playlistLid), Utils.unlessError(callback));
 };
 
 exports.addPlaylistChangeListener = function addPlaylistChangeListener(callback) {
@@ -191,7 +175,7 @@ exports.addPlaylistChangeListener = function addPlaylistChangeListener(callback)
 };
 
 exports.getPlaylistsForUser = function getPlaylistsForUser(userId, callback) {
-  chrome.storage.sync.get(null, utils.unlessError(items => {
+  chrome.storage.sync.get(null, Utils.unlessError(items => {
     const playlists = [];
     for (const key in items) {
       try {
@@ -229,7 +213,7 @@ exports.importPlaylistsForUser = function importPlaylistsForUser(userId, playlis
 };
 
 exports.handleMigrations = function handleMigrations(callback) {
-  chrome.storage.sync.get(null, utils.unlessError(items => {
+  chrome.storage.sync.get(null, Utils.unlessError(items => {
     /* eslint-disable no-param-reassign */
     if (!('schemaVersion' in items)) {
       items.schemaVersion = 0;
@@ -248,6 +232,6 @@ exports.handleMigrations = function handleMigrations(callback) {
     /* eslint-disable no-param-reassign */
 
     console.info('migrated items:', items);
-    chrome.storage.sync.set(items, utils.unlessError(callback));
+    chrome.storage.sync.set(items, Utils.unlessError(callback));
   }));
 };

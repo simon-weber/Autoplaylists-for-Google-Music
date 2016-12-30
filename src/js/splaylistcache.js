@@ -2,11 +2,10 @@
 
 const SortedMap = require('collections/sorted-map');
 
-const Gm = require('./googlemusic');
 const Gmoauth = require('./googlemusic_oauth');
-const Storage = require('./storage');
-const Reporting = require('./reporting');
 const Splaylist = require('./splaylist');
+
+const Reporting = require('./reporting');
 
 // splaylists are cached locally to enable playlist linking.
 // cache fields:
@@ -31,15 +30,6 @@ exports.sync = function sync(cache, user, playlists, callback) {
   // Callback a set of deleted splaylist ids once the sync is done.
   console.log('syncing splaylist cache. current cache has:', Object.keys(cache.splaylists).length);
 
-  Storage.getNewSyncEnabled(newSyncEnabled => {
-    if (newSyncEnabled) {
-      return newSync(cache, user, playlists, callback);
-    }
-    return legacySync(cache, user, playlists, callback);
-  });
-};
-
-function newSync(cache, user, playlists, callback) {
   const deletedIds = new Set();
   const newTimestamp = new Date().getTime() * 1000;
   const autoPlaylistIds = new Set(playlists.map(p => p.remoteId));
@@ -107,61 +97,4 @@ function newSync(cache, user, playlists, callback) {
       callback(deletedIds);
     });
   });
-}
-
-function legacySync(cache, user, playlists, callback) {
-  console.log('syncing splaylist cache. current cache has:', Object.keys(cache.splaylists).length);
-  const autoPlaylistIds = new Set(playlists.map(p => p.remoteId));
-
-  Gm.getPlaylists(user, freshSplaylists => {
-    console.debug('got splaylists', freshSplaylists);
-
-    const oldSplaylistIds = new Set(Object.keys(cache.splaylists));
-
-    for (let i = 0; i < freshSplaylists.length; i++) {
-      const freshSplaylist = freshSplaylists[i];
-
-      freshSplaylist.isAutoplaylist = autoPlaylistIds.has(freshSplaylist.id);
-
-      // Mark as seen.
-      const wasAdded = !(oldSplaylistIds.delete(freshSplaylist.id));
-
-      // Sync added or modified splaylists.
-      if (wasAdded || cache.splaylists[freshSplaylist.id].lastModified < freshSplaylist.lastModified) {
-        console.debug(`sync splaylist "${freshSplaylist.title}"`);
-        Gm.getPlaylistContents(user, freshSplaylist.id, freshEntries => {
-          const entries = {};
-          for (let j = 0; j < freshEntries.length; j++) {
-            const entry = freshEntries[j];
-            entries[entry.entryId] = entry.track.id;
-          }
-          freshSplaylist.legacyEntries = entries;
-          cache.splaylists[freshSplaylist.id] = freshSplaylist; // eslint-disable-line no-param-reassign
-        }, error => {
-          Reporting.Raven.captureMessage('error during splaylistcache.sync.getContents', {
-            tags: {playlistId: freshSplaylist.id},
-            extra: {error},
-            stacktrace: true,
-          });
-        });
-      }
-    }
-
-    // Delete deleted splaylists (those not seen in the fresh splaylists).
-    for (const oldSplaylistId of oldSplaylistIds) {
-      const oldTitle = cache.splaylists[oldSplaylistId].title;
-      console.debug(`splaylist "${oldTitle}" was deleted`);
-      delete cache.splaylists[oldSplaylistId]; // eslint-disable-line no-param-reassign
-    }
-
-    callback(oldSplaylistIds);
-  },
-  error => {
-    Reporting.Raven.captureMessage('error during splaylistcache.sync', {
-      extra: {error},
-      stacktrace: true,
-    });
-
-    callback(new Set());
-  });
-}
+};

@@ -34,28 +34,6 @@ exports.GATracker = GATracker;
 
 let cachedContext = null;
 
-// action is one of 'success', 'retry', or 'failure'.
-// label is optional, and can be something like 'gave-up' or 'failed-reorder'.
-exports.reportSync = function reportSync(action, label) {
-  // Note that due to GA's serverside rate limiting, this can drop bursty events.
-  // If this becomes a problem, consider something like http://stackoverflow.com/a/9340290/1231454.
-
-  if (!cachedContext) {
-    // setContext should make this available very quickly after loading.
-    setTimeout(reportSync, 1000, action, label);
-  } else {
-    let sync = analytics.EventBuilder.builder()
-    .category('sync')
-    .action(action);
-
-    if (arguments.length === 2) {
-      sync = sync.label(label);
-    }
-
-    GATracker.send(sync);
-  }
-};
-
 // action is 'success' or 'failure'
 // type is 'Playlist' or 'Entry'
 // value is the number of mutations being sent

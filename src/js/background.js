@@ -4,7 +4,7 @@ const Qs = require('qs');
 const SortedMap = require('collections/sorted-map');
 
 const Auth = require('./auth');
-const utils = require('./utils');
+const Utils = require('./utils');
 const Gm = require('./googlemusic');
 const Gmoauth = require('./googlemusic_oauth');
 const Lf = require('lovefield');  // made available for debugQuery eval
@@ -26,9 +26,6 @@ const dbs = {};
 
 // {userId: splaylistCache}
 const splaylistcaches = {};
-
-// {playlistId: <bool>}, locks playlists during some updates
-const playlistIsUpdating = {};
 
 // {userId: <timestamp>}
 const pollTimestamps = {};
@@ -72,7 +69,7 @@ function diffUpdateTrackcache(userId, db, callback, timestamp) {
     if (!changes.success) {
       console.warn('failed to getTrackChanges:', JSON.stringify(changes));
       if (changes.reloadXsrf) {
-        chrome.tabs.sendMessage(user.tabId, {action: 'getXsrf'}, utils.unlessError(r => {
+        chrome.tabs.sendMessage(user.tabId, {action: 'getXsrf'}, Utils.unlessError(r => {
           console.info('requested xsrf refresh', r);
         },
         e => {
@@ -114,92 +111,6 @@ function diffUpdateTrackcache(userId, db, callback, timestamp) {
 
         callback({success: true});
       });
-    });
-  });
-}
-
-function syncPlaylistContents(playlist, attempt) {
-  // Sync a playlist's tracks and ordering.
-  // A remote playlist must already exist.
-
-  const user = users[playlist.userId];
-  const _attempt = attempt || 0;
-  const db = dbs[playlist.userId];
-  const splaylistcache = splaylistcaches[playlist.userId];
-
-  console.debug('syncPlaylistContents, attempt', _attempt);
-
-  Trackcache.queryTracks(db, splaylistcache, playlist, {}, tracks => {
-    if (tracks === null) {
-      Reporting.reportSync('failure', 'failed-query');
-      return;
-    }
-
-    console.debug('lock', playlist.title);
-    playlistIsUpdating[playlist.remoteId] = true;
-    console.debug(playlist.title, 'found', tracks.length);
-    if (tracks.length > 0) {
-      console.debug('first is', tracks[0]);
-    }
-    if (tracks.length > 1000) {
-      console.warn('attempting to sync over 1000 tracks; only first 1k will sync');
-    }
-
-    const desiredTracks = tracks.slice(0, 1000);
-
-    Gm.setPlaylistContents(db, user, playlist.remoteId, desiredTracks, response => {
-      if (response !== null) {
-        // large updates seem to only apply partway sometimes.
-        // retrying like this seems to make even 1k playlists eventually consistent.
-        if (_attempt < 2) {
-          Reporting.reportSync('retry', `retry-${_attempt}`);
-          console.debug('not a 0-track add; retrying syncPlaylistContents', response);
-          setTimeout(syncPlaylistContents, 10000 * (_attempt + 1), playlist, _attempt + 1);
-        } else {
-          Reporting.reportSync('failure', 'gave-up');
-          console.warn('giving up on syncPlaylistContents!', response);
-          // Never has the need for promises been so clear.
-          Gm.setPlaylistOrder(db, user, playlist, orderResponse => {
-            console.debug('reorder response', orderResponse);
-            console.debug('unlock', playlist.title);
-            playlistIsUpdating[playlist.remoteId] = false;
-          }, err => {
-            Reporting.reportSync('failure', 'failed-reorder');
-            console.error('failed to reorder playlist', playlist.title, err);
-            Reporting.Raven.captureMessage('sync setPlaylistOrder', {
-              tags: {playlistId: playlist.remoteId},
-              extra: {playlist, err},
-            });
-            console.debug('unlock', playlist.title);
-            playlistIsUpdating[playlist.remoteId] = false;
-          });
-        }
-      } else {
-        Gm.setPlaylistOrder(db, user, playlist, orderResponse => {
-          Reporting.reportSync('success', `success-${_attempt}`);
-          console.debug('reorder response', orderResponse);
-          console.debug('unlock', playlist.title);
-          playlistIsUpdating[playlist.remoteId] = false;
-        }, err => {
-          Reporting.reportSync('failure', 'failed-reorder');
-          console.error('failed to reorder playlist', playlist.title, err);
-          Reporting.Raven.captureMessage('sync setPlaylistOrder', {
-            tags: {playlistId: playlist.remoteId},
-            extra: {playlist, err},
-          });
-          console.debug('unlock', playlist.title);
-          playlistIsUpdating[playlist.remoteId] = false;
-        });
-      }
-    }, err => {
-      Reporting.reportSync('failure', 'failed-set');
-      console.error('failed to sync playlist', playlist.title, err);
-      Reporting.Raven.captureMessage('sync setPlaylistContents', {
-        tags: {playlistId: playlist.remoteId},
-        extra: {playlist, err},
-      });
-      console.debug('unlock', playlist.title);
-      playlistIsUpdating[playlist.remoteId] = false;
     });
   });
 }
@@ -305,7 +216,7 @@ function getEntryMutations(playlist, splaylistcache, callback) {
 
       if (track.id in entriesToKeep || track.storeId in entriesToKeep) {
         type = 'existing';
-        clientId = utils.uuidV1();
+        clientId = Utils.uuidV1();
         entryId = entriesToKeep[track.id] || entriesToKeep[track.storeId];
       } else {
         // We only build appends with library id.
@@ -324,7 +235,7 @@ function getEntryMutations(playlist, splaylistcache, callback) {
       postDeletePositions.push(idToDesiredPosition[postDeleteEntryIds[i]]);
     }
 
-    const maxIncSubPositions = utils.maximumIncreasingSubsequenceIndices(postDeletePositions);
+    const maxIncSubPositions = Utils.maximumIncreasingSubsequenceIndices(postDeletePositions);
     const maxIncSubEntryIds = new Set();
     for (let i = 0; i < maxIncSubPositions.length; i++) {
       maxIncSubEntryIds.add(postDeleteEntryIds[maxIncSubPositions[i]]);
@@ -407,59 +318,37 @@ function syncPlaylist(playlist, playlists) {
   const user = users[playlist.userId];
   const splaylistcache = splaylistcaches[playlist.userId];
 
-  Storage.getNewSyncEnabled(newSyncEnabled => {
-    if (!('remoteId' in playlist)) {
-      // The remote playlist doesn't exist yet.
-      if (newSyncEnabled) {
-        const add = Gmoauth.buildPlaylistAdd(playlist.title, getDescription(playlist, splaylistcache, playlists));
-        Gmoauth.runPlaylistMutations(user, [add], response => {
-          postCreate(playlist, response);
-        });
-      } else {
-        Gm.createRemotePlaylist(user, playlist.title, remoteId => {
-          legacyPostCreate(playlist, remoteId);
-        });
-      }
-    } else {
-      if (newSyncEnabled) {  // eslint-disable-line no-lonely-if
-        syncSplaylistcache(playlist.userId).then(() => {
-          // Unfortunately playlist and entry updates can't be batched.
-          const playlistMutations = getPlaylistMutations(playlist, splaylistcache, playlists);
-          Gmoauth.runPlaylistMutations(user, playlistMutations, response => {
-            console.log('update res', response);
-          });
+  if (!('remoteId' in playlist)) {
+    // The remote playlist doesn't exist yet.
+    const add = Gmoauth.buildPlaylistAdd(playlist.title, getDescription(playlist, splaylistcache, playlists));
+    Gmoauth.runPlaylistMutations(user, [add], response => {
+      console.log('postCreate', response);
+      const remoteId = response.mutate_response[0].id;
+      console.log('created remote playlist', remoteId);
+      const playlistToSave = JSON.parse(JSON.stringify(playlist));
+      playlistToSave.remoteId = remoteId;
 
-          getEntryMutations(playlist, splaylistcache, ({mutations, mixedReorders}) => {
-            Reporting.reportMixedReorders(mixedReorders);
-            Gmoauth.runEntryMutations(user, mutations, response => {
-              console.log('entry res', response);
-            });
-          });
+      Storage.savePlaylist(playlistToSave, () => {
+        // nothing else to do. listener will see the change and recall.
+        console.debug('wrote remote id');
+      });
+    });
+  } else {
+    syncSplaylistcache(playlist.userId).then(() => {
+      // Unfortunately playlist and entry updates can't be batched.
+      const playlistMutations = getPlaylistMutations(playlist, splaylistcache, playlists);
+      Gmoauth.runPlaylistMutations(user, playlistMutations, response => {
+        console.log('update res', response);
+      });
+
+      getEntryMutations(playlist, splaylistcache, ({mutations, mixedReorders}) => {
+        Reporting.reportMixedReorders(mixedReorders);
+        Gmoauth.runEntryMutations(user, mutations, response => {
+          console.log('entry res', response);
         });
-      } else {
-        Gm.updatePlaylist(user, playlist.remoteId, playlist.title, playlist, playlists, splaylistcache, () => {
-          syncPlaylistContents(playlist);
-        });
-      }
-    }
-  });
-}
-
-function postCreate(playlist, response) {
-  console.log('postCreate', response);
-  const remoteId = response.mutate_response[0].id;
-  legacyPostCreate(playlist, remoteId);
-}
-
-function legacyPostCreate(playlist, remoteId) {
-  console.log('created remote playlist', remoteId);
-  const playlistToSave = JSON.parse(JSON.stringify(playlist));
-  playlistToSave.remoteId = remoteId;
-
-  Storage.savePlaylist(playlistToSave, () => {
-    // nothing else to do. listener will see the change and recall.
-    console.debug('wrote remote id');
-  });
+      });
+    });
+  }
 }
 
 function syncEntryMutations(hasFullVersion, splaylistcache, user, playlists) {
@@ -543,31 +432,9 @@ function syncPlaylists(userId) {
 
   License.hasFullVersion(false, hasFullVersion => {
     Storage.getPlaylistsForUser(userId, playlists => {
-      Storage.getNewSyncEnabled(newSyncEnabled => {
-        if (newSyncEnabled) {
-          // These don't need to be ordered since the playlists we're modifying should exist already.
-          syncEntryMutations(hasFullVersion, splaylistcache, user, playlists);
-          syncPlaylistMutations(hasFullVersion, splaylistcache, user, playlists);
-        } else {
-          for (let i = 0; i < playlists.length; i++) {
-            const playlist = playlists[i];
-
-            if (i > 0 && !hasFullVersion) {
-              console.info('skipping sync of locked playlist', playlist.title);
-              continue;
-            }
-
-            // This locking prevents two things:
-            //   * slow periodic syncs from stepping on later periodic syncs
-            //   * periodic syncs from stepping on manual syncs
-            if (playlistIsUpdating[playlist.remoteId]) {
-              console.warn('skipping sync since playlist is being updated:', playlist.title);
-            } else {
-              syncPlaylist(playlist, playlists);
-            }
-          }
-        }
-      });
+      // These don't need to be ordered since the playlists we're modifying should exist already.
+      syncEntryMutations(hasFullVersion, splaylistcache, user, playlists);
+      syncPlaylistMutations(hasFullVersion, splaylistcache, user, playlists);
     });
   });
 }
@@ -776,21 +643,11 @@ function main() {
             const url = chrome.extension.getURL('html/welcome.html');
 
             // Pause to give Chrome time to launch a window.
-            setTimeout(utils.focusOrCreateExtensionTab, 5 * 1000, url);
+            setTimeout(Utils.focusOrCreateExtensionTab, 5 * 1000, url);
           }
         });
       }
     });
-  });
-
-  Storage.getNewSyncEnabled(newSyncEnabled => {
-    if (newSyncEnabled) {
-      console.info('new sync is enabled!');
-      Reporting.reportHit('newSyncEnabled');
-    } else {
-      console.log('using legacy sync');
-      Reporting.reportHit('newSyncDisabled');
-    }
   });
 
   chrome.identity.getProfileUserInfo(userInfo => {
@@ -813,6 +670,7 @@ function main() {
 
     Storage.getPlaylistsForUser(userId, playlists => {
       if (operation === 'delete') {
+        // TODO switch this to oauth
         Gm.deleteRemotePlaylist(users[userId], change.oldValue.remoteId, () => null);
 
         Playlist.deleteAllReferences(change.oldValue.localId, playlists);
@@ -840,14 +698,14 @@ function main() {
                 initSyncs(userId);
                 const qstring = Qs.stringify({userId: userIdForTabId(tab.id)});
                 const url = chrome.extension.getURL('html/playlists.html');
-                utils.focusOrCreateExtensionTab(`${url}?${qstring}`);
+                Utils.focusOrCreateExtensionTab(`${url}?${qstring}`);
               }
             });
           } else {
             console.log('already had auth', verifiedToken.slice(0, 10));
             const qstring = Qs.stringify({userId: userIdForTabId(tab.id)});
             const url = chrome.extension.getURL('html/playlists.html');
-            utils.focusOrCreateExtensionTab(`${url}?${qstring}`);
+            Utils.focusOrCreateExtensionTab(`${url}?${qstring}`);
           }
         });
       });
@@ -860,7 +718,7 @@ function main() {
       Reporting.reportHit('multiuserPageActionClick');
 
       const url = chrome.extension.getURL('html/multi-user.html');
-      utils.focusOrCreateExtensionTab(url);
+      Utils.focusOrCreateExtensionTab(url);
     }
   });
 
