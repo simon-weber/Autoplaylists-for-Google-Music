@@ -157,7 +157,7 @@ exports.fields = [
   f([24, 'creationDate', Lf.Type.INTEGER], {
     sjName: 'creationTimestamp',
     label: 'date added to library',
-    explanation: 'eiher a relative datetime like "30 days ago" or an absolute one like "April 1 2016".',
+    explanation: 'either a relative datetime like "30 days ago" or an absolute one like "April 1 2016".',
     is_datetime: true,
     // coerce strings (sj)
     coerce: val => parseInt(val, 10),
