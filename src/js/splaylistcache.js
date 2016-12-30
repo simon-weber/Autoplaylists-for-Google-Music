@@ -1,6 +1,6 @@
 'use strict';
 
-const SortedMap = require('collections/sorted-map');
+const SortedArray = require('collections/sorted-array');
 
 const Gmoauth = require('./googlemusic_oauth');
 const Splaylist = require('./splaylist');
@@ -12,8 +12,7 @@ const Reporting = require('./reporting');
 //   * splaylists: {id: splaylist}
 // Cached splaylists contain additional fields:
 //   * isAutoplaylist: bool
-//   * entries: {entryId: {trackId, absolutePosition}}
-//   * orderedEntries: SortedMap{absolutePosition: {entryId, trackId}}
+//   * orderedEntries: SortedArray({entryId, trackId, absolutePosition})
 
 exports.open = function open() {
   // Return a new, empty cache.
@@ -42,15 +41,15 @@ exports.sync = function sync(cache, user, playlists, callback) {
       } else if (!(mutation.id in cache.splaylists)) {
         const splaylist = Splaylist.fromSJ(mutation);
         splaylist.isAutoplaylist = autoPlaylistIds.has(mutation.id);
-        splaylist.entries = {};
-        splaylist.orderedEntries = new SortedMap();
+        splaylist.orderedEntries = createEntryArray();
+        splaylist._entries = {};
         cache.splaylists[mutation.id] = splaylist;  // eslint-disable-line no-param-reassign
       } else {
         const oldSplaylist = cache.splaylists[mutation.id];
         const newSplaylist = Splaylist.fromSJ(mutation);
         newSplaylist.isAutoplaylist = autoPlaylistIds.has(mutation.id);
-        newSplaylist.entries = oldSplaylist.entries;
         newSplaylist.orderedEntries = oldSplaylist.orderedEntries;
+        newSplaylist._entries = oldSplaylist._entries;
         cache.splaylists[mutation.id] = newSplaylist;  // eslint-disable-line no-param-reassign
       }
     }
@@ -66,30 +65,67 @@ exports.sync = function sync(cache, user, playlists, callback) {
           continue;
         }
 
+        const oldEntry = splaylist._entries[mutation.id];
+        const entry = entryFromMutation(mutation);
+
+        // SortedArray noops duplicate adds, so we need to delete if we're already tracking the entry.
+        if (oldEntry) {
+          splaylist.orderedEntries.delete(oldEntry);
+        }
+
         if (mutation.deleted) {
-          const oldEntry = splaylist.entries[mutation.id];
-          delete splaylist.entries[mutation.id];
-          splaylist.orderedEntries.delete(oldEntry.absolutePosition);
+          delete splaylist._entries[mutation.id];
         } else {
-          if (mutation.id in splaylist.entries) {
-            const oldPosition = splaylist.entries[mutation.id].absolutePosition;
-
-            // This is fiddly. If we blindly delete oldPosition, we may delete a different entry
-            // in the case that eg two entries swapped absolutePositions.
-            // So, we need to also check that the oldPosition is what we expect it to be.
-            const oldValue = splaylist.orderedEntries.get(oldPosition);
-            if (oldValue && oldValue.entryId === mutation.id) {
-              splaylist.orderedEntries.delete(oldPosition);
-            }
-          }
-
-          splaylist.entries[mutation.id] = {trackId: mutation.trackId, absolutePosition: mutation.absolutePosition};
-          splaylist.orderedEntries.set(mutation.absolutePosition, {entryId: mutation.id, trackId: mutation.trackId});
+          splaylist._entries[mutation.id] = entry;
+          splaylist.orderedEntries.add(entry);
         }
       }
       cache._lastSyncMicros = newTimestamp;   // eslint-disable-line no-param-reassign
-      console.log('cache synced', cache, deletedIds);
+
+      const cacheInfo = {};
+      let inconsistent = false;
+      for (const id in cache.splaylists) {
+        const splaylist = cache.splaylists[id];
+        const orderedLen = splaylist.orderedEntries.length;
+        const unorderedLen = Object.keys(splaylist._entries).length;
+        cacheInfo[`${splaylist.title} (${id})`] = `${unorderedLen}, ${orderedLen}`;
+        inconsistent = inconsistent || (orderedLen !== unorderedLen);
+      }
+      const cacheInfoStr = JSON.stringify(cacheInfo, null, '  ');
+      if (inconsistent) {
+        console.warn('cache synced inconsistently to', cacheInfoStr);
+      } else {
+        console.log('cache synced to', cacheInfoStr);
+      }
+
       callback(deletedIds);
     });
   });
 };
+
+function entryFromMutation(mutation) {
+  return {
+    entryId: mutation.id,
+    absolutePosition: mutation.absolutePosition,
+    trackId: mutation.trackId,
+  };
+}
+
+function entryEquals(one, two) {
+  return one.entryId === two.entryId;
+}
+
+function entryCompare(left, right) {
+  if (left.absolutePosition < right.absolutePosition) {
+    return -1;
+  }
+  if (left.absolutePosition > right.absolutePosition) {
+    return 1;
+  }
+  return 0;
+}
+
+
+function createEntryArray() {
+  return new SortedArray([], entryEquals, entryCompare);
+}
