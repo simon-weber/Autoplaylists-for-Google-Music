@@ -149,7 +149,7 @@ function getEntryMutations(playlist, splaylistcache, callback) {
   const mutations = [];
   const desiredOrdering = [];
   let tracksToAdd;
-  let tracksToDelete;
+  let entryIdsToDelete;
   let entriesToKeep;
   const postDeleteEntryIds = [];
   let mixedReorders = 0;
@@ -163,7 +163,7 @@ function getEntryMutations(playlist, splaylistcache, callback) {
     tracksToAdd = new Set(desiredTracks.map(t => t.id));
     console.debug('query found', tracksToAdd);
 
-    tracksToDelete = {};
+    entryIdsToDelete = [];
     entriesToKeep = {};
     currentOrderedEntries.forEach(entry => {
       const entryId = entry.entryId;
@@ -174,8 +174,7 @@ function getEntryMutations(playlist, splaylistcache, callback) {
         entriesToKeep[remoteTrackId] = entryId;
         postDeleteEntryIds.push(entryId);
       } else {
-        // FIXME This assumes that there are no duplicates in the remote, which will probably break eventually.
-        tracksToDelete[remoteTrackId] = entryId;
+        entryIdsToDelete.push(entryId);
       }
     });
 
@@ -190,9 +189,9 @@ function getEntryMutations(playlist, splaylistcache, callback) {
   }).then(orderedTracks => {
     console.debug('to add', tracksToAdd.size, tracksToAdd);
     console.debug('to keep', Object.keys(entriesToKeep).length, entriesToKeep);
-    console.debug('to delete', Object.keys(tracksToDelete).length, tracksToDelete);
+    console.debug('to delete', entryIdsToDelete.length, entryIdsToDelete);
 
-    const deletes = Gmoauth.buildEntryDeletes(Object.values(tracksToDelete));
+    const deletes = Gmoauth.buildEntryDeletes(entryIdsToDelete);
     for (let i = 0; i < deletes.length; i++) {
       mutations.push(deletes[i]);
     }
