@@ -12,7 +12,6 @@ const Reporting = require('./reporting');
 //   * splaylists: {id: splaylist}
 // Cached splaylists contain additional fields:
 //   * isAutoplaylist: bool
-//   * legacyEntries: {entryId: trackId}
 //   * entries: {entryId: {trackId, absolutePosition}}
 //   * orderedEntries: SortedMap{absolutePosition: {entryId, trackId}}
 
@@ -44,7 +43,6 @@ exports.sync = function sync(cache, user, playlists, callback) {
         const splaylist = Splaylist.fromSJ(mutation);
         splaylist.isAutoplaylist = autoPlaylistIds.has(mutation.id);
         splaylist.entries = {};
-        splaylist.legacyEntries = {};
         splaylist.orderedEntries = new SortedMap();
         cache.splaylists[mutation.id] = splaylist;  // eslint-disable-line no-param-reassign
       } else {
@@ -52,7 +50,6 @@ exports.sync = function sync(cache, user, playlists, callback) {
         const newSplaylist = Splaylist.fromSJ(mutation);
         newSplaylist.isAutoplaylist = autoPlaylistIds.has(mutation.id);
         newSplaylist.entries = oldSplaylist.entries;
-        newSplaylist.legacyEntries = oldSplaylist.legacyEntries;
         newSplaylist.orderedEntries = oldSplaylist.orderedEntries;
         cache.splaylists[mutation.id] = newSplaylist;  // eslint-disable-line no-param-reassign
       }
@@ -72,7 +69,6 @@ exports.sync = function sync(cache, user, playlists, callback) {
         if (mutation.deleted) {
           const oldEntry = splaylist.entries[mutation.id];
           delete splaylist.entries[mutation.id];
-          delete splaylist.legacyEntries[mutation.id];
           splaylist.orderedEntries.delete(oldEntry.absolutePosition);
         } else {
           if (mutation.id in splaylist.entries) {
@@ -88,7 +84,6 @@ exports.sync = function sync(cache, user, playlists, callback) {
           }
 
           splaylist.entries[mutation.id] = {trackId: mutation.trackId, absolutePosition: mutation.absolutePosition};
-          splaylist.legacyEntries[mutation.id] = mutation.trackId;
           splaylist.orderedEntries.set(mutation.absolutePosition, {entryId: mutation.id, trackId: mutation.trackId});
         }
       }

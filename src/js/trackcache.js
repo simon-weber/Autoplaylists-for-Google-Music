@@ -133,7 +133,7 @@ function buildWhereClause(track, playlistsById, splaylistcache, resultCache, db,
         // splaylist
         let entries = {};
         try {
-          entries = splaylistcache.splaylists[rule.value.substring(1)].legacyEntries;
+          entries = splaylistcache.splaylists[rule.value.substring(1)].entries;
         } catch (e) {
           // This is likely a desync between the rules and splaylist state.
           // It's often triggered on the first sync (since the cache is racing to sync first).
@@ -145,7 +145,7 @@ function buildWhereClause(track, playlistsById, splaylistcache, resultCache, db,
           });
         }
 
-        const trackIdList = Object.values(entries);
+        const trackIdList = Object.values(entries).map(entryPair => entryPair.trackId);
         clause = Lf.op.or(
           track.id.in(trackIdList),
           track.storeId.in(trackIdList)
