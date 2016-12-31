@@ -118,7 +118,6 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache,
   let initialPlaylist = null;
   const $conditions = $('#conditions');
 
-  console.log(userId, playlistId);
 
   const $sorts = $('#sorts');
   if (!isLocked) {

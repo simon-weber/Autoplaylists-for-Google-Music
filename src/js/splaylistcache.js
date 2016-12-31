@@ -62,6 +62,8 @@ exports.sync = function sync(cache, user, playlists, callback) {
 
         if (!splaylist) {
           // These orphaned entries usually belong to a playlist that was recently deleted.
+          // It can also happen if a playlist is added between the playlist and entries calls,
+          // in which case it's more of a problem (and one that's not dealt with).
           continue;
         }
 
