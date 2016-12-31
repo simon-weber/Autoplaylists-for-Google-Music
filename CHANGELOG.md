@@ -1,3 +1,9 @@
+## 5.1.0 (December 31, 2016)
+
+Features:
+
+  - add a duplicate button to the playlist editor to ease creation of many similar playlists
+
 ## 5.0.1 (December 30, 2016)
 
 Bugfixes:
