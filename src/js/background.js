@@ -278,7 +278,7 @@ function getEntryMutations(playlist, splaylistcache, callback) {
         if (surroundingType && surroundingType !== following.type) {
           // There's nothing we can do about this unless we send a no-op reorder and switch to client ids.
           // It doesn't seem worth it given that the reorders are already eventually consistent.
-          console.warn('mixed reorder detected for', ordering, desiredOrdering[i - 1], following);
+          console.log('mixed reorder detected for', ordering, desiredOrdering[i - 1], following);
           mixedReorders++;
         } else {
           surroundingType = following.type;
