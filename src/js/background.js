@@ -857,7 +857,16 @@ function main() {
       Context.get(sendResponse);
       return true;
     } else if (request.action === 'getSplaylistcache') {
-      sendResponse(splaylistcaches[request.userId]);
+      // FIXME the cache may not exist yet and we have no way of waiting for it.
+      let cache = splaylistcaches[request.userId];
+      if (!cache) {
+        cache = Splaylistcache.open();
+        Reporting.Raven.captureMessage('got getSplaylistcache, but cache not synced yet', {
+          level: 'warning',
+          extra: {request},
+        });
+      }
+      sendResponse(cache);
       return;
     } else {
       console.warn('received unknown request', request);
