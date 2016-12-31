@@ -3,11 +3,12 @@ const Qs = require('qs');
 const Sortable = require('sortablejs');
 require('jquery-modal');
 
-const Utils = require('./utils');
+const License = require('./license');
 const Playlist = require('./playlist');
+const Reporting = require('./reporting');
 const Storage = require('./storage');
 const Track = require('./track');
-const Reporting = require('./reporting');
+const Utils = require('./utils');
 
 
 const sortedFields = Track.fields.filter(e => !e.hidden);
@@ -267,7 +268,7 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache)
     $('#submit, #test')
     .addClass('locked')
     .addClass('disabled')
-    .wrap('<div class="hint--top" data-hint="The free version allows only one playlist.' +
+    .wrap(`<div class="hint--top" data-hint="The free version allows only ${License.FREE_PLAYLIST_REPR}.` +
          ' This one is locked to editing."/>');
   }
 }
@@ -278,7 +279,16 @@ function main() {
 
   Storage.getPlaylistsForUser(qstring.userId, playlists => {
     chrome.runtime.sendMessage({action: 'getSplaylistcache', userId: qstring.userId}, splaylistcache => {
-      initializeForm(qstring.userId, qstring.id, qstring.locked === 'true', playlists, splaylistcache);
+      if (qstring.id) {
+        License.isLocked(qstring.id, playlists).then(isLocked => {
+          initializeForm(qstring.userId, qstring.id, isLocked, playlists, splaylistcache);
+        });
+      } else {
+        License.hasFullVersion(false, hasFullVersion => {
+          const isLocked = (!hasFullVersion && (playlists.length >= License.FREE_PLAYLIST_COUNT));
+          initializeForm(qstring.userId, null, isLocked, playlists, splaylistcache);
+        });
+      }
     });
   });
 }

@@ -4,16 +4,16 @@ const Qs = require('qs');
 const SortedMap = require('collections/sorted-map');
 
 const Auth = require('./auth');
-const Utils = require('./utils');
 const Gm = require('./googlemusic');
 const Gmoauth = require('./googlemusic_oauth');
 const Lf = require('lovefield');  // made available for debugQuery eval
 const License = require('./license');
 const Playlist = require('./playlist');
+const Splaylistcache = require('./splaylistcache');
 const Storage = require('./storage');
 const Track = require('./track');
 const Trackcache = require('./trackcache');
-const Splaylistcache = require('./splaylistcache');
+const Utils = require('./utils');
 
 const Context = require('./context');
 const Reporting = require('./reporting');
@@ -373,7 +373,8 @@ function syncEntryMutations(hasFullVersion, splaylistcache, user, playlists) {
   for (let i = 0; i < playlists.length; i++) {
     const playlist = playlists[i];
 
-    if (i > 0 && !hasFullVersion) {
+    if (i > (License.FREE_PLAYLIST_COUNT - 1) && !hasFullVersion) {
+      // TODO can this be combined with License.isLocked?
       console.info('skipping (entry) sync of locked playlist', playlist.title);
       callbacksRemaining--;
       continue;
@@ -403,7 +404,7 @@ function syncPlaylistMutations(hasFullVersion, splaylistcache, user, playlists) 
   for (let i = 0; i < playlists.length; i++) {
     const playlist = playlists[i];
 
-    if (i > 0 && !hasFullVersion) {
+    if (i > (License.FREE_PLAYLIST_COUNT - 1) && !hasFullVersion) {
       console.info('skipping (playlist) sync of locked playlist', playlist.title);
       callbacksRemaining--;
       continue;

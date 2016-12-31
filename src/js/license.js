@@ -10,6 +10,32 @@ const DEVELOPER_ID_WHITELIST = { // eslint-disable-line no-unused-vars
   '103350848301234480355': true,  // me
 };
 
+exports.FREE_PLAYLIST_COUNT = 1;
+exports.FREE_PLAYLIST_REPR = 'one playlist';
+
+exports.isLocked = function isLocked(playlistId, playlists) {
+  // Promise a bool.
+  return new Promise(resolve => {
+    exports.hasFullVersion(false, resolve);
+  }).then(hasFullVersion => {
+    if (hasFullVersion) {
+      return false;
+    }
+
+    let locked = true;
+    for (let i = 0; i < playlists.length; i++) {
+      if (i > (exports.FREE_PLAYLIST_COUNT - 1)) {
+        break;
+      }
+      if (playlists[i].localId === playlistId) {
+        locked = false;
+        break;
+      }
+    }
+    return locked;
+  });
+};
+
 function isDeveloper(callback) {
   // Callback a truthy value for whether the current user is a developer.
   chrome.management.getSelf(extensionInfo => {

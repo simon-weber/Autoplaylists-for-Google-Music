@@ -47,11 +47,10 @@ function initializeForm(userId, playlists) {
 
     for (let i = 0; i < playlists.length; i++) {
       const playlist = playlists[i];
-      const isLocked = (i > 0 && !hasFullVersion);
+      const isLocked = (!hasFullVersion && (i > (License.FREE_PLAYLIST_COUNT - 1)));
       const qs = {
         userId,
         id: playlist.localId,
-        locked: isLocked,
       };
       const href = `/html/playlist.html?${Qs.stringify(qs)}`;
       let $link = $('<a>', {href, text: playlist.title});
@@ -59,19 +58,21 @@ function initializeForm(userId, playlists) {
       if (isLocked) {
         $link
         .addClass('locked')
-        .wrap('<div class="hint--right" data-hint="The free version allows only one playlist.' +
+        .wrap(`<div class="hint--right" data-hint="The free version allows only ${License.FREE_PLAYLIST_REPR}.` +
               ' This playlist is not being synced."/>');
         $link = $link.parent();
-
-        $('#add-playlist:not(.locked)')
-        .addClass('locked')
-        .addClass('disabled')
-        .wrap('<div class="hint--right" data-hint="The free version allows only one playlist.' +
-             ' Upgrade to add more."/>');
       }
 
       console.log(playlist);
       $playlists.append($('<li>').append($link));
+    }
+
+    if (!hasFullVersion && (playlists.length >= License.FREE_PLAYLIST_COUNT)) {
+      $('#add-playlist')
+      .addClass('locked')
+      .addClass('disabled')
+      .wrap(`<div class="hint--right" data-hint="The free version allows only ${License.FREE_PLAYLIST_REPR}.` +
+           ' Upgrade to add more."/>');
     }
   });
 
