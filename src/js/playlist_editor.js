@@ -113,7 +113,7 @@ function parseSorts($sorts) {
   return sorts;
 }
 
-function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache) {
+function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache, duplicating) {
   const initConditions = getRulesData(playlists, playlistId, splaylistcache);
   let initialPlaylist = null;
   const $conditions = $('#conditions');
@@ -139,33 +139,38 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache)
                 ' the wiki</a> for more details.').appendTo($explanations);
 
   if (playlistId) {
-    Storage.getPlaylist(userId, playlistId, loadedPlaylist => {
-      initialPlaylist = loadedPlaylist;
-      $('#playlist-title').val(loadedPlaylist.title);
+    const loadedPlaylist = playlists.filter(p => p.localId === playlistId)[0];
+    initialPlaylist = loadedPlaylist;
+    $('#playlist-title').val(loadedPlaylist.title);
 
-      console.log('loading playlist', loadedPlaylist);
-      initConditions.data = loadedPlaylist.rules;
-      if (isLocked) {
-        initConditions.disabled = true;
-      }
-      $conditions.conditionsBuilder(initConditions);
+    console.log('loading playlist', loadedPlaylist);
+    initConditions.data = loadedPlaylist.rules;
+    if (isLocked) {
+      initConditions.disabled = true;
+    }
+    $conditions.conditionsBuilder(initConditions);
 
-      $('#limit-to').val(loadedPlaylist.limit);
+    $('#limit-to').val(loadedPlaylist.limit);
 
-      for (let i = 0; i < loadedPlaylist.sorts.length; i++) {
-        const sort = loadedPlaylist.sorts[i];
-        const $sort = createSort(sortedFields, isLocked);
-        $sort.children('.sort-by').val(sort.sortBy);
-        $sort.children('.sort-by-order').val(sort.sortByOrder);
-        $sorts.append($sort);
-      }
-    });
+    for (let i = 0; i < loadedPlaylist.sorts.length; i++) {
+      const sort = loadedPlaylist.sorts[i];
+      const $sort = createSort(sortedFields, isLocked);
+      $sort.children('.sort-by').val(sort.sortBy);
+      $sort.children('.sort-by-order').val(sort.sortByOrder);
+      $sorts.append($sort);
+    }
   } else {
     console.log('creating empty form');
     $conditions.conditionsBuilder(initConditions);
     $('#playlist-title').val('[auto] new playlist').focus();
     $sorts.append(createSort(sortedFields, isLocked));
     $('#delete').hide();
+    $('#duplicate').hide();
+  }
+
+  if (duplicating) {
+    $('#delete').hide();
+    $('#duplicate').hide();
   }
 
   function readForm() {
@@ -258,6 +263,11 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache)
     });
   });
 
+  $('#duplicate').click(e => {
+    e.preventDefault();
+    Utils.goToPlaylistEditor(userId, playlistId, true);
+  });
+
   if (isLocked) {
     $('#drag-explanation').remove();
     $('#limit-explanation').remove();
@@ -271,6 +281,16 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache)
     .wrap(`<div class="hint--top" data-hint="The free version allows only ${License.FREE_PLAYLIST_REPR}.` +
          ' This one is locked to editing."/>');
   }
+
+  License.hasFullVersion(false, hasFullVersion => {
+    if (!hasFullVersion && (playlists.length >= License.FREE_PLAYLIST_COUNT)) {
+      $('#duplicate')
+      .addClass('locked')
+      .addClass('disabled')
+      .wrap(`<div class="hint--right" data-hint="The free version allows only ${License.FREE_PLAYLIST_REPR}.` +
+           ' Upgrade to add more."/>');
+    }
+  });
 }
 
 function main() {
@@ -281,12 +301,23 @@ function main() {
     chrome.runtime.sendMessage({action: 'getSplaylistcache', userId: qstring.userId}, splaylistcache => {
       if (qstring.id) {
         License.isLocked(qstring.id, playlists).then(isLocked => {
-          initializeForm(qstring.userId, qstring.id, isLocked, playlists, splaylistcache);
+          initializeForm(qstring.userId, qstring.id, isLocked, playlists, splaylistcache, false);
         });
       } else {
         License.hasFullVersion(false, hasFullVersion => {
           const isLocked = (!hasFullVersion && (playlists.length >= License.FREE_PLAYLIST_COUNT));
-          initializeForm(qstring.userId, null, isLocked, playlists, splaylistcache);
+          let playlistId = null;
+          if (qstring.duplicateId) {
+            const originalPlaylist = playlists.filter(p => p.localId === qstring.duplicateId)[0];
+            const duplicatePlaylist = JSON.parse(JSON.stringify(originalPlaylist));
+            duplicatePlaylist.title = `copy of ${duplicatePlaylist.title}`;
+            playlistId = `${new Date().getTime()}`;
+            duplicatePlaylist.localId = playlistId;
+            delete duplicatePlaylist.remoteId;
+            playlists.push(duplicatePlaylist);
+          }
+
+          initializeForm(qstring.userId, playlistId, isLocked, playlists, splaylistcache, Boolean(playlistId));
         });
       }
     });

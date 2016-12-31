@@ -61,6 +61,18 @@ exports.goToManager = function goToManager(userId) {
   window.location.href = `/html/playlists.html?${Qs.stringify({userId})}`;
 };
 
+exports.goToPlaylistEditor = function goToPlaylistEditor(userId, playlistId, duplicating) {
+  // Navigate to the playlist details page for an existing playlist, or a playlist being duplicated.
+  const qstring = {userId};
+  if (duplicating) {
+    qstring.duplicateId = playlistId;
+  } else {
+    qstring.id = playlistId;
+  }
+
+  window.location.href = `/html/playlist.html?${Qs.stringify(qstring)}`;
+};
+
 exports.maximumIncreasingSubsequenceIndices = function maximumIncreasingSubsequenceIndices(a) {
   if (a.length === 0) {
     return [];
