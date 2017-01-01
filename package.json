@@ -2,7 +2,7 @@
   "private": true,
   "dependencies": {
     "browserify": "11.2.0",
-    "collections": "^5.0.5",
+    "collections": "simon-weber/collections#fix_sorted_array_incomparable",
     "exorcist": "^0.4.0",
     "jquery-modal": "^0.7.0",
     "lovefield": "2.1.3",
