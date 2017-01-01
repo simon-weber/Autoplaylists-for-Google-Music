@@ -97,7 +97,7 @@ exports.sync = function sync(cache, user, playlists, callback) {
       if (inconsistent) {
         console.warn('cache synced inconsistently to', cacheInfoStr, cache);
       } else {
-        console.log('cache synced to', cacheInfoStr, cache);
+        console.debug('cache synced to', cacheInfoStr, cache);
       }
 
       callback(deletedIds);
