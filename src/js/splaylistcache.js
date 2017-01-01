@@ -76,9 +76,9 @@ exports.sync = function sync(cache, user, playlists, callback) {
         }
 
         if (mutation.deleted) {
-          delete splaylist._entries[mutation.id];
+          delete splaylist._entries[entry.entryId];
         } else {
-          splaylist._entries[mutation.id] = entry;
+          splaylist._entries[entry.entryId] = entry;
           splaylist.orderedEntries.add(entry);
         }
       }
@@ -108,7 +108,7 @@ exports.sync = function sync(cache, user, playlists, callback) {
 function entryFromMutation(mutation) {
   return {
     entryId: mutation.id,
-    absolutePosition: mutation.absolutePosition,
+    absolutePosition: parseInt(mutation.absolutePosition, 10),
     trackId: mutation.trackId,
   };
 }
