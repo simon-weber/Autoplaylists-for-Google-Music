@@ -1,3 +1,9 @@
+## 5.1.1 (December 31, 2016)
+
+Bugfixes:
+
+  - fix a bug causing incorrect syncs in some cases
+
 ## 5.1.0 (December 31, 2016)
 
 Features:
