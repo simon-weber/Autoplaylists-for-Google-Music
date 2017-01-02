@@ -4,14 +4,11 @@ const Qs = require('qs');
 const SortedMap = require('collections/sorted-map');
 
 const Auth = require('./auth');
-const Gm = require('./googlemusic');
-const Gmoauth = require('./googlemusic_oauth');
 const Lf = require('lovefield');  // made available for debugQuery eval
 const License = require('./license');
-const Playlist = require('./playlist');
 const Splaylistcache = require('./splaylistcache');
 const Storage = require('./storage');
-const Track = require('./track');
+const Syncing = require('./syncing');
 const Trackcache = require('./trackcache');
 const Utils = require('./utils');
 
@@ -35,436 +32,14 @@ let primaryGaiaId = null;
 
 let syncsHaveStarted = false;
 
+const manager = new Syncing.Manager(users, dbs, splaylistcaches, pollTimestamps);
+
 function userIdForTabId(tabId) {
   for (const userId in users) {
     if (users[userId].tabId === tabId) {
       return userId;
     }
   }
-}
-
-function deauthUser(userId) {
-  console.info('deauthing', userId);
-  delete users[userId];
-  delete dbs[userId];
-  delete pollTimestamps[userId];
-  delete splaylistcaches[userId];
-}
-
-
-function diffUpdateTrackcache(userId, db, callback, timestamp) {
-  // Update our cache with any changes since timestamp.
-  // Callback an object with success = true if we were able to retrieve changes.
-
-  // If timestamp is not provided, use the last stored timestamp.
-  // If there is no stored timestamp, use 0 (a full sync).
-
-  const user = users[userId];
-  if (!Number.isInteger(timestamp)) {
-    timestamp = pollTimestamps[userId] || 0;  // eslint-disable-line no-param-reassign
-  }
-
-  console.log('checking for remote track changes');
-  Gm.getTrackChanges(user, timestamp, changes => {
-    if (!changes.success) {
-      console.warn('failed to getTrackChanges:', JSON.stringify(changes));
-      if (changes.reloadXsrf) {
-        chrome.tabs.sendMessage(user.tabId, {action: 'getXsrf'}, Utils.unlessError(r => {
-          console.info('requested xsrf refresh', r);
-        },
-        e => {
-          console.warn('failed to request xsrf refresh; deauthing', JSON.stringify(e));
-          Reporting.Raven.captureMessage('failed to request xsrf refresh; deauthing', {
-            level: 'warning',
-            extra: {changes, timestamp, e: JSON.stringify(e)},
-          });
-          deauthUser(userId);
-        }));
-      } else if (changes.unauthed) {
-        console.info('unauthed', userId);
-        deauthUser(userId);
-      } else {
-        console.error('unexpected getTrackChanges response', changes);
-        Reporting.Raven.captureMessage('unexpected getTrackChanges response', {
-          extra: {changes, timestamp},
-        });
-      }
-      return callback({success: false});
-    }
-
-    Trackcache.upsertTracks(db, userId, changes.upsertedTracks, () => {
-      Trackcache.deleteTracks(db, userId, changes.deletedIds, () => {
-        if (changes.newTimestamp) {
-          pollTimestamps[userId] = changes.newTimestamp;
-          console.log('poll timestamp now Google-provided', changes.newTimestamp);
-        } else if (timestamp === 0) {
-          // if we're updating from 0 and didn't get a new timestamp, we want to avoid updating from 0 again.
-          // so, use the current time minus a minute to avoid race conditions from when the sync started.
-          pollTimestamps[userId] = (new Date().getTime() * 1000) - (60 * 1000);
-          console.info('no new poll timestamp; using one minute ago');
-        } else {
-          // This happens when the diff update had no changes.
-          // We can just use the same timestamp again next time.
-          pollTimestamps[userId] = timestamp;
-          console.log('no new poll timestamp; reusing', timestamp);
-        }
-
-        callback({success: true});
-      });
-    });
-  });
-}
-
-function getDescription(playlist, splaylistcache, playlists) {
-  const rulesRepr = Playlist.toString(playlist, playlists, splaylistcache);
-  return `Synced ${new Date().toLocaleString()} by Autoplaylists for Google Music™ to contain: ${rulesRepr}.`;
-}
-
-function getPlaylistMutations(playlist, splaylistcache, playlists) {
-  const description = getDescription(playlist, splaylistcache, playlists);
-  const update = Gmoauth.buildPlaylistUpdates([{id: playlist.remoteId, name: playlist.title, description}]);
-  return update;
-}
-
-
-function getEntryMutations(playlist, splaylistcache, callback) {
-  // Callback {mutations: [], mixedReorders: int}
-  let currentOrderedEntries = new SortedMap();
-  if (playlist.remoteId in splaylistcache.splaylists) {
-    currentOrderedEntries = splaylistcache.splaylists[playlist.remoteId].orderedEntries;
-  } else {
-    console.warn('playlist.remoteId', playlist.remoteId, 'not yet cached; assuming empty');
-  }
-
-  // We'll make three kinds of mutations:
-  //   1) delete tracks we don't want
-  //   2) add tracks we're missing
-  //   3) reorder the resulting tracks
-  // These can all be batched.
-  // As opposed to a simpler delete-all+add-all approach, this:
-  //   * reduces our request sizes and the work for Google
-  //   * avoids deleting tracks that are currently playing but we don't know about
-
-  const db = dbs[playlist.userId];
-  const mutations = [];
-  const desiredOrdering = [];
-  let tracksToAdd;
-  let entryIdsToDelete;
-  let entriesToKeep;
-  const postDeleteEntryIds = [];
-  let mixedReorders = 0;
-
-  new Promise(resolve => {
-    Trackcache.queryTracks(db, splaylistcache, playlist, {}, resolve);
-  }).then(tracks => {
-    const desiredTracks = tracks.slice(0, 1000);
-
-    // We'll reorder these later.
-    tracksToAdd = new Set(desiredTracks.map(t => t.id));
-    console.debug('query found', tracksToAdd);
-
-    entryIdsToDelete = [];
-    entriesToKeep = {};
-    currentOrderedEntries.forEach(entry => {
-      const entryId = entry.entryId;
-      const remoteTrackId = entry.trackId;
-
-      if (tracksToAdd.has(remoteTrackId)) {
-        tracksToAdd.delete(remoteTrackId);
-        entriesToKeep[remoteTrackId] = entryId;
-        postDeleteEntryIds.push(entryId);
-      } else {
-        entryIdsToDelete.push(entryId);
-      }
-    });
-
-    const trackIdsRemaining = Object.keys(entriesToKeep);
-    for (const id of tracksToAdd) {
-      trackIdsRemaining.push(id);
-    }
-
-    return new Promise(resolve => {
-      Trackcache.orderTracks(db, playlist, trackIdsRemaining, resolve);
-    });
-  }).then(orderedTracks => {
-    console.debug('to add', tracksToAdd.size, tracksToAdd);
-    console.debug('to keep', Object.keys(entriesToKeep).length, entriesToKeep);
-    console.debug('to delete', entryIdsToDelete.length, entryIdsToDelete);
-
-    const deletes = Gmoauth.buildEntryDeletes(entryIdsToDelete);
-    for (let i = 0; i < deletes.length; i++) {
-      mutations.push(deletes[i]);
-    }
-
-    const appends = Gmoauth.buildEntryAppends(playlist.remoteId, Array.from(tracksToAdd));
-    const appendsByTrackId = {};
-    for (let i = 0; i < appends.length; i++) {
-      const append = appends[i];
-      mutations.push(append);
-      appendsByTrackId[append.create.trackId] = append.create;
-    }
-
-    const idToDesiredPosition = {};
-    for (let i = 0; i < orderedTracks.length; i++) {
-      const track = orderedTracks[i];
-      let clientId;
-      let type;
-      let entryId;
-      let append;
-      const trackId = track.id;
-
-      if (track.id in entriesToKeep || track.storeId in entriesToKeep) {
-        type = 'existing';
-        clientId = Utils.uuidV1();
-        entryId = entriesToKeep[track.id] || entriesToKeep[track.storeId];
-      } else {
-        // We only build appends with library id.
-        append = appendsByTrackId[track.id];
-        type = 'append';
-        clientId = append.clientId;
-      }
-      desiredOrdering.push({type, clientId, entryId, append, trackId});
-      if (entryId) {
-        idToDesiredPosition[entryId] = i;
-      }
-    }
-
-    const postDeletePositions = [];
-    for (let i = 0; i < postDeleteEntryIds.length; i++) {
-      postDeletePositions.push(idToDesiredPosition[postDeleteEntryIds[i]]);
-    }
-
-    const maxIncSubPositions = Utils.maximumIncreasingSubsequenceIndices(postDeletePositions);
-    const maxIncSubEntryIds = new Set();
-    for (let i = 0; i < maxIncSubPositions.length; i++) {
-      maxIncSubEntryIds.add(postDeleteEntryIds[maxIncSubPositions[i]]);
-    }
-    console.debug('maxIncSub is', maxIncSubEntryIds.size, 'of', postDeletePositions.length);
-
-    const reorderings = [];
-    for (let i = 0; i < desiredOrdering.length; i++) {
-      const ordering = desiredOrdering[i];
-
-      const entryId = ordering.entryId;
-      if (entryId && maxIncSubEntryIds.has(entryId)) {
-        // Only move entries not in the maxIncSub.
-        continue;
-      }
-
-      let target;
-      if (ordering.type === 'existing') {
-        target = {id: ordering.entryId, clientId: ordering.clientId};
-        reorderings.push(target);
-      } else {
-        // Edit the position the track will be added to.
-        target = ordering.append;
-      }
-
-      let surroundingType = null;
-      target.source = 1;
-      target.trackId = ordering.trackId;
-      if (i > 0) {
-        const preceding = desiredOrdering[i - 1];
-        surroundingType = preceding.type;
-        let id = preceding.entryId;
-        if (preceding.type === 'append') {
-          id = preceding.clientId;
-        }
-        target.precedingEntryId = id;
-      }
-      if (i < desiredOrdering.length - 1) {
-        const following = desiredOrdering[i + 1];
-
-        if (surroundingType && surroundingType !== following.type) {
-          // There's nothing we can do about this unless we send a no-op reorder and switch to client ids.
-          // It doesn't seem worth it given that the reorders are already eventually consistent.
-          console.log('mixed reorder detected for', ordering, desiredOrdering[i - 1], following);
-          mixedReorders++;
-        } else {
-          surroundingType = following.type;
-        }
-
-        let id = following.entryId;
-        if (following.type === 'append') {
-          id = following.clientId;
-        }
-        target.followingEntryId = id;
-      }
-      target.relativePositionIdType = (surroundingType === 'existing' ? 1 : 2);
-    }
-
-    const reorders = Gmoauth.buildEntryReorders(reorderings);
-    for (let i = 0; i < reorders.length; i++) {
-      mutations.push(reorders[i]);
-    }
-
-    console.debug(mutations.length, 'mutations');
-    callback({mutations, mixedReorders});
-  }).catch(e => {
-    console.error('getEntryMutations error', e, e.stack);
-    Reporting.Raven.captureMessage('getEntryMutations error', {
-      extra: {e, playlist, stack: e.stack},
-      stacktrace: true,
-    });
-    callback([]);
-  });
-}
-
-function syncPlaylist(playlist, playlists) {
-  // Sync a playlist's metadata and contents.
-  // A remote playlist will be created if one does not exist yet.
-  console.log('syncPlaylist', playlist.title);
-  const user = users[playlist.userId];
-  const splaylistcache = splaylistcaches[playlist.userId];
-
-  if (!('remoteId' in playlist)) {
-    // The remote playlist doesn't exist yet.
-    const add = Gmoauth.buildPlaylistAdd(playlist.title, getDescription(playlist, splaylistcache, playlists));
-    Gmoauth.runPlaylistMutations(user, [add], response => {
-      console.log('postCreate', response);
-      const remoteId = response.mutate_response[0].id;
-      console.log('created remote playlist', remoteId);
-      const playlistToSave = JSON.parse(JSON.stringify(playlist));
-      playlistToSave.remoteId = remoteId;
-
-      Storage.savePlaylist(playlistToSave, () => {
-        // nothing else to do. listener will see the change and recall.
-        console.debug('wrote remote id');
-      });
-    });
-  } else {
-    syncSplaylistcache(playlist.userId).then(() => {
-      // Unfortunately playlist and entry updates can't be batched.
-      const playlistMutations = getPlaylistMutations(playlist, splaylistcache, playlists);
-      Gmoauth.runPlaylistMutations(user, playlistMutations, response => {
-        console.log('update res', response);
-      });
-
-      getEntryMutations(playlist, splaylistcache, ({mutations, mixedReorders}) => {
-        Reporting.reportMixedReorders(mixedReorders);
-        Gmoauth.runEntryMutations(user, mutations, response => {
-          console.log('entry res', response);
-        });
-      });
-    });
-  }
-}
-
-function syncEntryMutations(hasFullVersion, splaylistcache, user, playlists) {
-  const entryMutations = [];
-  let sumMixedReorders = 0;  // eslint-disable-line no-unused-vars
-  let callbacksRemaining = playlists.length;
-
-  function processMutations({mutations, mixedReorders}) {
-    sumMixedReorders += mixedReorders;
-    for (let j = 0; j < mutations.length; j++) {
-      entryMutations.push(mutations[j]);
-    }
-    callbacksRemaining--;
-
-    if (callbacksRemaining <= 0) {
-      Reporting.reportMixedReorders(sumMixedReorders);
-      Gmoauth.runEntryMutations(user, entryMutations, response => {
-        console.log('combined entry res', response);
-      });
-    }
-  }
-
-  for (let i = 0; i < playlists.length; i++) {
-    const playlist = playlists[i];
-
-    if (i > (License.FREE_PLAYLIST_COUNT - 1) && !hasFullVersion) {
-      // TODO can this be combined with License.isLocked?
-      console.info('skipping (entry) sync of locked playlist', playlist.title);
-      callbacksRemaining--;
-      continue;
-    }
-
-    getEntryMutations(playlist, splaylistcache, processMutations);
-  }
-}
-
-function syncPlaylistMutations(hasFullVersion, splaylistcache, user, playlists) {
-  const playlistMutations = [];
-  let callbacksRemaining = playlists.length;
-
-  function processMutations(mutations) {
-    for (let j = 0; j < mutations.length; j++) {
-      playlistMutations.push(mutations[j]);
-    }
-    callbacksRemaining--;
-
-    if (callbacksRemaining <= 0) {
-      Gmoauth.runPlaylistMutations(user, playlistMutations, response => {
-        console.log('combined playlist res', response);
-      });
-    }
-  }
-
-  for (let i = 0; i < playlists.length; i++) {
-    const playlist = playlists[i];
-
-    if (i > (License.FREE_PLAYLIST_COUNT - 1) && !hasFullVersion) {
-      console.info('skipping (playlist) sync of locked playlist', playlist.title);
-      callbacksRemaining--;
-      continue;
-    }
-
-    processMutations(getPlaylistMutations(playlist, splaylistcache, playlists));
-  }
-}
-
-function syncPlaylists(userId) {
-  console.log('syncPlaylists', userId);
-  const db = dbs[userId];
-  const splaylistcache = splaylistcaches[userId];
-  const user = users[userId];
-
-  if (!db) {
-    console.warn('refusing syncPlaylists because db is not init');
-
-    Reporting.Raven.captureMessage('refusing forceUpdate because db is not init', {
-      level: 'warning',
-      extra: {users},
-    });
-    return;
-  }
-
-  License.hasFullVersion(false, hasFullVersion => {
-    Storage.getPlaylistsForUser(userId, playlists => {
-      // These don't need to be ordered since the playlists we're modifying should exist already.
-      syncEntryMutations(hasFullVersion, splaylistcache, user, playlists);
-      syncPlaylistMutations(hasFullVersion, splaylistcache, user, playlists);
-    });
-  });
-}
-
-function syncSplaylistcache(userId) {
-  // Promise nothing when the cache is updated.
-  const splaylistcache = splaylistcaches[userId];
-
-  const playlistsP = new Promise(resolve => {
-    Storage.getPlaylistsForUser(userId, resolve);
-  });
-
-  const deletedIdsP = playlistsP.then(playlists =>
-    new Promise(resolve => {
-      Splaylistcache.sync(splaylistcache, users[userId], playlists, resolve);
-    })
-  );
-
-  return Promise.all([playlistsP, deletedIdsP])
-  .then(params => {
-    const playlists = params[0];
-    const deletedIds = params[1];
-    for (const deletedId of deletedIds) {
-      Playlist.deleteAllReferences('P' + deletedId, playlists);
-      for (let i = 0; i < playlists.length; i++) {
-        // FIXME this sucks?
-        Storage.savePlaylist(playlists[i], () => {});
-      }
-    }
-  });
 }
 
 function initSyncs(userId) {
@@ -479,10 +54,10 @@ function initSyncs(userId) {
   }
 
   new Promise(resolve => {
-    initLibrary(userId, resolve);
+    Syncing.initLibrary(userId, resolve);
   }).then(() => {
     splaylistcaches[userId] = Splaylistcache.open();
-    return syncSplaylistcache(userId);
+    return Syncing.syncSplaylistcache(userId);
   }).then(() => {
     // This must be done after the caches are set up to avoid periodic updates racing them.
     Storage.getLastPSync(lastPSync => {
@@ -558,7 +133,6 @@ function startPeriodicSyncs() {
   });
 }
 
-
 function periodicUpdate() {
   const now = new Date();
   Storage.setLastPSync(now.getTime(), () => {
@@ -566,72 +140,9 @@ function periodicUpdate() {
   });
 
   for (const userId in users) {
-    console.log('periodic update for', userId);
-
-    syncSplaylistcache(userId)
-    .then(() => {
-      if (dbs[userId]) {
-        diffUpdateTrackcache(userId, dbs[userId], response => {
-          console.debug('periodic diffUpdate:', response.success, response);
-          syncPlaylists(userId);
-        });
-      } else {
-        // Retry to init the library.
-        console.warn('db not init at periodic sync');
-        Reporting.Raven.captureMessage('db not init at periodic sync', {
-          level: 'warning',
-          extra: {users},
-        });
-        initLibrary(userId, () => null);
-      }
-    });
+    manager.requestSync({userId, action: 'update-all'});
   }
 }
-
-function initLibrary(userId, callback) {
-  // Initialize our cache from Google's indexeddb, or fall back to a differential update from time 0.
-  // Callback nothing when finished.
-  Track.resetRandomCache();
-  Trackcache.openDb(userId, db => {
-    const message = {action: 'getLocalTracks', userId};
-    chrome.tabs.sendMessage(users[userId].tabId, message, response => {
-      if (chrome.extension.lastError || response === null || response.gtracks === null ||
-          response.gtracks.length === 0 || response.timestamp === null) {
-        console.warn('local idb not helpful; falling back to diffUpdate(0).', response, chrome.extension.lastError);
-        diffUpdateTrackcache(userId, db, diffResponse => {
-          if (diffResponse.success) {
-            dbs[userId] = db;
-          } else {
-            console.warn('failed to init library after diffupdate fallback');
-            Reporting.Raven.captureMessage('failed to init library', {
-              extra: {response, lastError: chrome.extension.lastError},
-              tags: {hadToFallback: true},
-            });
-          }
-          callback();
-        }, 0);
-      } else {
-        console.log('got idb gtracks:', response.gtracks.length);
-        const tracks = response.gtracks.map(Track.fromJsproto);
-        Trackcache.upsertTracks(db, userId, tracks, () => {
-          diffUpdateTrackcache(userId, db, diffResponse => {
-            if (diffResponse.success) {
-              dbs[userId] = db;
-            } else {
-              console.warn('failed to init library after successful idb read');
-              Reporting.Raven.captureMessage('failed to init library', {
-                extra: {response},
-                tags: {hadToFallback: false},
-              });
-            }
-            callback();
-          }, response.timestamp);
-        });
-      }
-    });
-  });
-}
-
 
 function main() {
   Auth.getToken(false, 'startup', token => {
@@ -658,29 +169,21 @@ function main() {
     const hasOld = 'oldValue' in change;
     const hasNew = 'newValue' in change;
 
-    let operation;
-    let userId;
+    let action;
+    let relevantChange;
     if (hasOld && !hasNew) {
-      operation = 'delete';
-      userId = change.oldValue.userId;
+      action = 'delete';
+      relevantChange = change.oldValue;
     } else {
-      operation = 'create-or-update';
-      userId = change.newValue.userId;
+      action = 'update'; // or create
+      relevantChange = change.newValue;
     }
 
-    Storage.getPlaylistsForUser(userId, playlists => {
-      if (operation === 'delete') {
-        // TODO switch this to oauth
-        Gm.deleteRemotePlaylist(users[userId], change.oldValue.remoteId, () => null);
-
-        Playlist.deleteAllReferences(change.oldValue.localId, playlists);
-        for (let i = 0; i < playlists.length; i++) {
-          Storage.savePlaylist(playlists[i], () => {});
-        }
-      } else {
-        syncPlaylist(change.newValue, playlists);
-      }
-    });
+    const syncDetails = {action, userId: relevantChange.userId, localId: relevantChange.localId};
+    if (action === 'delete') {
+      syncDetails.remoteId = change.oldValue.remoteId;
+    }
+    manager.requestSync(syncDetails);
   });
 
   chrome.pageAction.onClicked.addListener(tab => {
@@ -739,36 +242,12 @@ function main() {
     // respond to manager / content script requests.
 
     if (request.action === 'forceUpdate') {
-      if (!dbs[request.userId]) {
-        console.warn('forceUpdate requested diffUpdate, but db not init for', request.userId);
-        Reporting.Raven.captureMessage('forceUpdate requested diffUpdate, but db not init', {
-          level: 'warning',
-          extra: {request, users, dbs, syncsHaveStarted},
-        });
-      } else {
-        console.log('forceupdate diffUpdate');
-        diffUpdateTrackcache(request.userId, dbs[request.userId], response => {
-          console.debug('forceupdate diffUpdate res:', response);
-          syncPlaylists(request.userId);
-        });
-      }
+      // TODO this should probably be distinguished from normal periodic syncs.
+      manager.requestSync({userId: request.userId, action: 'update-all'});
     } else if (request.action === 'setXsrf') {
       console.info('updating xt:', JSON.stringify(request));
       users[request.userId].xt = request.xt;
-
-      if (!dbs[request.userId]) {
-        console.warn('setXsrf requested diffUpdate, but db not init for', request.userId);
-        Reporting.Raven.captureMessage('setXsrf requested diffUpdate, but db not init', {
-          level: 'warning',
-          extra: {request, users, dbs, syncsHaveStarted},
-        });
-      } else {
-        console.log('xsrf diffUpdate');
-        diffUpdateTrackcache(request.userId, dbs[request.userId], response => {
-          console.debug('xsrf diffUpdate response', response);
-          syncPlaylists(request.userId);
-        });
-      }
+      manager.requestSync({userId: request.userId, action: 'update-all'});
     } else if (request.action === 'showPageAction') {
       if (!(request.userId)) {
         console.warn('received falsey user id from page action');

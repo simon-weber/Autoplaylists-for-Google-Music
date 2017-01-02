@@ -55,6 +55,8 @@ function authedGMRequest(endpoint, data, user, method, callback, onError) {
 exports.getTrackChanges = function getTrackChanges(user, sinceTimestamp, callback) {
   // Callback {success: true, newTimestamp: 1234, upsertedTracks: [{}], deletedIds: ['']}, or {success: false, ...} on failure.
   // timestamps are in microseconds.
+  // sinceTimestamp of 0 can be used to retrieve the entire library.
+  // (There's no difference when omitting it, unlike https://github.com/simon-weber/gmusicapi/issues/513).
   const payload = {
     lastUpdated: sinceTimestamp,
     tier: 1, // TODO need proper tier?
@@ -149,8 +151,8 @@ exports.getTrackChanges = function getTrackChanges(user, sinceTimestamp, callbac
   });
 };
 
-exports.deleteRemotePlaylist = function deleteRemotePlaylist(user, remoteId, callback) {
-  // Callback no args after deleting a playlist.
+exports.deleteRemotePlaylist = function deleteRemotePlaylist(user, remoteId) {
+  // Promise an api response after deleting a playlist.
 
   const payload = {
     id: remoteId,
@@ -161,8 +163,7 @@ exports.deleteRemotePlaylist = function deleteRemotePlaylist(user, remoteId, cal
 
   console.debug('deleteRemotePlaylist', remoteId);
 
-  authedGMRequest('deleteplaylist', payload, user, 'post', response => {
-    console.debug('delete playlist response', response);
-    callback();
+  return new Promise((resolve, reject) => {
+    authedGMRequest('deleteplaylist', payload, user, 'post', resolve, reject);
   });
 };

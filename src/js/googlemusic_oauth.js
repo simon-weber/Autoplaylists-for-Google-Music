@@ -81,13 +81,14 @@ exports.buildPlaylistUpdates = function buildPlaylistUpdates(updates) {
   return mutations;
 };
 
-exports.runPlaylistMutations = function runPlaylistMutations(user, mutations, callback) {
+exports.runPlaylistMutations = function runPlaylistMutations(user, mutations) {
+  // Promise an api response.
   Reporting.reportMutationBatch('playlist', mutations);
 
   if (mutations.length === 0) {
     console.info('skipping empty playlist sync');
     Reporting.reportNewSync('success', 'Playlist', 0);
-    return callback({mutate_response: []});
+    return Promise.resolve({mutate_response: []});
   }
 
   const details = {
@@ -100,12 +101,15 @@ exports.runPlaylistMutations = function runPlaylistMutations(user, mutations, ca
       'tier': user.tier,
     },
   };
-  authedGMRequest(details, response => {
-    Reporting.reportNewSync('success', 'Playlist', mutations.length);
-    callback(response);
-  }, err => {
-    console.error('playlistbatch failed', err);
-    Reporting.reportNewSync('failure', 'Playlist', mutations.length);
+  return new Promise((resolve, reject) => {
+    authedGMRequest(details, response => {
+      Reporting.reportNewSync('success', 'Playlist', mutations.length);
+      resolve(response);
+    }, err => {
+      console.error('playlistbatch failed', err);
+      Reporting.reportNewSync('failure', 'Playlist', mutations.length);
+      reject(err);
+    });
   });
 };
 
@@ -114,6 +118,10 @@ exports.runPlaylistMutations = function runPlaylistMutations(user, mutations, ca
 // callback a list of items
 function consumePages(getNext, pageToken, items, callback) {
   getNext(pageToken, response => {
+    if (!response) {
+      return callback(items);
+    }
+
     if ('data' in response) {
       for (let i = 0; i < response.data.items.length; i++) {
         items.push(response.data.items[i]);
@@ -154,6 +162,9 @@ exports.getPlaylistChanges = function getPlaylistChanges(user, sinceTimestamp, c
 
     authedGMRequest(details, response => {
       _callback(response);
+    }, err => {
+      console.error('getPlaylistChanges call failed:', err);
+      _callback(undefined);
     });
   }
 
@@ -187,6 +198,9 @@ exports.getEntryChanges = function getEntryChanges(user, sinceTimestamp, callbac
 
     authedGMRequest(details, response => {
       _callback(response);
+    }, err => {
+      console.error('getEntryChanges call failed:', err);
+      _callback(undefined);
     });
   }
 
@@ -253,13 +267,14 @@ exports.buildEntryAppends = function buildEntryAppends(playlistId, trackIds) {
   return mutations;
 };
 
-exports.runEntryMutations = function runEntryMutations(user, mutations, callback) {
+exports.runEntryMutations = function runEntryMutations(user, mutations) {
+  // Promise an api response.
   Reporting.reportMutationBatch('entry', mutations);
 
   if (mutations.length === 0) {
     console.info('skipping empty entry sync');
     Reporting.reportNewSync('success', 'Entry', 0);
-    return callback({mutate_response: []});
+    return Promise.resolve({mutate_response: []});
   }
 
   const details = {
@@ -272,11 +287,14 @@ exports.runEntryMutations = function runEntryMutations(user, mutations, callback
       'tier': user.tier,
     },
   };
-  authedGMRequest(details, response => {
-    Reporting.reportNewSync('success', 'Entry', mutations.length);
-    callback(response);
-  }, err => {
-    console.error('playlistbatch failed', err);
-    Reporting.reportNewSync('failure', 'Entry', mutations.length);
+  return new Promise((resolve, reject) => {
+    authedGMRequest(details, response => {
+      Reporting.reportNewSync('success', 'Entry', mutations.length);
+      resolve(response);
+    }, err => {
+      console.error('playlistbatch failed', err);
+      Reporting.reportNewSync('failure', 'Entry', mutations.length);
+      reject(err);
+    });
   });
 };
