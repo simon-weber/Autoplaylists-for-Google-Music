@@ -1,3 +1,10 @@
+## 5.1.2 (January 1, 2017)
+
+Bugfixes:
+
+  - fix random playlists not re-shuffling after refreshing the page
+  - fix sync problems caused by multiple syncs happening at once
+
 ## 5.1.1 (December 31, 2016)
 
 Bugfixes:
