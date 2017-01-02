@@ -1,3 +1,9 @@
+## 5.1.3 (January 2, 2017)
+
+Bugfixes:
+
+  - fix sync problems for users with a system clock ahead of Google's
+
 ## 5.1.2 (January 1, 2017)
 
 Bugfixes:
