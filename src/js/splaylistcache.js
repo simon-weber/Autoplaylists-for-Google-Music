@@ -29,12 +29,20 @@ exports.sync = function sync(cache, user, playlists, callback) {
   console.log('syncing splaylist cache. current cache has:', Object.keys(cache.splaylists).length);
 
   const deletedIds = new Set();
-  const newTimestamp = new Date().getTime() * 1000;
   const autoPlaylistIds = new Set(playlists.map(p => p.remoteId));
+  // TODO consider storing these separately to improve efficiency a bit.
+  let maxPTimestamp = null;
+  let maxETimestamp = null;
 
   Gmoauth.getPlaylistChanges(user, cache._lastSyncMicros, mutations => {
     for (let i = 0; i < mutations.length; i++) {
       const mutation = mutations[i];
+
+      const lmTimestamp = parseInt(mutation.lastModifiedTimestamp, 10);
+      if (lmTimestamp) {
+        maxPTimestamp = Math.max(maxPTimestamp || lmTimestamp, lmTimestamp);
+      }
+
       if (mutation.deleted) {
         delete cache.splaylists[mutation.id];  // eslint-disable-line no-param-reassign
         deletedIds.add(mutation.id);
@@ -57,6 +65,12 @@ exports.sync = function sync(cache, user, playlists, callback) {
     Gmoauth.getEntryChanges(user, cache._lastSyncMicros, entryMutations => {
       for (let i = 0; i < entryMutations.length; i++) {
         const mutation = entryMutations[i];
+
+        const lmTimestamp = parseInt(mutation.lastModifiedTimestamp, 10);
+        if (lmTimestamp) {
+          maxETimestamp = Math.max(maxETimestamp || lmTimestamp, lmTimestamp);
+        }
+
         // This assumes that entries can't change playlists without a delete.
         const splaylist = cache.splaylists[mutation.playlistId];
 
@@ -82,9 +96,16 @@ exports.sync = function sync(cache, user, playlists, callback) {
           splaylist.orderedEntries.add(entry);
         }
       }
-      cache._lastSyncMicros = newTimestamp;   // eslint-disable-line no-param-reassign
 
-      const cacheInfo = {};
+      if (maxPTimestamp && maxETimestamp) {
+        // They're both numbers; take the smaller.
+        cache._lastSyncMicros = Math.min(maxPTimestamp, maxETimestamp); // eslint-disable-line no-param-reassign
+      } else {
+        // One or both is null.
+        cache._lastSyncMicros = maxPTimestamp || maxETimestamp; // eslint-disable-line no-param-reassign
+      }
+
+      const cacheInfo = {lastSync: cache._lastSyncMicros};
       let inconsistent = false;
       for (const id in cache.splaylists) {
         const splaylist = cache.splaylists[id];
