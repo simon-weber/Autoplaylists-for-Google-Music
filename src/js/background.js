@@ -9,6 +9,7 @@ const License = require('./license');
 const Splaylistcache = require('./splaylistcache');
 const Storage = require('./storage');
 const Syncing = require('./syncing');
+const Track = require('./track');
 const Trackcache = require('./trackcache');
 const Utils = require('./utils');
 
@@ -295,6 +296,7 @@ function main() {
           if (verifiedToken) {
             // Only start syncs if we already have auth.
             // If we don't, they'll be forced to provide it when clicking the page action.
+            Track.resetRandomCache();
             initSyncs(request.userId);
           }
         });

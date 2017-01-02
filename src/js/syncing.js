@@ -165,7 +165,6 @@ function deauthUser(userId) {
 function initLibrary(userId, callback) {
   // Initialize our cache from Google's indexeddb, or fall back to a differential update from time 0.
   // Callback nothing when finished.
-  Track.resetRandomCache();
   Trackcache.openDb(userId, db => {
     const message = {action: 'getLocalTracks', userId};
     chrome.tabs.sendMessage(globalState.users[userId].tabId, message, response => {
