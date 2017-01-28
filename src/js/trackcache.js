@@ -236,7 +236,7 @@ exports.queryTracks = function queryTracks(db, splaylistcache, playlist, resultC
 
   if (playlist.localId in resultCache) {
     console.info('using cached results for', playlist.localId, resultCache);
-    return callback([]);
+    return callback(resultCache[playlist.localId]);
   }
 
   Storage.getPlaylistsForUser(playlist.userId, playlists => {
