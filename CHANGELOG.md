@@ -1,3 +1,9 @@
+## 5.1.4 (January 28, 2017)
+
+Bugfixes:
+
+  - fix incorrect results for some autoplaylists that include multiple other autoplaylists
+
 ## 5.1.3 (January 2, 2017)
 
 Bugfixes:
