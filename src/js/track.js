@@ -28,6 +28,7 @@ exports.operators = {
   datetime: [
     {name: 'lt', label: 'earlier than', input_type: 'text'},
     {name: 'gt', label: 'between now and', input_type: 'text'},
+    {name: 'in-month', label: 'in the month of', input_type: 'text'},
   ],
   select: [
     {label: 'is equal to', name: 'equalTo', input_type: 'select'},
@@ -157,7 +158,7 @@ exports.fields = [
   f([24, 'creationDate', Lf.Type.INTEGER], {
     sjName: 'creationTimestamp',
     label: 'date added to library',
-    explanation: 'either a relative datetime like "30 days ago" or an absolute one like "April 1 2016".',
+    explanation: 'either a relative datetime like "30 days ago", an absolute one like "April 1 2016", or a month like "2017-02".',
     is_datetime: true,
     // coerce strings (sj)
     coerce: val => parseInt(val, 10),
