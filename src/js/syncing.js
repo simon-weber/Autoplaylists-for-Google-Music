@@ -18,11 +18,14 @@ const Reporting = require('./reporting');
 // This is being used to hold the old global state moving out of background.
 const globalState = {};
 
+const BACKOFF_MINS = 15;
+
 class Manager {
   // A sync manager serializes access to both remote and local (cached) Music resources.
   constructor(users, dbs, splaylistcaches, pollTimestamps) {
     this.queue = [];
     this.syncing = false;
+    this.backoffStart = null;
 
     globalState.users = users;
     globalState.dbs = dbs;
@@ -50,13 +53,40 @@ class Manager {
       return;
     }
 
+    if (this.inBackoff() && details.action === 'update-all') {
+      console.info('rejecting update-all while in backoff');
+      return;
+    }
+
     this.queue.push(details);
     console.log('queued sync', details, '.', 'queue is now', this.queue);
     this._doSyncs();
   }
 
+  inBackoff() {
+    if (!(this.backoffStart)) {
+      return false;
+    }
+
+    const backoffMins = (new Date().valueOf() - this.backoffStart.valueOf()) / 1000 / 60;
+    console.log('backoffMins', backoffMins);
+
+    if (backoffMins > BACKOFF_MINS) {
+      console.log('ending backoff; restarting syncs');
+      this.backoffStart = null;
+    }
+
+    return this.backoffStart !== null;
+  }
+
   _doSyncs() {
     // Drain the sync queue.
+
+    if (this.inBackoff()) {
+      console.info('in backoff; deferring');
+      return;
+    }
+
     if (this.syncing) {
       console.log('sync already in progress; deferring.', this.queue.length, 'waiting');
       return;
@@ -95,6 +125,10 @@ class Manager {
         level: 'error',
         extra: {details, e},
       });
+      if (e.status === 500 && !this.inBackoff()) {
+        console.warn('entering backoff');
+        this.backoffStart = new Date();
+      }
     }).then(responses => {
       console.log('finished sync', details, '. responses', responses);
       this.syncing = false;
