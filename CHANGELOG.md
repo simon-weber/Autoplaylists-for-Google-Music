@@ -1,3 +1,9 @@
+## 5.1.5 (February 26, 2017)
+
+Bugfixes:
+
+  - prevent overloading Google's servers by pausing syncing for 15 minutes when they return an error
+
 ## 5.1.4 (January 28, 2017)
 
 Bugfixes:
