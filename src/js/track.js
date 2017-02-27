@@ -104,13 +104,14 @@ exports.fields = [
   f([13, 'durationMillis', Lf.Type.INTEGER], {
     label: 'duration (ms)'}),
   f([14, 'track', Lf.Type.INTEGER], {
-    sjName: 'trackNumber'}),
+    sjName: 'trackNumber',
+    label: 'track number'}),
   f([15, 'totalTracks', Lf.Type.INTEGER], {
     sjName: 'totalTrackCount',
     label: 'total tracks'}),
   f([16, 'disc', Lf.Type.INTEGER], {
     sjName: 'discNumber',
-  }),
+    label: 'disc number'}),
   f([17, 'totalDiscs', Lf.Type.INTEGER], {
     sjName: 'totalDiscCount',
     label: 'total discs'}),
