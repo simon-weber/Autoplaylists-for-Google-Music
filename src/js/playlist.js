@@ -63,7 +63,7 @@ exports.toString = function toString(playlist, playlists, splaylistcache) {
     linkedNames['P' + s.id] = s.title;
   }
 
-  return `${ruleToString(playlist.rules, linkedNames)} sort by ${sorts}`;
+  return `${ruleToString(playlist.rules, linkedNames)} sorted by: ${sorts}`;
 };
 
 function involvedFieldNames(rule) {
