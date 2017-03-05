@@ -1,3 +1,11 @@
+## 5.1.6 (March 5, 2017)
+
+Misc:
+
+  - add an experimental option to send multiple smaller requests instead of one large one. See https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/128#issuecomment-283096925 for details.
+  - rename "track" and "disc" to "track number" and "disc number"
+  - update description format
+
 ## 5.1.5 (February 26, 2017)
 
 Bugfixes:
