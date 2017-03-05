@@ -119,7 +119,7 @@ class Manager {
       }).then(() => Promise.reject('db not init at periodic sync'));
     }).then(res => {
       console.log('cache update res', res);
-      return sync(details);
+      return sync(details, this.batchingEnabled);
     }).catch(e => {
       console.error('sync for', details, 'failed:', e);
       Reporting.Raven.captureMessage('sync failed', {
@@ -143,12 +143,12 @@ class Manager {
 
 exports.Manager = Manager;
 
-function sync(details) {
+function sync(details, batchingEnabled) {
   // Promise a list of api responses.
   const userId = details.userId;
 
   if (details.action === 'update-all') {
-    return syncPlaylists(userId);
+    return syncPlaylists(userId, batchingEnabled);
   }
 
   if (details.action === 'update' || details.action === 'delete') {
@@ -466,7 +466,7 @@ function getEntryMutations(playlist, splaylistcache) {
         if (surroundingType && surroundingType !== following.type) {
           // There's nothing we can do about this unless we send a no-op reorder and switch to client ids.
           // It doesn't seem worth it given that the reorders are already eventually consistent.
-          console.log('mixed reorder detected for', ordering, desiredOrdering[i - 1], following);
+          console.debug('mixed reorder detected for', ordering, desiredOrdering[i - 1], following);
           mixedReorders++;
         } else {
           surroundingType = following.type;
@@ -545,7 +545,7 @@ function syncPlaylist(playlist, playlists) {
   });
 }
 
-function syncEntryMutations(hasFullVersion, splaylistcache, user, playlists) {
+function syncEntryMutations(hasFullVersion, splaylistcache, user, playlists, batchingEnabled) {
   // Promise a parsed api response.
   const mutationBatchPromises = [];
   for (let i = 0; i < playlists.length; i++) {
@@ -571,6 +571,19 @@ function syncEntryMutations(hasFullVersion, splaylistcache, user, playlists) {
   }
 
   return Promise.all(mutationBatchPromises).then(mutationBatches => {
+    if (batchingEnabled) {
+      // Sync each batch on its own, serially.
+      return mutationBatches.reduce((promise, mutationBatch) => { // eslint-disable-line arrow-body-style
+        return promise.then(() => {
+          Reporting.reportMixedReorders(mutationBatch.mixedReorders);
+          return Gmoauth.runEntryMutations(user, mutationBatch.mutations).then(res => {
+            console.log('batch response', res);
+            return res;
+          });
+        });
+      }, Promise.resolve());
+    }
+    // Combine batches into one and sync in one request.
     const mutations = [];
     let sumMixedReorders = 0;
     for (let i = 0; i < mutationBatches.length; i++) {
@@ -611,7 +624,7 @@ function syncPlaylistMutations(hasFullVersion, splaylistcache, user, playlists) 
   return Gmoauth.runPlaylistMutations(user, mutations);
 }
 
-function syncPlaylists(userId) {
+function syncPlaylists(userId, batchingEnabled) {
   // Promise something when done. Reject if the sync couldn't happen.
   console.log('syncPlaylists', userId);
   const db = globalState.dbs[userId];
@@ -632,7 +645,7 @@ function syncPlaylists(userId) {
     License.hasFullVersion(false, hasFullVersion => {
       Storage.getPlaylistsForUser(userId, playlists => {
         // These don't need to be ordered/synchronous; the containing playlist already exists.
-        const entrySyncPromise = syncEntryMutations(hasFullVersion, splaylistcache, user, playlists);
+        const entrySyncPromise = syncEntryMutations(hasFullVersion, splaylistcache, user, playlists, batchingEnabled);
         const playlistSyncPromise = syncPlaylistMutations(hasFullVersion, splaylistcache, user, playlists);
         Promise.all([entrySyncPromise, playlistSyncPromise]).then(resolve).catch(reject);
       });
