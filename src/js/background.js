@@ -146,6 +146,11 @@ function periodicUpdate() {
 }
 
 function main() {
+  Storage.getBatchingEnabled(batchingEnabled => {
+    console.log('batching on?', batchingEnabled);
+    manager.batchingEnabled = batchingEnabled;
+  });
+
   Auth.getToken(false, 'startup', token => {
     Auth.verifyToken(token, verifiedToken => {
       if (!verifiedToken) {

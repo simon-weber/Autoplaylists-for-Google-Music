@@ -25,6 +25,18 @@
                     </p>
                     <input type="text" id="sync-minutes"/>
 
+                    <label for="batching-enabled">enable change batching</label>
+                    <p id="settings-explanation">
+                        Experimental: do not enabled unless asked to.
+                        <br/>
+                        When enabled, splits changes into multiple smaller requests instead of one large request.
+                        <br/>
+                        You must
+                        <a href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki/Debugging#reloading-the-extension">manually reload the extension</a>
+                        after changing this setting.
+                    </p>
+                    <input type="checkbox" id="batching-enabled"/>
+
                     <br/>
                     <br/>
                     <button id="submit" class="button-primary">save</button>

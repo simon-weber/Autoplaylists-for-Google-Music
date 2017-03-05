@@ -51,6 +51,21 @@ const MIGRATIONS = [
 ];
 
 // Callback a bool.
+exports.getBatchingEnabled = function getBatchingEnabled(callback) {
+  chrome.storage.sync.get('batchingEnabled', Utils.unlessError(items => {
+    callback(Boolean(items.batchingEnabled));
+  }));
+};
+
+// batchingEnabled is a bool.
+exports.setBatchingEnabled = function setBatchingEnabled(batchingEnabled, callback) {
+  const storageItems = {};
+  storageItems.batchingEnabled = batchingEnabled;
+
+  chrome.storage.sync.set(storageItems, Utils.unlessError(callback));
+};
+
+// Callback a bool.
 // Note that this is in local storage, since it's per machine.
 exports.getShouldNotWelcome = function getShouldNotWelcome(callback) {
   chrome.storage.local.get('shouldNotWelcome', Utils.unlessError(items => {

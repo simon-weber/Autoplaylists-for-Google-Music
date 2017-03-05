@@ -26,6 +26,7 @@ class Manager {
     this.queue = [];
     this.syncing = false;
     this.backoffStart = null;
+    this.batchingEnabled = false;
 
     globalState.users = users;
     globalState.dbs = dbs;

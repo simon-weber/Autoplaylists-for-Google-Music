@@ -14,6 +14,10 @@ function main() {
     $('#sync-minutes').val(syncMs / 1000 / 60);
   });
 
+  Storage.getBatchingEnabled(batchingEnabled => {
+    $('#batching-enabled').prop('checked', batchingEnabled);
+  });
+
   $('#submit').click(e => {
     e.preventDefault();
     let syncMinutes = parseFloat($('#sync-minutes').val(), 10);
@@ -27,9 +31,12 @@ function main() {
     }
 
     const syncMs = syncMinutes * 1000 * 60;
+    const batchingEnabled = $('#batching-enabled').prop('checked');
 
     Storage.setSyncMs(syncMs, () => {
-      Utils.goToManager(userId);
+      Storage.setBatchingEnabled(batchingEnabled, () => {
+        Utils.goToManager(userId);
+      });
     });
   });
 }
