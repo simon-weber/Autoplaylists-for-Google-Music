@@ -1,3 +1,14 @@
+## 5.2.0 (March 19, 2017)
+
+Features:
+
+  - add a condition for linking playlists via their title
+  - add a button to manually trigger a sync
+
+Misc:
+
+  - improve error reporting
+
 ## 5.1.6 (March 5, 2017)
 
 Misc:
