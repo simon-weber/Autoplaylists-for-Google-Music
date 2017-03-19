@@ -9,7 +9,7 @@ const Reporting = require('./reporting');
 // TODO push lengthy ops into the background script
 
 function initializeForm(userId, playlists) {
-  $('#force-update').click(e => {
+  $('#sync-now').click(e => {
     e.preventDefault();
     chrome.runtime.sendMessage({action: 'forceUpdate', userId});
   });

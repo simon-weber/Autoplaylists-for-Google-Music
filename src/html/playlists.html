@@ -16,7 +16,9 @@
             <div class="row">
                 <div class="column">
                     <h2>Autoplaylists</h2>
-                    Autoplaylists will be synced automatically once you create them.
+                    New autoplaylists will be synced once you create them.
+                    <br/>
+                    Existing autoplaylists are synced periodically according to your sync period setting.
                     <br/>
                     See <a href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki/Frequently-Asked-Questions#syncing" target="_blank">
                         the syncing FAQ</a> for more details.
@@ -25,6 +27,10 @@
                     <ul id='playlists'></ul>
 
                     <a id="add-playlist" class="button button-primary menu-button">Add an autoplaylist</a>
+                    <br/>
+                    <div class="hint--right" data-hint="Manually triggers a periodic sync.">
+                        <a id="sync-now" class="button menu-button">Sync now</a>
+                    </div>
                 </div>
             </div>
 
