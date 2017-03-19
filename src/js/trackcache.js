@@ -87,13 +87,58 @@ exports.deleteTracks = function deleteTracks(db, userId, trackIds, callback) {
   });
 };
 
-function escapeForRegex(s) {
-  // Return a copy of the string s with regex control characters escaped.
-  // Source: http://stackoverflow.com/a/3561711.
-  return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');  // eslint-disable-line no-useless-escape
+function getLinkedTracks(playlistId, splaylistcache, playlistsById, db, resultCache) {
+  // Promise the tracks in a given playlist or splaylist.
+  if (playlistId[0] === 'P') {
+    // splaylist
+    console.log('splaylist');
+    let orderedEntries = [];
+    try {
+      orderedEntries = splaylistcache.splaylists[playlistId.substring(1)].orderedEntries;
+    } catch (e) {
+      // This is likely a desync between the rules and splaylist state.
+      // It's often triggered on the first sync (since the cache is racing to sync first).
+      console.error(e);
+      Reporting.Raven.captureException(e, {
+        level: 'warning',
+        tags: {playlistId},
+        extra: {splaylistcache},
+      });
+    }
+    return Promise.resolve(orderedEntries.map(entry => entry.trackId));
+  }
+  // playlist
+  console.log('playlist', playlistsById);
+  const linkedPlaylist = playlistsById[playlistId];
+  return new Promise(resolve => {
+    exports.queryTracks(db, splaylistcache, linkedPlaylist, resultCache, resolve);
+  }).then(tracks => tracks.map(t => t.id));
 }
 
-function buildWhereClause(track, playlistsById, splaylistcache, resultCache, db, rule) {
+function titleMatches(operatorName, value, playlistTitle) {
+  const regexValue = Track.regexForOperator(operatorName, value);
+  if (regexValue) {
+    return playlistTitle.match(regexValue);
+  }
+
+  // Non regex string match.
+  if (operatorName === 'eq') {
+    return playlistTitle === value;
+  }
+  if (operatorName === 'neq') {
+    return playlistTitle !== value;
+  }
+
+  console.error(`received unknown title operator ${operatorName}`);
+  Reporting.Raven.captureMessage('received unknown title operator', {
+    tags: {operatorName},
+    extra: {value, playlistTitle},
+  });
+
+  return false;
+}
+
+function buildWhereClause(playlistId, track, playlistsById, splaylistcache, resultCache, db, rule) {
   // Promise a clause for use in a lovefield where() predicate, or null to select all tracks.
   let clause = null;
   let boolOp = null;
@@ -110,7 +155,7 @@ function buildWhereClause(track, playlistsById, splaylistcache, resultCache, db,
     const lfOp = boolOp === 'all' ? Lf.op.and : Lf.op.or;
 
     const subClausePs = subrules
-    .map(buildWhereClause.bind(undefined, track, playlistsById, splaylistcache, resultCache, db));
+    .map(buildWhereClause.bind(undefined, playlistId, track, playlistsById, splaylistcache, resultCache, db));
 
     return Promise.all(subClausePs)
     .then(subClauses => {
@@ -128,44 +173,45 @@ function buildWhereClause(track, playlistsById, splaylistcache, resultCache, db,
     let value = rule.value;
     let operator = rule.operator;
 
-    if (rule.name === 'playlist') {
-      if (rule.value[0] === 'P') {
-        // splaylist
-        let orderedEntries = [];
-        try {
-          orderedEntries = splaylistcache.splaylists[rule.value.substring(1)].orderedEntries;
-        } catch (e) {
-          // This is likely a desync between the rules and splaylist state.
-          // It's often triggered on the first sync (since the cache is racing to sync first).
-          console.error(e);
-          Reporting.Raven.captureException(e, {
-            level: 'warning',
-            tags: {playlistId: rule.value},
-            extra: {splaylistcache, rule},
-          });
+    if (rule.name === 'playlist' || rule.name === 'playlistTitle') {
+      const linkedPlaylistIds = [];
+      if (rule.name === 'playlistTitle') {
+        for (const id in playlistsById) {
+          if (titleMatches(rule.operator, rule.value, playlistsById[id].title)) {
+            if (id !== playlistId) {
+              console.log('matched playlist', playlistsById[id].title);
+              linkedPlaylistIds.push(id);
+            }
+          }
         }
-
-        const trackIdList = orderedEntries.map(entry => entry.trackId);
-        clause = Lf.op.or(
-          track.id.in(trackIdList),
-          track.storeId.in(trackIdList)
-        );
-        if (rule.operator === 'notEqualTo') {
-          clause = Lf.op.not(clause);
+        for (const id in splaylistcache.splaylists) {
+          const splaylist = splaylistcache.splaylists[id];
+          if (!splaylist.isAutoplaylist && titleMatches(rule.operator, rule.value, splaylist.title)) {
+            console.log('matched splaylist', playlistsById[id].title);
+            linkedPlaylistIds.push('P' + id);
+          }
         }
-        return Promise.resolve(clause);
+      } else {
+        linkedPlaylistIds.push(rule.value);
       }
-      // playlist
-      const linkedPlaylist = playlistsById[rule.value];
-      return new Promise(resolve => {
-        exports.queryTracks(db, splaylistcache, linkedPlaylist, resultCache, resolve);
-      }).then(tracks => {
-        const trackIdList = tracks.map(t => t.id);
+
+      return Promise.all(linkedPlaylistIds.map(id => getLinkedTracks(id, splaylistcache, playlistsById, db, resultCache)))
+      .then(linkedTrackIdsBatch => {
+        const allLinkedTrackIds = new Set();
+        for (let i = 0; i < linkedTrackIdsBatch.length; i++) {
+          const trackIds = linkedTrackIdsBatch[i];
+          for (let j = 0; j < trackIds.length; j++) {
+            allLinkedTrackIds.add(trackIds[j]);
+          }
+        }
+        return Array.from(allLinkedTrackIds);
+      }).then(trackIdList => {
+        console.debug(`found ${trackIdList.length} linked tracks`);
         clause = Lf.op.or(
           track.id.in(trackIdList),
           track.storeId.in(trackIdList)
         );
-        if (rule.operator === 'notEqualTo') {
+        if (Track.isExcludingOperator(rule.operator)) {
           clause = Lf.op.not(clause);
         }
 
@@ -177,31 +223,10 @@ function buildWhereClause(track, playlistsById, splaylistcache, resultCache, db,
       value = Date.create(rule.value).getTime() * 1000;
     }
 
-    if (rule.operator === 'match') {
+    const regexValue = Track.regexForOperator(rule.operator, value);
+    if (regexValue) {
       operator = 'match';
-      value = new RegExp(escapeForRegex(value));
-    } else if (rule.operator === 'match-regex') {
-      operator = 'match';
-      value = new RegExp(value);
-    } else if (rule.operator === 'match-insensitive') {
-      operator = 'match';
-      value = new RegExp(escapeForRegex(value), 'i');
-    } else if (rule.operator === 'no-match') {
-      operator = 'match';
-      // Negative lookahead on each character.
-      // Source: http://stackoverflow.com/a/957581/1231454
-      value = new RegExp(`^((?!${escapeForRegex(value)}).)*$`);
-    } else if (rule.operator === 'no-match-insensitive') {
-      operator = 'match';
-      value = new RegExp(`^((?!${escapeForRegex(value)}).)*$`, 'i');
-    } else if (rule.operator === 'eq-insensitive') {
-      operator = 'match';
-      value = new RegExp(`^${escapeForRegex(value)}$`, 'i');
-    } else if (rule.operator === 'neq-insensitive') {
-      // Negative lookahead once.
-      // Source: http://stackoverflow.com/a/2964653.
-      operator = 'match';
-      value = new RegExp(`^(?!${escapeForRegex(value)}$)`, 'i');
+      value = regexValue;
     }
 
     clause = track[rule.name][operator](value);
@@ -247,7 +272,7 @@ exports.queryTracks = function queryTracks(db, splaylistcache, playlist, resultC
     }
 
     const track = db.getSchema().table('Track');
-    buildWhereClause(track, playlistsById, splaylistcache, resultCache, db, playlist.rules)
+    buildWhereClause(playlist.localId, track, playlistsById, splaylistcache, resultCache, db, playlist.rules)
     .then(whereClause => {
       execQuery(db, track, whereClause, playlist, results => {
         resultCache[playlist.localId] = results;  // eslint-disable-line no-param-reassign

@@ -15,6 +15,7 @@ exports.operators = {
     {name: 'gte', label: 'greater than or equal', input_type: 'numeric'},
   ],
   string: [
+    // if the first letter of an operator is n, it's considered excluding for playlist linking.
     {name: 'eq', label: 'equals', input_type: 'text'},
     {name: 'eq-insensitive', label: 'equals (case ignored)', input_type: 'text'},
     {name: 'neq', label: "doesn't equal", input_type: 'text'},
@@ -30,9 +31,49 @@ exports.operators = {
     {name: 'gt', label: 'between now and', input_type: 'text'},
   ],
   select: [
+    // first letter n also applies here.
     {label: 'is equal to', name: 'equalTo', input_type: 'select'},
     {label: 'is not equal to', name: 'notEqualTo', input_type: 'select'},
   ],
+};
+
+exports.isExcludingOperator = function isExcludingOperator(operatorName) {
+  // FIXME this should be put into the operators then looked up
+  // rather adding semantics to the first letter
+  return operatorName[0] === 'n';
+};
+
+function escapeForRegex(s) {
+  // Return a copy of the string s with regex control characters escaped.
+  // Source: http://stackoverflow.com/a/3561711.
+  return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');  // eslint-disable-line no-useless-escape
+}
+
+exports.regexForOperator = function regexForOperator(operatorName, value) {
+  // Given a string operator name and a value to match on, return a RegExp.
+  // If this is not a string operator, return null;
+  let regex = null;
+  if (operatorName === 'match') {
+    regex = new RegExp(escapeForRegex(value));
+  } else if (operatorName === 'match-regex') {
+    regex = new RegExp(value);
+  } else if (operatorName === 'match-insensitive') {
+    regex = new RegExp(escapeForRegex(value), 'i');
+  } else if (operatorName === 'no-match') {
+    // Negative lookahead on each character.
+    // Source: http://stackoverflow.com/a/957581/1231454
+    regex = new RegExp(`^((?!${escapeForRegex(value)}).)*$`);
+  } else if (operatorName === 'no-match-insensitive') {
+    regex = new RegExp(`^((?!${escapeForRegex(value)}).)*$`, 'i');
+  } else if (operatorName === 'eq-insensitive') {
+    regex = new RegExp(`^${escapeForRegex(value)}$`, 'i');
+  } else if (operatorName === 'neq-insensitive') {
+    // Negative lookahead once.
+    // Source: http://stackoverflow.com/a/2964653.
+    regex = new RegExp(`^(?!${escapeForRegex(value)}$)`, 'i');
+  }
+
+  return regex;
 };
 
 function f(requiredItems, optionalItems) {

@@ -16,7 +16,11 @@ function ruleToString(rule, linkedNames) {
   if (rule.name === 'playlist') {
     const operators = Track.operators.select;
     const operator = operators.filter(o => o.name === rule.operator)[0];
-    return `${rule.name} ${operator.label} "${linkedNames[rule.value]}"`;
+    return `playlist ${operator.label} "${linkedNames[rule.value]}"`;
+  } else if (rule.name === 'playlistTitle') {
+    const operators = Track.operators.string;
+    const operator = operators.filter(o => o.name === rule.operator)[0];
+    return `playlist title ${operator.label} "${rule.value}"`;
   } else if (rule.name) {
     const field = Track.fieldsByName[rule.name];
     // FIXME this is duplicated in playlist_editor
@@ -46,6 +50,7 @@ function lfOrderToString(lfOrder) {
 }
 
 function sortToString(sort) {
+  // FIXME this should use a label (eg 'playlist count' instead of 'playlistCount')
   return `${sort.sortBy} ${lfOrderToString(sort.sortByOrder)}`;
 }
 
@@ -71,7 +76,7 @@ function involvedFieldNames(rule) {
   const fieldNames = {};
 
 
-  if (rule.name && rule.name !== 'playlist') {
+  if (rule.name && rule.name !== 'playlist' && rule.name !== 'playlistTitle') {
     fieldNames[rule.name] = true;
   } else if (rule.all || rule.any) {
     const subRules = rule.all || rule.any;

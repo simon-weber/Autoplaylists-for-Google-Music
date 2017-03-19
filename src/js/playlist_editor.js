@@ -57,6 +57,12 @@ function getRulesData(playlists, playlistId, splaylistcache) {
       field_type: 'select',
       options: playlistOptions,
     });
+    variables.push({
+      name: 'playlistTitle',
+      label: 'playlist title',
+      field_type: 'string',
+      options: [],
+    });
   }
 
   variables.sort(compareByLabel);
