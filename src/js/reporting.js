@@ -27,6 +27,10 @@ Raven
 .install();
 exports.Raven = Raven;
 
+window.addEventListener('unhandledrejection', event => {
+  Raven.captureException(event.reason);
+});
+
 const GAService = analytics.getService('autoplaylists');
 const GATracker = GAService.getTracker('UA-71628085-3');
 exports.GAService = GAService;
