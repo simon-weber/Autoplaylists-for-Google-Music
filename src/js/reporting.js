@@ -19,7 +19,7 @@ Raven
 
     setTimeout(() => {
       delete limiter[data.message];
-    }, 1000 * 60 * 10);
+    }, 1000 * 60 * 30);
 
     return true;
   },
