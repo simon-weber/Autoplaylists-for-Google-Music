@@ -73,7 +73,6 @@ function queryIDB(callback) {
       // Sometimes the indexeddb just isn't written at all.
       // This happens for the very first load of Music, and maybe other cases.
       console.error(e);
-      Reporting.Raven.captureException(e);
       callback(null);
     }
   };
