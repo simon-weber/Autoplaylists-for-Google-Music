@@ -1,3 +1,10 @@
+## 5.2.1 (May 13, 2017)
+
+Misc:
+
+  - add a warning that uninstalling will delete definitions
+  - error reporting tweaks
+
 ## 5.2.0 (March 19, 2017)
 
 Features:
