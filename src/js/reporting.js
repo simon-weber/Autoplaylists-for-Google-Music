@@ -9,8 +9,11 @@ Raven
 .config('https://ea691c5833f34aa085df5e5aee9a46f3@app.getsentry.com/66349', {
   release: chrome.runtime.getManifest().version,
   shouldSendCallback: data => {
-    // rate limit error sending.
+    // rate limit error sending to sentry, but duplicate to GA.
     // source: https://github.com/getsentry/raven-js/issues/435#issuecomment-183021031
+
+    exports.reportGAError(data);
+
     if (data.message in limiter) {
       return false;
     }
@@ -147,6 +150,20 @@ exports.reportHit = function reportHit(view) {
     setTimeout(reportHit, 1000, view);
   } else {
     GATracker.sendAppView(view);
+  }
+};
+
+// Send a sentry error to GA.
+exports.reportGAError = function reportGAError(sentryData) {
+  if (!cachedContext) {
+    setTimeout(reportGAError, 1000, sentryData);
+  } else {
+    const error = analytics.EventBuilder.builder()
+    .category('error')
+    .action(sentryData.message)
+    .label(sentryData.message);
+
+    GATracker.send(error);
   }
 };
 
