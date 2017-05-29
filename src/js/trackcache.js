@@ -222,6 +222,14 @@ function buildWhereClause(playlistId, track, playlistsById, splaylistcache, resu
     if (Track.fieldsByName[rule.name].is_datetime) {
       value = Date.create(rule.value).getTime() * 1000;
     }
+    if (rule.operator === 'in-month') {
+      // We want a specific month; we basically want dates between the specified value and a month from it
+      // FIXME: ideally, we should check that the start value is a 1st of a month at midnight
+      const valueStart = value;
+      const valueEnd = Date.create(rule.value).advance({ month: 1 }).getTime() * 1000;
+      clause = track[rule.name].between(valueStart, valueEnd);
+      return Promise.resolve(clause);
+    }
 
     const regexValue = Track.regexForOperator(rule.operator, value);
     if (regexValue) {
