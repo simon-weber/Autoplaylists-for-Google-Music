@@ -167,8 +167,8 @@ function sync(details, batchingEnabled) {
       return Gm.deleteRemotePlaylist(globalState.users[userId], details.remoteId)
       .then(response => {
         // TODO this should probably happen outside of syncing
-        const storagePromises = [];
         Playlist.deleteAllReferences(details.localId, playlists);
+        const toSave = [];
         for (let i = 0; i < playlists.length; i++) {
           if (playlists[i].localId === details.localId || playlists[i].remoteId === details.remoteId) {
             // I'm not sure why this happens, since the playlist should be deleted before sync is even called.
@@ -176,12 +176,15 @@ function sync(details, batchingEnabled) {
             // This might also be fixed now -- it probably was a problem when syncs didn't wait on storage.
             continue;
           }
-          storagePromises.push(new Promise(resolve => {
-            Storage.savePlaylist(playlists[i], resolve);
-          }));
+          toSave.push(playlists[i]);
         }
-        return Promise.all(storagePromises)
-        .then(storageResults => [response]); // eslint-disable-line no-unused-vars
+
+        return new Promise(resolve => {
+          // It'd be ideal not to trigger an update of every playlist, but this is easier than doing a DFS to find
+          // all playlists that could have changed.
+          // It'd be easy to just not do this when it wasn't linked at all, though.
+          Storage.savePlaylists(toSave, resolve);
+        }).then(() => [response]);
       });
     });
   }
@@ -671,17 +674,15 @@ function syncSplaylistcache(userId) {
   .then(params => {
     const playlists = params[0];
     const deletedIds = params[1];
-    const storagePromises = [];
     for (const deletedId of deletedIds) {
       Playlist.deleteAllReferences('P' + deletedId, playlists);
-      for (let i = 0; i < playlists.length; i++) {
-        // FIXME saving all the playlists sucks since it triggers updates for each
-        storagePromises.push(new Promise(resolve => {
-          Storage.savePlaylist(playlists[i], resolve);
-        }));
-      }
     }
-    return Promise.all(storagePromises).then();
+
+    if (deletedIds.size > 0) {
+      return new Promise(resolve => {
+        Storage.savePlaylists(playlists, resolve);
+      });
+    }
   });
 }
 

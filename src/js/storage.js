@@ -167,8 +167,15 @@ exports.getPlaylist = function getPlaylist(userId, playlistLid, callback) {
 };
 
 exports.savePlaylist = function savePlaylist(playlist, callback) {
+  exports.savePlaylists([playlist], callback);
+};
+
+exports.savePlaylists = function savePlaylists(playlists, callback) {
   const storageItems = {};
-  storageItems[playlistKey(playlist.userId, playlist.localId)] = playlist;
+  for (let i = 0; i < playlists.length; i++) {
+    const playlist = playlists[i];
+    storageItems[playlistKey(playlist.userId, playlist.localId)] = playlist;
+  }
 
   chrome.storage.sync.set(storageItems, Utils.unlessError(callback));
 };
