@@ -1,3 +1,9 @@
+## 5.2.2 (June 16, 2017)
+
+Bugfixes:
+
+  - reduce the likelyhood of hitting sync storage write quotas when deleting playlists
+
 ## 5.2.1 (May 13, 2017)
 
 Misc:
