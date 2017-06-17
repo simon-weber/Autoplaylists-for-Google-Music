@@ -42,7 +42,7 @@ function main() {
 
       $('#query-result').DataTable({ // eslint-disable-line new-cap
         autoWidth: true,
-        dom: 'Bfrtip',
+        dom: 'lBfrtip',
         data: response.tracks,
         columns,
         aaSorting: [],

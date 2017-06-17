@@ -218,10 +218,14 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache,
     const playlist = readForm();
     console.log('testing', playlist);
 
-    // When testing, show the total number of matched tracks.
+    // Query the entire resultset, then limit it afterwards.
+    const limit = playlist.limit;
     playlist.limit = null;
 
     chrome.runtime.sendMessage({action: 'query', playlist}, response => {
+      const fullResults = response.tracks;
+      const limitedResults = response.tracks.slice(0, limit);
+
       const columnNames = new Set();
       columnNames.add('title');
       columnNames.add('artist');
@@ -253,9 +257,29 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache,
       }
 
       $('#query-result').DataTable({ // eslint-disable-line new-cap
-        data: response.tracks,
+        data: limitedResults,
+        dom: 'lBfrtip',
         columns,
         aaSorting: [],
+        buttons: [
+          {
+            text: 'Ignore limit',
+            action: function action(buttonE, dt, node, config) {
+              config.applyLimit = !config.applyLimit; // eslint-disable-line no-param-reassign
+
+              dt.clear();
+              if (config.applyLimit) {
+                dt.rows.add(limitedResults);
+                this.text('Ignore limit');
+              } else {
+                dt.rows.add(fullResults);
+                this.text('Apply limit');
+              }
+              dt.draw();
+            },
+            applyLimit: true,
+          },
+        ],
       });
       $('#query-modal').modal();
     });
