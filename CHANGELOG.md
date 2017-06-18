@@ -1,3 +1,9 @@
+## 5.3.0 (June 17, 2017)
+
+Features:
+
+  - show test results with limit applied by default; add a button to show results without the limit
+
 ## 5.2.2 (June 16, 2017)
 
 Bugfixes:
