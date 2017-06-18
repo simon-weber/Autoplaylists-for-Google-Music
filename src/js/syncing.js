@@ -265,10 +265,6 @@ function diffUpdateTrackcache(userId, db, callback, timestamp) {
         },
         e => {
           console.warn('failed to request xsrf refresh; deauthing', JSON.stringify(e));
-          Reporting.Raven.captureMessage('failed to request xsrf refresh; deauthing', {
-            level: 'warning',
-            extra: {changes, timestamp, e: JSON.stringify(e)},
-          });
           deauthUser(userId);
         }));
       } else if (changes.unauthed) {
