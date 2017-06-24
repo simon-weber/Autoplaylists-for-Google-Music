@@ -156,7 +156,7 @@ function main() {
     const tier = event.data.tier;
     const xt = event.data.xt;
     const gaiaId = event.data.gaiaId;
-    const action = event.data.isInitial ? 'showPageAction' : 'setXsrf';
+    const action = event.data.isInitial ? 'showPageActionOld' : 'setXsrfOld';
 
     chrome.runtime.sendMessage({
       action,

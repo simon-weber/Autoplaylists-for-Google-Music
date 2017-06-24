@@ -16,6 +16,8 @@ const Utils = require('./utils');
 const Context = require('./context');
 const Reporting = require('./reporting');
 
+const MUSIC_URL = 'https://play.google.com/music/listen';
+
 // {userId: {userIndex: int, tabId: int, xt: string, tier: string, gaiaId: string}}
 const users = {};
 
@@ -151,6 +153,14 @@ function main() {
     manager.batchingEnabled = batchingEnabled;
   });
 
+  chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (changeInfo.status === 'complete' && tab.url.startsWith(MUSIC_URL)) {
+      console.info('noticed music tab; injecting for', tabId);
+      chrome.tabs.executeScript(tabId, {file: 'js-built/getuserinfo.js'});
+    }
+  });
+
+
   Auth.getToken(false, 'startup', token => {
     Auth.verifyToken(token, verifiedToken => {
       if (!verifiedToken) {
@@ -250,6 +260,8 @@ function main() {
     if (request.action === 'forceUpdate') {
       // TODO this should probably be distinguished from normal periodic syncs.
       manager.requestSync({userId: request.userId, action: 'update-all'});
+    } else if (request.action === 'postUserInfo') {
+      console.info('postUserInfo:', JSON.stringify(request));
     } else if (request.action === 'setXsrf') {
       console.info('updating xt:', JSON.stringify(request));
       users[request.userId].xt = request.xt;

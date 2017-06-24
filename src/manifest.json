@@ -18,13 +18,6 @@
         "persistent": true
     },
     "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
-    "content_scripts": [
-        {
-            "matches": ["https://play.google.com/music/listen*"],
-            "js": ["js/vendor/google-analytics-bundle.js", "js-built/content.js"],
-            "run_at": "document_idle"
-        }
-    ],
     "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAz+3KtzjQDL02ImMyyYME023b6e+X/QzknISyl5BR3fAZRRqwj1am8BqOahuaDU7cnInozDZBCg16OoNLsMySA+tW8TYQ/y5d9MJl7AoJARm77td0A5M4gWD17cf2Y4DPo5SrksISIsUf66c1QXJAvm4ADNGJ7iXe/Uz4kpUSxx9L0ZbLq/2jwdoZ5riqzEg8J5WiWYGozUtMedrZON6azr/lhlmqlXbeNknn4K43xu3dCP2mvnWBIg5D97+BnGHcwygATq8qcGbPz0NFpT2JKHFafKYjKcxqwn3zRnYZQxqpZ8vPgjd2yudekLnqH88wYUhJHXgVIe8i5mjcSzHqgQIDAQAB",
     "oauth2": {
         "client_id": "2926246410-1fv6eah3tgqu44f1hmol91cih06brpth.apps.googleusercontent.com",
