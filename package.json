@@ -19,5 +19,14 @@
     "eslint-plugin-import": "^1.14.0",
     "eslint-plugin-jsx-a11y": "^2.2.1",
     "eslint-plugin-react": "^6.2.1"
+  },
+  "browser": {
+    "analytics": "./src/js/vendor/google-analytics-bundle.js"
+  },
+  "browserify": {
+    "transform": [ "browserify-shim" ]
+  },
+  "browserify-shim": {
+    "analytics": "analytics"
   }
 }

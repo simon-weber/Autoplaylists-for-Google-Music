@@ -14,7 +14,7 @@
     },
 
     "background": {
-        "scripts": ["js/vendor/jquery-1.9.1.min.js", "js/vendor/google-analytics-bundle.js", "js-built/background.js"],
+        "scripts": ["js/vendor/jquery-1.9.1.min.js", "js-built/background.js"],
         "persistent": true
     },
     "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",

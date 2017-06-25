@@ -39,7 +39,6 @@ function authedGMRequest(endpoint, data, user, method, callback, onError) {
     };
   }
 
-  // TODO jquery should be injected with browserify?
   $[method](
     url,
     payload,

@@ -1,5 +1,6 @@
 'use strict';
 const Raven = require('raven-js');
+const Analytics = require('analytics'); // eslint-disable-line import/no-unresolved,import/no-extraneous-dependencies
 
 const Context = require('./context');
 
@@ -34,7 +35,7 @@ window.addEventListener('unhandledrejection', event => {
   Raven.captureException(event.reason);
 });
 
-const GAService = analytics.getService('autoplaylists');
+const GAService = Analytics.getService('autoplaylists');
 const GATracker = GAService.getTracker('UA-71628085-3');
 exports.GAService = GAService;
 exports.GATracker = GATracker;
@@ -50,7 +51,7 @@ exports.reportNewSync = function reportNewSync(action, type, value) {
     setTimeout(reportNewSync, 1000, action, type, value);
   } else {
     const category = 'newSync' + type;
-    const sync = analytics.EventBuilder.builder()
+    const sync = Analytics.EventBuilder.builder()
     .category(category)
     .action(action)
     .value(value);
@@ -77,7 +78,7 @@ exports.reportMutationBatch = function reportMutationBatch(type, mutations) {
         continue;
       }
 
-      const batch = analytics.EventBuilder.builder()
+      const batch = Analytics.EventBuilder.builder()
       .category(category)
       .action(mutationType)
       .value(count);
@@ -107,7 +108,7 @@ exports.reportMixedReorders = function reportMixedReorders(num) {
   if (!cachedContext) {
     setTimeout(reportMixedReorders, 1000, num);
   } else if (num > 0) {
-    const reorders = analytics.EventBuilder.builder()
+    const reorders = Analytics.EventBuilder.builder()
     .category('mixedReorders')
     .action('present')
     .value(num);
@@ -122,7 +123,7 @@ exports.reportActivation = function reportActivation(action) {
   if (!cachedContext) {
     setTimeout(reportActivation, 1000, action);
   } else {
-    const activation = analytics.EventBuilder.builder()
+    const activation = Analytics.EventBuilder.builder()
     .category('activation')
     .action(action);
 
@@ -136,7 +137,7 @@ exports.reportAuth = function reportAuth(action, label) {
   if (!cachedContext) {
     setTimeout(reportAuth, 1000, action, label);
   } else {
-    const auth = analytics.EventBuilder.builder()
+    const auth = Analytics.EventBuilder.builder()
     .category('oauth')
     .action(action)
     .label(label);
@@ -158,7 +159,7 @@ exports.reportGAError = function reportGAError(sentryData) {
   if (!cachedContext) {
     setTimeout(reportGAError, 1000, sentryData);
   } else {
-    const error = analytics.EventBuilder.builder()
+    const error = Analytics.EventBuilder.builder()
     .category('error')
     .action(sentryData.message)
     .label(sentryData.message);

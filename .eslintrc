@@ -4,7 +4,6 @@
       "chrome": true,
       "$": true,
       "__DEVELOPMENT__": true,
-      "analytics": true,
       "require": true,
       "exports": true,
       "Set": true
