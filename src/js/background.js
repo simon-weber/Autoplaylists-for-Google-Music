@@ -21,6 +21,10 @@ const MUSIC_URL = 'https://play.google.com/music/listen';
 // {userId: {userIndex: int, tabId: int, xt: string, tier: string, gaiaId: string}}
 const users = {};
 
+// handle tabs.onUpdated firing duplicate events.
+const TAB_COOLDOWN_MS = 10 * 1000;
+const tabIdsInCooldown = new Set();
+
 // {userId: <lovefield db>}
 const dbs = {};
 
@@ -155,7 +159,16 @@ function main() {
 
   chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete' && tab.url.startsWith(MUSIC_URL)) {
-      console.info('noticed music tab; injecting for', tabId);
+      console.log('noticed music tab', tabId);
+      if (tabIdsInCooldown.has(tabId)) {
+        console.info('tab in cooldown; not injecting for', tabId);
+        return;
+      }
+
+      tabIdsInCooldown.add(tabId);
+      setTimeout(() => tabIdsInCooldown.delete(tabId), TAB_COOLDOWN_MS);
+
+      console.info('injecting getuser for', tabId);
       chrome.tabs.executeScript(tabId, {file: 'js-built/getuserinfo.js'});
     }
   });
