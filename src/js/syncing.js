@@ -6,6 +6,7 @@ const SortedArray = require('collections/sorted-array');
 const Gm = require('./googlemusic');
 const Gmoauth = require('./googlemusic_oauth');
 const License = require('./license');
+const Page = require('./page');
 const Playlist = require('./playlist');
 const Splaylistcache = require('./splaylistcache');
 const Storage = require('./storage');
@@ -201,26 +202,28 @@ function deauthUser(userId) {
 }
 
 function initLibrary(userId, callback) {
+  const fallback = db => {
+    diffUpdateTrackcache(userId, db, diffResponse => {
+      if (diffResponse.success) {
+        globalState.dbs[userId] = db;
+      } else {
+        console.warn('failed to init library after diffupdate fallback');
+        Reporting.Raven.captureMessage('failed to init library', {
+          tags: {hadToFallback: true},
+        });
+      }
+      callback();
+    }, 0);
+  };
+
   // Initialize our cache from Google's indexeddb, or fall back to a differential update from time 0.
   // Callback nothing when finished.
   Trackcache.openDb(userId, db => {
-    const message = {action: 'getLocalTracks', userId};
-    chrome.tabs.sendMessage(globalState.users[userId].tabId, message, response => {
+    Page.getLocalTracks(globalState.users[userId].tabId).then(response => {
       if (chrome.extension.lastError || response === null || response.gtracks === null ||
           response.gtracks.length === 0 || response.timestamp === null) {
         console.warn('local idb not helpful; falling back to diffUpdate(0).', response, chrome.extension.lastError);
-        diffUpdateTrackcache(userId, db, diffResponse => {
-          if (diffResponse.success) {
-            globalState.dbs[userId] = db;
-          } else {
-            console.warn('failed to init library after diffupdate fallback');
-            Reporting.Raven.captureMessage('failed to init library', {
-              extra: {response, lastError: chrome.extension.lastError},
-              tags: {hadToFallback: true},
-            });
-          }
-          callback();
-        }, 0);
+        fallback(db);
       } else {
         console.log('got idb gtracks:', response.gtracks.length);
         const tracks = response.gtracks.map(Track.fromJsproto);
@@ -239,6 +242,9 @@ function initLibrary(userId, callback) {
           }, response.timestamp);
         });
       }
+    }).catch(e => {
+      console.warn('getLocalTracks rejected; falling back', e);
+      fallback(db);
     });
   });
 }
@@ -260,13 +266,16 @@ function diffUpdateTrackcache(userId, db, callback, timestamp) {
     if (!changes.success) {
       console.warn('failed to getTrackChanges:', JSON.stringify(changes));
       if (changes.reloadXsrf) {
-        chrome.tabs.sendMessage(user.tabId, {action: 'getXsrf'}, Utils.unlessError(r => {
-          console.info('requested xsrf refresh', r);
-        },
-        e => {
-          console.warn('failed to request xsrf refresh; deauthing', JSON.stringify(e));
+        Page.getXsrf(user.tabId).then(xt => {
+          globalState.users[userId].xt = xt;
+          callback({success: false});
+          // TODO this used to request a sync immediately; is that what we want?
+          // requestSync({userId, action: 'update-all'});
+        }).catch(e => {
+          console.warn('rejected from getXsrf', e);
           deauthUser(userId);
-        }));
+          callback({success: false});
+        });
       } else if (changes.unauthed) {
         console.info('unauthed', userId);
         deauthUser(userId);

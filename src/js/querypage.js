@@ -1,40 +1,20 @@
 'use strict';
 
+// This script expects to have a config variable injected to it.
+
 const Qs = require('qs');
 
 const Reporting = require('./reporting');
 
-let userId;
+const ID = config.id;  // eslint-disable-line no-undef
+const ACTION = config.action; // eslint-disable-line no-undef
 
-/*
- * Return a string of javascript that will post a message to us if the user is authenticated.
- * isInitial should be true for the very first message, false afterwards.
- */
-function getInjectCode(isInitial) {
-  const isInitialRepr = isInitial ? 'true' : 'false';
+console.log('querypage', ID, ACTION);
 
-  // context[12] is the email for authenticated users.
-  /* eslint-disable prefer-template */
-  const code = '(' + function inject() {
-    if (window.USER_CONTEXT[12] !== '') {
-      window.postMessage(
-        {isInitial: isInitialRepr,
-          userId: window.USER_ID,
-          tier: window.USER_CONTEXT[13],
-          gaiaId: window.USER_CONTEXT[32],
-          xt: window._GU_getCookie('xt')},
-        '*');
-    }
-  } + ')()';
-  /* eslint-enable prefer-template */
+// This only exists in a multi-login session.
+const USER_INDEX = Qs.parse(location.search.substring(1)).u || '0';
 
-  // We need to actually get the value of our variable into the string, not a reference to it.
-  return code.replace('isInitialRepr', isInitialRepr);
-}
-
-/*
- * Inject some javascript (as a string) into the DOM.
- */
+// Inject some javascript (as a string) into the DOM.
 function injectCode(code) {
   const script = document.createElement('script');
   script.textContent = code;
@@ -42,12 +22,34 @@ function injectCode(code) {
   script.parentNode.removeChild(script);
 }
 
+function getInjectCode(id) {
+  // context[12] is the email for authenticated users.
+  // FIXME this should always send a response, even with not authed
+  /* eslint-disable prefer-template,no-undef */
+  const code = '(' + function inject() {
+    if (window.USER_CONTEXT[12] !== '') {
+      window.postMessage(
+        {contentScriptId: contentScriptIdRepr,
+          userId: window.USER_ID,
+          tier: window.USER_CONTEXT[13],
+          gaiaId: window.USER_CONTEXT[32],
+          xt: window._GU_getCookie('xt')},
+        '*');
+    }
+  } + ')()';
+  /* eslint-enable prefer-template,no-undef */
+
+  // We need to actually get the value of our variable into the string, not a reference to it.
+  return code.replace('contentScriptIdRepr', `${id}`);
+}
+
 /*
  * Callback an object with gtracks (a list of jsproto tracks)
  * and timestamp keys from the local indexedDb.
  * Either may be null.
  */
-function queryIDB(callback) {
+function queryIDB(userId, callback) {
+  console.log('queryIDB', userId);
   const dbName = `music_${userId}`;
   const DBOpenRequest = window.indexedDB.open(dbName, 6);
 
@@ -56,7 +58,7 @@ function queryIDB(callback) {
     Reporting.Raven.captureMessage('DBOpenRequest.onerror', {
       extra: {err},
     });
-    callback(null);
+    callback({gtracks: null, timestamp: null});
   };
 
   DBOpenRequest.onsuccess = event => { // eslint-disable-line no-unused-vars
@@ -73,7 +75,7 @@ function queryIDB(callback) {
       // Sometimes the indexeddb just isn't written at all.
       // This happens for the very first load of Music, and maybe other cases.
       console.error(e);
-      callback(null);
+      callback({gtracks: null, timestamp: null});
     }
   };
 }
@@ -123,52 +125,47 @@ function queryTracks(tracksStore, callback) {
   };
 }
 
-function main() {
-  // This only exists in a multi-login session.
-  const userIndex = Qs.parse(location.search.substring(1)).u || '0';
+function eventListener(event) {
+  // We only accept messages from ourselves
+  if (event.source !== window || event.data.contentScriptId !== ID) {
+    return;
+  }
 
-  // Add our self event listeners first to avoid race conditions.
-  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log('got message', request);
-    if (request.action === 'getLocalTracks') {
-      queryIDB(result => {
-        sendResponse(result);
+  console.log('received from page', event.data);
+
+  const userId = event.data.userId;
+  const tier = event.data.tier;
+  const xt = event.data.xt;
+  const gaiaId = event.data.gaiaId;
+
+  window.removeEventListener('message', eventListener);
+
+
+  new Promise(resolve => {
+    if (ACTION === 'getUserInfo') {
+      resolve({
+        tier,
+        xt,
+        gaiaId,
+        userId: `${userId}`,
+        userIndex: parseInt(USER_INDEX, 10),
       });
-      return true;
-    } else if (request.action === 'getXsrf') {
-      injectCode(getInjectCode(false));
-      sendResponse('ok');
+    } else if (ACTION === 'getLocalTracks') {
+      queryIDB(userId, resolve);
     }
+  }).then(result => {
+    /* eslint-disable no-param-reassign */
+    result.action = 'postPageResponse';
+    result.contentScriptId = ID;
+    /* eslint-enable no-param-reassign */
+    console.info('sending result', result);
+    chrome.runtime.sendMessage(result);
   });
+}
 
-
-  // Pull the user id from the page, then show the page action.
-  // Since we can't read window here, we inject code, then post a message back.
-  window.addEventListener('message', event => {
-    // We only accept messages from ourselves
-    if (event.source !== window) {
-      return;
-    }
-
-    console.log('received from page', event.data);
-
-    userId = event.data.userId;
-    const tier = event.data.tier;
-    const xt = event.data.xt;
-    const gaiaId = event.data.gaiaId;
-    const action = event.data.isInitial ? 'showPageActionOld' : 'setXsrfOld';
-
-    chrome.runtime.sendMessage({
-      action,
-      tier,
-      xt,
-      gaiaId,
-      userId: `${userId}`,
-      userIndex: parseInt(userIndex, 10),
-    });
-  }, false);
-
-  injectCode(getInjectCode(true));
+function main() {
+  window.addEventListener('message', eventListener);
+  injectCode(getInjectCode(ID));
 }
 
 main();

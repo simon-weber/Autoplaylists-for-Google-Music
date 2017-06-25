@@ -6,6 +6,7 @@ const SortedMap = require('collections/sorted-map');
 const Auth = require('./auth');
 const Lf = require('lovefield');  // made available for debugQuery eval
 const License = require('./license');
+const Page = require('./page');
 const Splaylistcache = require('./splaylistcache');
 const Storage = require('./storage');
 const Syncing = require('./syncing');
@@ -151,12 +152,82 @@ function periodicUpdate() {
   }
 }
 
+function showPageAction(request, tabId) {
+  if (!(request.userId)) {
+    console.warn('received falsey user id from page action');
+    Reporting.Raven.captureMessage('received falsey user id from page action', {
+      level: 'warning',
+      extra: {user_id: request.userId},
+    });
+
+    return;
+  }
+
+  // In the case that an existing tab/index was changed to a new user,
+  // remove the old entry.
+  for (const userId in users) {
+    if (users[userId].tabId === tabId ||
+        users[userId].userIndex === request.userIndex) {
+      delete users[userId];
+    }
+  }
+
+  console.log('see user', request.userId, users);
+  if (request.gaiaId !== primaryGaiaId) {
+    console.warn('user is not the primary user');
+    chrome.pageAction.show(tabId);
+    return;
+  }
+
+  let tier = 'free';
+  if (request.tier === 2) {
+    tier = 'aa';
+  }
+
+  users[request.userId] = {userIndex: request.userIndex, tabId, xt: request.xt, tier};
+
+  License.hasFullVersion(false, hasFullVersion => { console.log('precached license status:', hasFullVersion); });
+
+  // FIXME store this in sync storage and include it in context?
+  // That'd mean we wouldn't get it immediately, though, so maybe this is better.
+  Reporting.Raven.setTagsContext({tier: request.tier});
+  Reporting.GATracker.set('dimension3', request.tier);
+  Reporting.reportHit('showPageAction');
+
+  Auth.getToken(false, 'userDetected', token => {
+    Auth.verifyToken(token, verifiedToken => {
+      if (verifiedToken) {
+        // Only start syncs if we already have auth.
+        // If we don't, they'll be forced to provide it when clicking the page action.
+        Track.resetRandomCache();
+        initSyncs(request.userId);
+      }
+    });
+  });
+
+  chrome.pageAction.show(tabId);
+
+  Storage.getPlaylistsForUser(request.userId, playlists => {
+    if (playlists.length === 0) {
+      chrome.notifications.create('zeroPlaylists', {
+        type: 'basic',
+        title: 'Create your first autoplaylist!',
+        message: "To get started, click the extension's page action (to the right of the url bar).",
+        iconUrl: 'icon-128.png',
+        buttons: [{title: "Click here if you don't see the page action.", iconUrl: 'question_mark.svg'}],
+      });
+      Reporting.reportHit('zeroPlaylistsNotification');
+    }
+  });
+}
+
 function main() {
   Storage.getBatchingEnabled(batchingEnabled => {
     console.log('batching on?', batchingEnabled);
     manager.batchingEnabled = batchingEnabled;
   });
 
+  // TODO scan through tabs on startup and do this same stuff to recover them
   chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete' && tab.url.startsWith(MUSIC_URL)) {
       console.log('noticed music tab', tabId);
@@ -169,7 +240,10 @@ function main() {
       setTimeout(() => tabIdsInCooldown.delete(tabId), TAB_COOLDOWN_MS);
 
       console.info('injecting getuser for', tabId);
-      chrome.tabs.executeScript(tabId, {file: 'js-built/getuserinfo.js'});
+
+      Page.getUserInfo(tabId).then(userInfo => {
+        showPageAction(userInfo, tabId);
+      });
     }
   });
 
@@ -273,79 +347,6 @@ function main() {
     if (request.action === 'forceUpdate') {
       // TODO this should probably be distinguished from normal periodic syncs.
       manager.requestSync({userId: request.userId, action: 'update-all'});
-    } else if (request.action === 'postUserInfo') {
-      console.info('postUserInfo:', JSON.stringify(request));
-    } else if (request.action === 'setXsrf') {
-      console.info('updating xt:', JSON.stringify(request));
-      users[request.userId].xt = request.xt;
-      manager.requestSync({userId: request.userId, action: 'update-all'});
-    } else if (request.action === 'showPageAction') {
-      if (!(request.userId)) {
-        console.warn('received falsey user id from page action');
-        Reporting.Raven.captureMessage('received falsey user id from page action', {
-          level: 'warning',
-          extra: {user_id: request.userId},
-        });
-
-        return false;
-      }
-
-      // In the case that an existing tab/index was changed to a new user,
-      // remove the old entry.
-      for (const userId in users) {
-        if (users[userId].tabId === sender.tab.id ||
-            users[userId].userIndex === request.userIndex) {
-          delete users[userId];
-        }
-      }
-
-      console.log('see user', request.userId, users);
-      if (request.gaiaId !== primaryGaiaId) {
-        console.warn('user is not the primary user');
-        chrome.pageAction.show(sender.tab.id);
-        return;
-      }
-
-      let tier = 'free';
-      if (request.tier === 2) {
-        tier = 'aa';
-      }
-
-      users[request.userId] = {userIndex: request.userIndex, tabId: sender.tab.id, xt: request.xt, tier};
-
-      License.hasFullVersion(false, hasFullVersion => { console.log('precached license status:', hasFullVersion); });
-
-      // FIXME store this in sync storage and include it in context?
-      // That'd mean we wouldn't get it immediately, though, so maybe this is better.
-      Reporting.Raven.setTagsContext({tier: request.tier});
-      Reporting.GATracker.set('dimension3', request.tier);
-      Reporting.reportHit('showPageAction');
-
-      Auth.getToken(false, 'userDetected', token => {
-        Auth.verifyToken(token, verifiedToken => {
-          if (verifiedToken) {
-            // Only start syncs if we already have auth.
-            // If we don't, they'll be forced to provide it when clicking the page action.
-            Track.resetRandomCache();
-            initSyncs(request.userId);
-          }
-        });
-      });
-
-      chrome.pageAction.show(sender.tab.id);
-
-      Storage.getPlaylistsForUser(request.userId, playlists => {
-        if (playlists.length === 0) {
-          chrome.notifications.create('zeroPlaylists', {
-            type: 'basic',
-            title: 'Create your first autoplaylist!',
-            message: "To get started, click the extension's page action (to the right of the url bar).",
-            iconUrl: 'icon-128.png',
-            buttons: [{title: "Click here if you don't see the page action.", iconUrl: 'question_mark.svg'}],
-          });
-          Reporting.reportHit('zeroPlaylistsNotification');
-        }
-      });
     } else if (request.action === 'query') {
       const db = dbs[request.playlist.userId];
       const splaylistcache = splaylistcaches[request.playlist.userId];
@@ -379,12 +380,6 @@ function main() {
       }
       sendResponse(cache);
       return;
-    } else {
-      console.warn('received unknown request', request);
-      Reporting.Raven.captureMessage('received unknown request', {
-        level: 'warning',
-        extra: {request},
-      });
     }
   });
 
