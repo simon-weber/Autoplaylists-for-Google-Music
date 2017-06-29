@@ -1,3 +1,9 @@
+## 5.3.1 (June 28, 2017)
+
+Misc:
+
+  - switch to a different chrome api for communicating with the Google Music tab (which required adding the tabs permission)
+
 ## 5.3.0 (June 17, 2017)
 
 Features:
