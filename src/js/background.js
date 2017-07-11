@@ -42,14 +42,6 @@ let syncsHaveStarted = false;
 
 const manager = new Syncing.Manager(users, dbs, splaylistcaches, pollTimestamps);
 
-function userIdForTabId(tabId) {
-  for (const userId in users) {
-    if (users[userId].tabId === tabId) {
-      return userId;
-    }
-  }
-}
-
 function initSyncs(userId) {
   // Fill caches, then set the periodic sync schedule based on the last periodic sync.
   // This may also sync immediately if we're overdue for a sync.
@@ -291,41 +283,45 @@ function main() {
 
   chrome.pageAction.onClicked.addListener(tab => {
     chrome.notifications.clear('zeroPlaylists');
-    const userId = userIdForTabId(tab.id);
-    if (userId) {
-      Auth.getToken(false, 'pageAction', token => {
-        Auth.verifyToken(token, verifiedToken => {
-          if (!verifiedToken) {
-            console.info('asking for auth');
-            Auth.getToken(true, 'pageAction', token2 => {
-              if (token2) {
-                console.info('got auth on prompt', token2.slice(0, 10));
-                // FIXME the sync can race playlist creation.
-                initSyncs(userId);
-                const qstring = Qs.stringify({userId: userIdForTabId(tab.id)});
-                const url = chrome.extension.getURL('html/playlists.html');
-                Utils.focusOrCreateExtensionTab(`${url}?${qstring}`);
-              }
-            });
-          } else {
-            console.log('already had auth', verifiedToken.slice(0, 10));
-            const qstring = Qs.stringify({userId: userIdForTabId(tab.id)});
-            const url = chrome.extension.getURL('html/playlists.html');
-            Utils.focusOrCreateExtensionTab(`${url}?${qstring}`);
-          }
-        });
-      });
-    } else {
-      // Only the primary user is ever put into the users array.
-      Reporting.Raven.captureMessage('multiuser page action click', {
-        level: 'warning',
-        extra: {userId, primaryGaiaId, users},
-      });
-      Reporting.reportHit('multiuserPageActionClick');
 
-      const url = chrome.extension.getURL('html/multi-user.html');
-      Utils.focusOrCreateExtensionTab(url);
-    }
+    Page.getUserInfo(tab.id).then(userInfo => {
+      const gaiaId = userInfo.gaiaId;
+      if (gaiaId === primaryGaiaId) {
+        const userId = Object.keys(users)[0];
+        Auth.getToken(false, 'pageAction', token => {
+          Auth.verifyToken(token, verifiedToken => {
+            if (!verifiedToken) {
+              console.info('asking for auth');
+              Auth.getToken(true, 'pageAction', token2 => {
+                if (token2) {
+                  console.info('got auth on prompt', token2.slice(0, 10));
+                  // FIXME the sync can race playlist creation.
+                  initSyncs(userId);
+                  const qstring = Qs.stringify({userId});
+                  const url = chrome.extension.getURL('html/playlists.html');
+                  Utils.focusOrCreateExtensionTab(`${url}?${qstring}`);
+                }
+              });
+            } else {
+              console.log('already had auth', verifiedToken.slice(0, 10));
+              const qstring = Qs.stringify({userId});
+              const url = chrome.extension.getURL('html/playlists.html');
+              Utils.focusOrCreateExtensionTab(`${url}?${qstring}`);
+            }
+          });
+        });
+      } else {
+        console.warn('multiuser page action click from', gaiaId, 'expected', primaryGaiaId);
+        Reporting.Raven.captureMessage('multiuser page action click', {
+          level: 'warning',
+          extra: {gaiaId, primaryGaiaId, users},
+        });
+        Reporting.reportHit('multiuserPageActionClick');
+
+        const url = chrome.extension.getURL('html/multi-user.html');
+        Utils.focusOrCreateExtensionTab(url);
+      }
+    });
   });
 
   chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
