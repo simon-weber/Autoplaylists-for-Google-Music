@@ -1,3 +1,9 @@
+## 5.3.2 (July 11, 2017)
+
+Bugfixes:
+
+  - fix playlists using a "playlist title" condition that matched non-autoplaylists
+
 ## 5.3.1 (June 28, 2017)
 
 Misc:
