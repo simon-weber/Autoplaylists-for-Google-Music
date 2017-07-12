@@ -1,6 +1,7 @@
 'use strict';
 
 const Utils = require('./utils');
+const Reporting = require('./reporting');
 
 // Support interactions with the dom of a Google Music tab.
 // Instead of a normal long-running content script, this is done by injecting one-time use code
@@ -10,6 +11,20 @@ const Utils = require('./utils');
 // Promise the full response from the page.
 // Rejections are typically a failure to communicate with the tab.
 function makePageQuery(action, tabId) {
+  // Eventually this should replace the tab id, but I want to first find out how often
+  // the query finds more than one tab.
+  chrome.tabs.query({url: '*://play.google.com/music/*'}, Utils.unlessError(tabs => {
+    console.debug('tab query yields', JSON.stringify(tabs, null, '\t'));
+    Reporting.reportTabQuery('success', tabs.length);
+  }, e => {
+    console.warn('tab query failed', e);
+    Reporting.Raven.captureMessage('tab query failed', {
+      level: 'warning',
+      extra: {action, tabId, e},
+    });
+    Reporting.reportTabQuery('failure');
+  }));
+
   const scriptId = Date.now();
 
   return new Promise((resolve, reject) => {

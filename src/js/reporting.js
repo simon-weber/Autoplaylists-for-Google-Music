@@ -146,6 +146,24 @@ exports.reportAuth = function reportAuth(action, label) {
   }
 };
 
+// action is one of 'success' or 'failure'.
+// hits is optionally the number of tabs matched.
+exports.reportTabQuery = function reportTabQuery(action, hits) {
+  if (!cachedContext) {
+    setTimeout(reportTabQuery, 1000, action, hits);
+  } else {
+    let query = Analytics.EventBuilder.builder()
+    .category('tabQuery')
+    .action(action);
+
+    if (Number.isInteger(hits)) {
+      query = query.value(hits);
+    }
+
+    GATracker.send(query);
+  }
+};
+
 exports.reportHit = function reportHit(view) {
   if (!cachedContext) {
     setTimeout(reportHit, 1000, view);
