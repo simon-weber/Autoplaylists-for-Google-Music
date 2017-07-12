@@ -187,7 +187,7 @@ function buildWhereClause(playlistId, track, playlistsById, splaylistcache, resu
         for (const id in splaylistcache.splaylists) {
           const splaylist = splaylistcache.splaylists[id];
           if (!splaylist.isAutoplaylist && titleMatches(rule.operator, rule.value, splaylist.title)) {
-            console.log('matched splaylist', playlistsById[id].title);
+            console.log('matched splaylist', splaylist.title);
             linkedPlaylistIds.push('P' + id);
           }
         }
