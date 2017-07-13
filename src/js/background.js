@@ -213,13 +213,23 @@ function showPageAction(request, tabId) {
   });
 }
 
+function initTab(tabId) {
+  tabIdsInCooldown.add(tabId);
+  setTimeout(() => tabIdsInCooldown.delete(tabId), TAB_COOLDOWN_MS);
+
+  console.info('injecting getuser for', tabId);
+
+  Page.getUserInfo().then(userInfo => {
+    showPageAction(userInfo, tabId);
+  });
+}
+
 function main() {
   Storage.getBatchingEnabled(batchingEnabled => {
     console.log('batching on?', batchingEnabled);
     manager.batchingEnabled = batchingEnabled;
   });
 
-  // TODO scan through tabs on startup and do this same stuff to recover them
   chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete' && tab.url.startsWith(MUSIC_URL)) {
       console.log('noticed music tab', tabId);
@@ -228,17 +238,9 @@ function main() {
         return;
       }
 
-      tabIdsInCooldown.add(tabId);
-      setTimeout(() => tabIdsInCooldown.delete(tabId), TAB_COOLDOWN_MS);
-
-      console.info('injecting getuser for', tabId);
-
-      Page.getUserInfo().then(userInfo => {
-        showPageAction(userInfo, tabId);
-      });
+      initTab(tabId);
     }
   });
-
 
   Auth.getToken(false, 'startup', token => {
     Auth.verifyToken(token, verifiedToken => {
@@ -377,6 +379,13 @@ function main() {
       }
       sendResponse(cache);
       return;
+    }
+  });
+
+  Page.getTabs().then(tabs => {
+    if (tabs.length > 0) {
+      console.info('detected startup tab', tabs[0]);
+      initTab(tabs[0].id);
     }
   });
 
