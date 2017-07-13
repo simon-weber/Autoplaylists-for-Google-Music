@@ -10,21 +10,35 @@ const Reporting = require('./reporting');
 
 // Promise the full response from the page.
 // Rejections are typically a failure to communicate with the tab.
-function makePageQuery(action, tabId) {
-  // Eventually this should replace the tab id, but I want to first find out how often
-  // the query finds more than one tab.
-  chrome.tabs.query({url: '*://play.google.com/music/*'}, Utils.unlessError(tabs => {
-    console.debug('tab query yields', JSON.stringify(tabs, null, '\t'));
-    Reporting.reportTabQuery('success', tabs.length);
-  }, e => {
-    console.warn('tab query failed', e);
-    Reporting.Raven.captureMessage('tab query failed', {
-      level: 'warning',
-      extra: {action, tabId, e},
-    });
-    Reporting.reportTabQuery('failure');
-  }));
+function makePageQuery(action) {
+  return new Promise((resolve, reject) => {
+    chrome.tabs.query({url: '*://play.google.com/music/*'}, Utils.unlessError(tabs => {
+      console.debug('tab query yields', JSON.stringify(tabs, null, '\t'));
+      Reporting.reportTabQuery('success', tabs.length);
 
+      if (tabs.length === 0) {
+        return reject('no tabs matched');
+      }
+
+      if (tabs.length > 1) {
+        console.warn('found multiple tabs but using first');
+      }
+
+      const tabId = tabs[0].id;
+      _makePageQuery(action, tabId).then(resolve).catch(reject);
+    }, e => {
+      console.warn('tab query failed', e);
+      Reporting.Raven.captureMessage('tab query failed', {
+        level: 'warning',
+        extra: {action, e},
+      });
+      Reporting.reportTabQuery('failure');
+      reject(e);
+    }));
+  });
+}
+
+function _makePageQuery(action, tabId) {
   const scriptId = Date.now();
 
   return new Promise((resolve, reject) => {
@@ -64,14 +78,14 @@ function makePageQuery(action, tabId) {
 }
 
 // Promise the value of the xt cookie.
-exports.getXsrf = function getXsrf(tabId) {
-  return makePageQuery('getUserInfo', tabId)
+exports.getXsrf = function getXsrf() {
+  return makePageQuery('getUserInfo')
   .then(response => response.xt);
 };
 
 // Promise an object with keys: tier, xt, gaiaId, userid, userIndex.
-exports.getUserInfo = function getUserInfo(tabId) {
-  return makePageQuery('getUserInfo', tabId)
+exports.getUserInfo = function getUserInfo() {
+  return makePageQuery('getUserInfo')
   .then(response => ({
     tier: response.tier,
     xt: response.xt,
@@ -84,8 +98,8 @@ exports.getUserInfo = function getUserInfo(tabId) {
 // Promise an object with gtracks (a list of jsproto tracks)
 // and timestamp keys from the local indexedDb.
 // Either may be null.
-exports.getLocalTracks = function getLocalTracks(tabId) {
-  return makePageQuery('getLocalTracks', tabId)
+exports.getLocalTracks = function getLocalTracks() {
+  return makePageQuery('getLocalTracks')
   .then(response => ({
     gtracks: response.gtracks,
     timestamp: response.timestamp,

@@ -233,7 +233,7 @@ function main() {
 
       console.info('injecting getuser for', tabId);
 
-      Page.getUserInfo(tabId).then(userInfo => {
+      Page.getUserInfo().then(userInfo => {
         showPageAction(userInfo, tabId);
       });
     }
@@ -282,9 +282,10 @@ function main() {
   });
 
   chrome.pageAction.onClicked.addListener(tab => {
+    console.log('page action click for', tab);
     chrome.notifications.clear('zeroPlaylists');
 
-    Page.getUserInfo(tab.id).then(userInfo => {
+    Page.getUserInfo().then(userInfo => {
       const gaiaId = userInfo.gaiaId;
       if (gaiaId === primaryGaiaId) {
         const userId = Object.keys(users)[0];

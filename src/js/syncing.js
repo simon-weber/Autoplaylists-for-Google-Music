@@ -219,7 +219,7 @@ function initLibrary(userId, callback) {
   // Initialize our cache from Google's indexeddb, or fall back to a differential update from time 0.
   // Callback nothing when finished.
   Trackcache.openDb(userId, db => {
-    Page.getLocalTracks(globalState.users[userId].tabId).then(response => {
+    Page.getLocalTracks().then(response => {
       if (chrome.extension.lastError || response === null || response.gtracks === null ||
           response.gtracks.length === 0 || response.timestamp === null) {
         console.warn('local idb not helpful; falling back to diffUpdate(0).', response, chrome.extension.lastError);
@@ -266,7 +266,7 @@ function diffUpdateTrackcache(userId, db, callback, timestamp) {
     if (!changes.success) {
       console.warn('failed to getTrackChanges:', JSON.stringify(changes));
       if (changes.reloadXsrf) {
-        Page.getXsrf(user.tabId).then(xt => {
+        Page.getXsrf().then(xt => {
           globalState.users[userId].xt = xt;
           callback({success: false});
           // TODO this used to request a sync immediately; is that what we want?
