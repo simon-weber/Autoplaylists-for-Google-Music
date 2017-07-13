@@ -1,3 +1,13 @@
+## 5.3.3 (July 12, 2017)
+
+Bugfixes:
+
+  - fix periodic sync stops caused by closed tabs
+
+Misc:
+
+  - automatically connect to a GM tab on load (previously a refresh was required)
+
 ## 5.3.2 (July 11, 2017)
 
 Bugfixes:
