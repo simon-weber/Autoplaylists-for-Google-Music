@@ -5,6 +5,7 @@ const SortedArray = require('collections/sorted-array');
 
 const Gm = require('./googlemusic');
 const Gmoauth = require('./googlemusic_oauth');
+const Health = require('./health');
 const License = require('./license');
 const Page = require('./page');
 const Playlist = require('./playlist');
@@ -199,6 +200,7 @@ function deauthUser(userId) {
   delete globalState.dbs[userId];
   delete globalState.pollTimestamps[userId];
   delete globalState.splaylistcaches[userId];
+  Health.handleDeauth();
 }
 
 function initLibrary(userId, callback) {

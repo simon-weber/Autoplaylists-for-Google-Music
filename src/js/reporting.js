@@ -164,6 +164,21 @@ exports.reportTabQuery = function reportTabQuery(action, hits) {
   }
 };
 
+// action is 'success' or 'failure' depending on whether we did attempt to reload.
+// label describes what triggered the reload (eg 'deauth').
+exports.reportReload = function reportReload(action, label) {
+  if (!cachedContext) {
+    setTimeout(reportReload, 1000, action, label);
+  } else {
+    const query = Analytics.EventBuilder.builder()
+    .category('reload')
+    .action(action)
+    .label(label);
+
+    GATracker.send(query);
+  }
+};
+
 exports.reportHit = function reportHit(view) {
   if (!cachedContext) {
     setTimeout(reportHit, 1000, view);
