@@ -1,3 +1,9 @@
+## 5.3.4 (July 13, 2017)
+
+Misc:
+
+  - improve reliability over long periods by automatically reloading after deauths
+
 ## 5.3.3 (July 12, 2017)
 
 Bugfixes:
