@@ -1,3 +1,9 @@
+## 5.3.5 (July 15, 2017)
+
+Misc:
+
+  - add a mailchimp prompt to the welcome page
+
 ## 5.3.4 (July 13, 2017)
 
 Misc:
