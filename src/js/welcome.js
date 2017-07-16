@@ -13,9 +13,9 @@ function main() {
 
       Auth.getToken(true, 'upgrade', token => {
         console.log((token || '<falsey>').slice(0, 10));
-        chrome.tabs.getCurrent(tab => {
-          chrome.tabs.remove(tab.id, () => {});
-        });
+
+        $('#welcome').hide();
+        $('#list').show();
       });
     });
   });
