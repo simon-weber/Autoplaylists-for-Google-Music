@@ -1,3 +1,9 @@
+## 5.3.6 (July 17, 2017)
+
+Misc:
+
+  - switch announcements link to mailchimp archive
+
 ## 5.3.5 (July 15, 2017)
 
 Misc:
