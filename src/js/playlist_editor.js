@@ -22,11 +22,20 @@ sortedFields.sort(compareByLabel);
 function getRulesData(playlists, playlistId, splaylistcache) {
   const variables = [];
   sortedFields.forEach(field => {
+    let fieldType = Track.lfToBusinessTypes[field.type];
+    let options = [];
+    if (field.is_datetime) {
+      fieldType = 'datetime';
+    } else if (field.is_boolean) {
+      fieldType = 'boolean';
+      options = [{label: 'true', value: 'true'}, {label: 'false', value: 'false'}];
+    }
+
     variables.push({
       name: field.name,
       label: field.label,
-      field_type: field.is_datetime ? 'datetime' : Track.lfToBusinessTypes[field.type],
-      options: [],
+      field_type: fieldType,
+      options,
     });
   });
 

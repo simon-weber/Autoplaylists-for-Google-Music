@@ -35,6 +35,9 @@ exports.operators = {
     {name: 'equalTo', label: 'is equal to', input_type: 'select'},
     {name: 'notEqualTo', label: 'is not equal to', input_type: 'select'},
   ],
+  boolean: [
+    {name: 'eq', label: 'is', input_type: 'select'},
+  ],
 };
 
 exports.isExcludingOperator = function isExcludingOperator(operatorName) {
@@ -87,11 +90,15 @@ function f(requiredItems, optionalItems) {
   field.label = opt.label || field.name;
   field.explanation = opt.explanation || '';
   field.is_datetime = opt.is_datetime || false;
+  field.is_boolean = opt.is_boolean || false;
   field.hidden = opt.hidden || false;
   field.transformation = opt.transformation || null;
 
   if (opt.coerce) {
     field.coerce = opt.coerce;
+  } else if (field.is_boolean) {
+    // storing this as a string is super lazy, but it makes integration with business rules way easier
+    field.coerce = val => (val ? 'true' : 'false');
 
   // Default types to non-null values to allow querying.
   } else if (field.type === Lf.Type.STRING) {
@@ -136,6 +143,11 @@ exports.fields = [
     },
   }),
   f([1, 'title', Lf.Type.STRING]),
+  f([2, 'hasAlbumArt', Lf.Type.STRING], {
+    // I've seen this not be accurate when a track is also matched, though it seems eventually consistent.
+    label: 'has album art?',
+    is_boolean: true,
+  }),
   f([3, 'artist', Lf.Type.STRING]),
   f([4, 'album', Lf.Type.STRING]),
   f([5, 'albumArtist', Lf.Type.STRING], {
@@ -219,6 +231,11 @@ exports.fields = [
   f([28, 'matchedId', Lf.Type.STRING], {
     // not in sj
     hidden: true,
+  }),
+  f([28, 'isMatched', Lf.Type.STRING], {
+    label: 'is matched?',
+    is_boolean: true,
+    explanation: 'true if Google matched this track to one in their store.',
   }),
   f([29, 'type', Lf.Type.INTEGER], {
     sjName: 'trackType',
