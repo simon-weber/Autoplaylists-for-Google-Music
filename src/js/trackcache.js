@@ -116,17 +116,25 @@ function getLinkedTracks(playlistId, splaylistcache, playlistsById, db, resultCa
 }
 
 function titleMatches(operatorName, value, playlistTitle) {
+  // Treating inclusive and exclusive operators the same way here is intentional.
+  // Inverting matches here breaks exclusion, since it would:
+  //   * find all playlists that _don't_ match the user's query
+  //   * _exclude_ their tracks
+  // when instead we want to _exclude_ the tracks in the playlists that _match_ their query.
+  // See https://github.com/simon-weber/Autoplaylists-for-Google-Music/issues/163
+  // for more details.
   const regexValue = Track.regexForOperator(operatorName, value);
   if (regexValue) {
-    return playlistTitle.match(regexValue);
+    let res = playlistTitle.match(regexValue);
+    if (Track.isExcludingOperator(operatorName)) {
+      res = !res;
+    }
+    return res;
   }
 
   // Non regex string match.
-  if (operatorName === 'eq') {
+  if (operatorName === 'eq' || operatorName === 'neq') {
     return playlistTitle === value;
-  }
-  if (operatorName === 'neq') {
-    return playlistTitle !== value;
   }
 
   console.error(`received unknown title operator ${operatorName}`);
