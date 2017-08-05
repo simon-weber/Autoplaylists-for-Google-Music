@@ -89,9 +89,20 @@ exports.deleteTracks = function deleteTracks(db, userId, trackIds, callback) {
 
 function getLinkedTracks(playlistId, splaylistcache, playlistsById, db, resultCache) {
   // Promise the tracks in a given playlist or splaylist.
+  // Cycle detection happens here so it applies to both static and auto playlists.
+
+  if (playlistId in resultCache) {
+    console.info('using cached results for', playlistId, resultCache);
+    return Promise.resolve(resultCache[playlistId]);
+  }
+
+  // This terminates cycles with the empty set.
+  // If we're able to get a result, the cache gets overwritten below.
+  resultCache[playlistId] = []; // eslint-disable-line no-param-reassign
+
   if (playlistId[0] === 'P') {
     // splaylist
-    console.log('splaylist');
+    console.debug('getLinked splaylist', playlistsById);
     let orderedEntries = [];
     try {
       orderedEntries = splaylistcache.splaylists[playlistId.substring(1)].orderedEntries;
@@ -105,14 +116,20 @@ function getLinkedTracks(playlistId, splaylistcache, playlistsById, db, resultCa
         extra: {splaylistcache},
       });
     }
-    return Promise.resolve(orderedEntries.map(entry => entry.trackId));
+    const result = orderedEntries.map(entry => entry.trackId);
+    resultCache[playlistId] = result; // eslint-disable-line no-param-reassign
+    return Promise.resolve(result);
   }
   // playlist
-  console.log('playlist', playlistsById);
+  console.debug('getLinked playlist', playlistsById);
   const linkedPlaylist = playlistsById[playlistId];
   return new Promise(resolve => {
     exports.queryTracks(db, splaylistcache, linkedPlaylist, resultCache, resolve);
-  }).then(tracks => tracks.map(t => t.id));
+  }).then(tracks => {
+    const result = tracks.map(t => t.id);
+    resultCache[playlistId] = result; // eslint-disable-line no-param-reassign
+    return result;
+  });
 }
 
 function titleMatches(operatorName, value, playlistTitle) {
@@ -266,11 +283,7 @@ function execQuery(db, track, whereClause, playlist, callback, onError) {
 
 exports.queryTracks = function queryTracks(db, splaylistcache, playlist, resultCache, callback) {
   // Callback a list of tracks that should be in the playlist, or null on problems.
-
-  if (playlist.localId in resultCache) {
-    console.info('using cached results for', playlist.localId, resultCache);
-    return callback(resultCache[playlist.localId]);
-  }
+  console.debug('queryTracks', playlist.localId, playlist.remoteId, playlist);
 
   Storage.getPlaylistsForUser(playlist.userId, playlists => {
     const playlistsById = {};
@@ -283,7 +296,6 @@ exports.queryTracks = function queryTracks(db, splaylistcache, playlist, resultC
     buildWhereClause(playlist.localId, track, playlistsById, splaylistcache, resultCache, db, playlist.rules)
     .then(whereClause => {
       execQuery(db, track, whereClause, playlist, results => {
-        resultCache[playlist.localId] = results;  // eslint-disable-line no-param-reassign
         callback(results);
       }, err => {
         console.error('execQuery', err);
