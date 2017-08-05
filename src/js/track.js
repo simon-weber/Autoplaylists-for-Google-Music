@@ -241,7 +241,7 @@ exports.fields = [
     sjName: 'trackType',
     // coerce strings (sj)
     coerce: val => parseInt(val, 10),
-    explanation: '1: free/purchased, 2: uploaded but not matched, 6: uploaded and matched, 7: All Access.'}),
+    explanation: '1: free/purchased, 2: uploaded but not matched, 6: uploaded and matched, 7: subscription (previously All Access).'}),
   f([30, 'comment', Lf.Type.STRING]),
   // TODO not in sj?
   f([34, 'bitrate', Lf.Type.INTEGER]),
