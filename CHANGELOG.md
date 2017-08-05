@@ -1,3 +1,14 @@
+## 5.4.0 (August 5, 2017)
+
+Features:
+
+  - add two new boolean conditions: "has album art?" and "is matched?"
+
+Bugfixes:
+
+  - fix playlist linking conditions that exclude tracks (eg 'playlist is not...' and 'playlist title doesn't match...')
+  - fix an endless loop involving playlists that indirectly link to themselves
+
 ## 5.3.6 (July 17, 2017)
 
 Misc:
