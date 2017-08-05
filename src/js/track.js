@@ -31,9 +31,9 @@ exports.operators = {
     {name: 'gt', label: 'between now and', input_type: 'text'},
   ],
   select: [
-    // first letter n also applies here.
-    {label: 'is equal to', name: 'equalTo', input_type: 'select'},
-    {label: 'is not equal to', name: 'notEqualTo', input_type: 'select'},
+    // first letter n semantics also apply here.
+    {name: 'equalTo', label: 'is equal to', input_type: 'select'},
+    {name: 'notEqualTo', label: 'is not equal to', input_type: 'select'},
   ],
 };
 
