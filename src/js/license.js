@@ -114,7 +114,8 @@ function cacheLicense(interactive, callback) {
         } else {
           const expiration = new Date();
           expiration.setSeconds(expiration.getSeconds() + response.maxAgeSecs);
-          const cachedLicense = {license: response, expiration};
+          const expirationMs = expiration.getTime();
+          const cachedLicense = {license: response, expirationMs};
           chrome.storage.sync.set({cachedLicense}, Utils.unlessError(() => {
             console.log('cached license', cachedLicense);
           }));
@@ -137,12 +138,51 @@ function getCachedLicense(callback) {
   chrome.storage.sync.get('cachedLicense', Utils.unlessError(items => {
     console.log('got cached license', items);
     if ('cachedLicense' in items) {
-      callback(items.cachedLicense);
+      const cachedLicense = items.cachedLicense;
+      if (!cachedLicense.expirationMs) {
+        // Hanldle migration from old expiration field.
+        cachedLicense.expirationMs = 0;
+      }
+      callback(cachedLicense);
     } else {
       callback(null);
     }
   }));
 }
+
+exports.getLicense = function getLicense(interactive, callback) {
+  // Callback a cached license, or null if one is not available.
+  // hasFullVersion should be used instead when interested in the version status.
+  // A cached license looks like:
+  //   {
+  //     "expirationMs": int, // ms since epoch after which license should be re-queried from api
+  //     "license": {
+  //       "kind": "chromewebstore#license",
+  //       "itemId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  //       "createdTime": "1377660091254",
+  //       "result": true,
+  //       "accessLevel": "FULL",
+  //       "maxAgeSecs": "2052"
+  //     }
+  //   }
+  if (interactive) {
+    // Always invalidate the cache on interactive checks.
+    console.log('invalidating cached license for interative check');
+    cacheLicense(interactive, cachedLicense => {
+      callback(cachedLicense);
+    });
+  } else {
+    getCachedLicense(cachedLicense => {
+      if (cachedLicense === null || cachedLicense.expirationMs < new Date().getTime()) {
+        cacheLicense(interactive, newCachedLicense => {
+          callback(newCachedLicense);
+        });
+      } else {
+        callback(cachedLicense);
+      }
+    });
+  }
+};
 
 exports.hasFullVersion = function hasFullVersion(interactive, callback) {
   // Callback a truthy value.
@@ -152,22 +192,8 @@ exports.hasFullVersion = function hasFullVersion(interactive, callback) {
       return callback(true);
     }
 
-    if (interactive) {
-      // Always invalidate the cache on interactive checks.
-      console.log('invalidating cached license');
-      cacheLicense(interactive, cachedLicense => {
-        callback(checkCachedLicense(cachedLicense));
-      });
-    } else {
-      getCachedLicense(cachedLicense => {
-        if (cachedLicense === null || cachedLicense.expiration > new Date()) {
-          cacheLicense(interactive, newCachedLicense => {
-            callback(checkCachedLicense(newCachedLicense));
-          });
-        } else {
-          callback(checkCachedLicense(cachedLicense));
-        }
-      });
-    }
+    exports.getLicense(interactive, cachedLicense => {
+      callback(checkCachedLicense(cachedLicense));
+    });
   });
 };
