@@ -113,7 +113,8 @@ function cacheLicense(interactive, callback) {
           callback(null);
         } else {
           const expiration = new Date();
-          expiration.setSeconds(expiration.getSeconds() + response.maxAgeSecs);
+          // maxAgeSecs is sometimes very short (eg 2), so set a minimum of 30m.
+          expiration.setSeconds(expiration.getSeconds() + response.maxAgeSecs + (60 * 30));
           const expirationMs = expiration.getTime();
           const cachedLicense = {license: response, expirationMs};
           chrome.storage.sync.set({cachedLicense}, Utils.unlessError(() => {
