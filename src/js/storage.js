@@ -81,6 +81,21 @@ exports.setShouldNotWelcome = function setShouldNotWelcome(shouldNotWelcome, cal
   chrome.storage.local.set(storageItems, Utils.unlessError(callback));
 };
 
+// Callback a bool.
+exports.getShouldNotPlugList = function getShouldNotPlugList(callback) {
+  chrome.storage.sync.get('shouldNotPlugList', Utils.unlessError(items => {
+    callback(Boolean(items.shouldNotPlugList));
+  }));
+};
+
+// shouldNotPlugList is a bool.
+exports.setShouldNotPlugList = function setShouldNotPlugList(shouldNotPlugList, callback) {
+  const storageItems = {};
+  storageItems.shouldNotPlugList = shouldNotPlugList;
+
+  chrome.storage.sync.set(storageItems, Utils.unlessError(callback));
+};
+
 // Callback an int.
 exports.getSyncMs = function getSyncMs(callback) {
   chrome.storage.sync.get('syncMs', Utils.unlessError(items => {

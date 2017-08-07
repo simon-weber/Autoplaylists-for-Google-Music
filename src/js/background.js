@@ -19,6 +19,8 @@ const Reporting = require('./reporting');
 
 const MUSIC_URL = 'https://play.google.com/music/listen';
 
+const LIST_CREATION_MS = new Date(2017, 6, 16).getTime();  // July 17th
+
 // {userId: {userIndex: int, tabId: int, xt: string, tier: string, gaiaId: string}}
 const users = {};
 
@@ -199,6 +201,26 @@ function showPageAction(request, tabId) {
 
   chrome.pageAction.show(tabId);
 
+  Storage.getShouldNotPlugList(shouldNotPlugList => {
+    if (shouldNotPlugList) {
+      return;
+    }
+
+    License.getLicense(false, cachedLicense => {
+      if (cachedLicense !== null && parseInt(cachedLicense.license.createdTime, 10) < LIST_CREATION_MS) {
+        chrome.notifications.create('plugList', {
+          type: 'basic',
+          title: 'Autoplaylists now has a mailing list!',
+          message: 'Subscribe for occasional announcements, usually about new features.',
+          iconUrl: 'icon-128.png',
+          buttons: [{title: 'Sign up', iconUrl: 'email.svg'}],
+        });
+        Reporting.reportHit('plugListNotification');
+        Storage.setShouldNotPlugList(true, () => {});
+      }
+    });
+  });
+
   Storage.getPlaylistsForUser(request.userId, playlists => {
     if (playlists.length === 0) {
       chrome.notifications.create('zeroPlaylists', {
@@ -332,6 +354,10 @@ function main() {
       chrome.tabs.create({url: 'https://autoplaylists.simon.codes/#usage'});
       chrome.notifications.clear(notificationId);
       Reporting.reportHit('zeroPlaylistsHelpButton');
+    } else if (notificationId === 'plugList') {
+      chrome.tabs.create({url: 'http://eepurl.com/cWe_bf'});
+      chrome.notifications.clear(notificationId);
+      Reporting.reportHit('plugListSignupButton');
     } else {
       Reporting.Raven.captureMessage('unknown notificationId button click', {
         level: 'warning',
