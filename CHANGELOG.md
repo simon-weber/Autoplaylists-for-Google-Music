@@ -1,3 +1,13 @@
+## 5.4.1 (August 7, 2017)
+
+Bugfixes:
+
+  - fix license caching bug that prevented re-querying the license api in some cases
+
+Misc:
+
+  - show a notification to users who installed before the mailing list existed so they're aware of it
+
 ## 5.4.0 (August 5, 2017)
 
 Features:
