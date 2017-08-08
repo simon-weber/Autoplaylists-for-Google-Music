@@ -1,3 +1,9 @@
+## 5.4.2 (August 7, 2017)
+
+Misc:
+
+  - disallow automatic reloads within the first 10m of starting (to prevent reload loops)
+
 ## 5.4.1 (August 7, 2017)
 
 Bugfixes:
