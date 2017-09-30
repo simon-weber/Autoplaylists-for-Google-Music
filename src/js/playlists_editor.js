@@ -1,6 +1,7 @@
 'use strict';
 
 const Qs = require('qs');
+const moment = require('moment');
 
 const Storage = require('./storage');
 const License = require('./license');
