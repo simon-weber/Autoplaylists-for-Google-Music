@@ -37,7 +37,6 @@ function initializeForm(userId, playlists) {
 
   License.getLicenseStatus(false, licenseStatus => {
     const $playlists = $('#playlists');
-    const hasFullVersion = licenseStatus.state !== 'INVALID';
 
     if (licenseStatus.state === 'FULL' || licenseStatus.state === 'FULL_FORCED') {
       $('#version-header').text('Version: full');
@@ -51,7 +50,7 @@ function initializeForm(userId, playlists) {
 
     for (let i = 0; i < playlists.length; i++) {
       const playlist = playlists[i];
-      const isLocked = (!hasFullVersion && (i > (License.FREE_PLAYLIST_COUNT - 1)));
+      const isLocked = (!licenseStatus.hasFullVersion && (i > (License.FREE_PLAYLIST_COUNT - 1)));
       const qs = {
         userId,
         id: playlist.localId,
@@ -71,7 +70,7 @@ function initializeForm(userId, playlists) {
       $playlists.append($('<li>').append($link));
     }
 
-    if (!hasFullVersion && (playlists.length >= License.FREE_PLAYLIST_COUNT)) {
+    if (!licenseStatus.hasFullVersion && (playlists.length >= License.FREE_PLAYLIST_COUNT)) {
       $('#add-playlist')
       .addClass('locked')
       .addClass('disabled')

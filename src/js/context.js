@@ -16,7 +16,7 @@ exports.get = function get(callback) {
               tags: {
                 isDeveloper: devStatus.isDev,
                 isFullForced: devStatus.isFullForced,
-                hasFullVersion: licenseStatus.state !== 'INVALID',
+                hasFullVersion: licenseStatus.hasFullVersion,
                 installType: extensionInfo.installType,
                 licenseState: licenseStatus.state,
               },
