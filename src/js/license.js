@@ -12,6 +12,7 @@ const DEVELOPER_ID_WHITELIST = { // eslint-disable-line no-unused-vars
 
 exports.FREE_PLAYLIST_COUNT = 1;
 exports.FREE_PLAYLIST_REPR = 'one playlist';
+exports.FREE_TRIAL_DAYS = 7;
 
 exports.isLocked = function isLocked(playlistId, playlists) {
   // Promise a bool.
@@ -186,7 +187,7 @@ exports.getLicense = function getLicense(interactive, callback) {
 };
 
 exports.hasFullVersion = function hasFullVersion(interactive, callback) {
-  // Callback a truthy value.
+  // Callback a truthy value. Truthy can signal a purchase or an active trial.
 
   exports.getDevStatus(devStatus => {
     if (devStatus.isFullForced) {
@@ -195,6 +196,40 @@ exports.hasFullVersion = function hasFullVersion(interactive, callback) {
 
     exports.getLicense(interactive, cachedLicense => {
       callback(checkCachedLicense(cachedLicense));
+    });
+  });
+};
+
+exports.getLicenseStatus = function getLicenseStatus(interactive, callback) {
+  // Callback one of 'FULL', 'FULL_FORCED', 'FREE_TRIAL', 'FREE_TRIAL_EXPIRED', or 'NONE'.
+  // From https://developer.chrome.com/webstore/one_time_payments#trial-limited-time.
+
+  exports.getDevStatus(devStatus => {
+    if (devStatus.isFullForced) {
+      return callback('FULL_FORCED');
+    }
+
+    exports.getLicense(interactive, cachedLicense => {
+      const license = cachedLicense.license;
+      let licenseStatus = 'NONE';
+
+      if (license && license.accessLevel == "FULL") {
+        licenseStatus = "FULL";
+      } else if (license && license.accessLevel == "FREE_TRIAL") {
+        // TODO also give a week to everyone from when this is released
+        const msSinceIssued = Date.now() - parseInt(license.createdTime, 10);
+        const daysSinceIssued = msSinceIssued / 1000 / 60 / 60 / 24;
+        if (daysSinceIssued <= TRIAL_PERIOD_DAYS) {
+          licenseStatus = "FREE_TRIAL";
+        } else {
+          licenseStatus = "FREE_TRIAL_EXPIRED";
+        }
+      } else {
+        console.warn('No license ever issued.');
+      }
+
+      console.log('license status', licenseStatus);
+      callback(licenseStatus);
     });
   });
 };
