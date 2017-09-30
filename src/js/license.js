@@ -10,6 +10,9 @@ const DEVELOPER_ID_WHITELIST = { // eslint-disable-line no-unused-vars
   '103350848301234480355': true,  // me
 };
 
+// TODO update this before release
+TRIAL_MIN_ISSUE_MS = moment('2017-09-30').valueOf();
+
 exports.FREE_PLAYLIST_COUNT = 1;
 exports.FREE_PLAYLIST_REPR = 'one playlist';
 exports.FREE_TRIAL_DAYS = 7;
@@ -202,7 +205,7 @@ exports.hasFullVersion = function hasFullVersion(interactive, callback) {
 
 exports.getLicenseStatus = function getLicenseStatus(interactive, callback) {
   // Callback one of 'FULL', 'FULL_FORCED', 'FREE_TRIAL', 'FREE_TRIAL_EXPIRED', or 'NONE'.
-  // From https://developer.chrome.com/webstore/one_time_payments#trial-limited-time.
+  // Adapted from https://developer.chrome.com/webstore/one_time_payments#trial-limited-time.
 
   exports.getDevStatus(devStatus => {
     if (devStatus.isFullForced) {
@@ -216,8 +219,13 @@ exports.getLicenseStatus = function getLicenseStatus(interactive, callback) {
       if (license && license.accessLevel == "FULL") {
         licenseStatus = "FULL";
       } else if (license && license.accessLevel == "FREE_TRIAL") {
-        // TODO also give a week to everyone from when this is released
-        const msSinceIssued = Date.now() - parseInt(license.createdTime, 10);
+        let issueMs = parseInt(license.createdTime, 10);
+        if (issueMs < TRIAL_MIN_ISSUE_MS) {
+          // Give the free trial to existing unpaid users who missed it.
+          issueMs = TRIAL_MIN_ISSUE_MS;
+        }
+
+        const msSinceIssued = Date.now() - issueMs;
         const daysSinceIssued = msSinceIssued / 1000 / 60 / 60 / 24;
         if (daysSinceIssued <= TRIAL_PERIOD_DAYS) {
           licenseStatus = "FREE_TRIAL";
