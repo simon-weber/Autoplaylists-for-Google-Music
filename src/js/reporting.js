@@ -212,6 +212,7 @@ function setContext(isBackground, context) {
   GATracker.set('userId', context.reportingUUID);
   GATracker.set('dimension1', context.tags.hasFullVersion ? 'full' : 'free');
   GATracker.set('dimension2', context.tags.isDeveloper ? 'yes' : 'no');
+  GATracker.set('dimension5', context.tags.licenseState);
 
   Raven.setUserContext(context.user);
   context.tags.isBackground = isBackground; // eslint-disable-line no-param-reassign

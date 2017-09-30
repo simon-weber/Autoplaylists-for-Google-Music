@@ -12,6 +12,7 @@ const DEVELOPER_ID_WHITELIST = { // eslint-disable-line no-unused-vars
 
 // TODO update this before release
 TRIAL_MIN_ISSUE_MS = moment('2017-09-30').valueOf();
+TRIAL_LENGTH_MS = 7 * 24 * 60 * 60 * 1000;
 
 exports.FREE_PLAYLIST_COUNT = 1;
 exports.FREE_PLAYLIST_REPR = 'one playlist';
@@ -132,9 +133,37 @@ function cacheLicense(interactive, callback) {
   });
 }
 
-function checkCachedLicense(cachedLicense) {
-  const hasFull = cachedLicense !== null && cachedLicense.license.accessLevel === 'FULL';
-  return hasFull;
+// Return a license status with the current state and expiry date (if state is FREE_TRIAL).
+function createLicenseStatus(cachedLicense) {
+
+  let status = {state: 'INVALID', expiresMs: null};
+  if (!cachedLicense) {
+    return status;
+  }
+
+  const license = cachedLicense.license;
+
+  if (license && license.accessLevel == "FULL") {
+    status.state = "FULL";
+  } else if (license && license.accessLevel == "FREE_TRIAL") {
+    let issueMs = parseInt(license.createdTime, 10);
+    if (issueMs < TRIAL_MIN_ISSUE_MS) {
+      // Give the free trial to existing unpaid users who missed it.
+      issueMs = TRIAL_MIN_ISSUE_MS;
+    }
+
+    const msSinceIssued = Date.now() - issueMs;
+    if (msSinceIssued <= TRIAL_LENGTH_MS) {
+      status.state = 'FREE_TRIAL';
+      status.expiresMs = issueMs + TRIAL_LENGTH_MS;
+    }
+  } else {
+    // TODO report this
+    console.warn('No license ever issued!');
+  }
+
+  console.log('license status', status);
+  return status;
 }
 
 function getCachedLicense(callback) {
@@ -198,46 +227,23 @@ exports.hasFullVersion = function hasFullVersion(interactive, callback) {
     }
 
     exports.getLicense(interactive, cachedLicense => {
-      callback(checkCachedLicense(cachedLicense));
+      callback(createLicenseStatus(cachedLicense).state !== 'INVALID');
     });
   });
 };
 
 exports.getLicenseStatus = function getLicenseStatus(interactive, callback) {
-  // Callback one of 'FULL', 'FULL_FORCED', 'FREE_TRIAL', 'FREE_TRIAL_EXPIRED', or 'NONE'.
+  // Callback one of 'FULL', 'FULL_FORCED', 'FREE_TRIAL', or 'INVALID' (never issued or free trial expired).
   // Adapted from https://developer.chrome.com/webstore/one_time_payments#trial-limited-time.
-
+  
   exports.getDevStatus(devStatus => {
     if (devStatus.isFullForced) {
-      return callback('FULL_FORCED');
+      status.state = 'FULL_FORCED';
+      return callback({state: 'INVALID', expiresMs: null});
     }
 
     exports.getLicense(interactive, cachedLicense => {
-      const license = cachedLicense.license;
-      let licenseStatus = 'NONE';
-
-      if (license && license.accessLevel == "FULL") {
-        licenseStatus = "FULL";
-      } else if (license && license.accessLevel == "FREE_TRIAL") {
-        let issueMs = parseInt(license.createdTime, 10);
-        if (issueMs < TRIAL_MIN_ISSUE_MS) {
-          // Give the free trial to existing unpaid users who missed it.
-          issueMs = TRIAL_MIN_ISSUE_MS;
-        }
-
-        const msSinceIssued = Date.now() - issueMs;
-        const daysSinceIssued = msSinceIssued / 1000 / 60 / 60 / 24;
-        if (daysSinceIssued <= TRIAL_PERIOD_DAYS) {
-          licenseStatus = "FREE_TRIAL";
-        } else {
-          licenseStatus = "FREE_TRIAL_EXPIRED";
-        }
-      } else {
-        console.warn('No license ever issued.');
-      }
-
-      console.log('license status', licenseStatus);
-      callback(licenseStatus);
+      callback(createLicenseStatus(cachedLicense));
     });
   });
 };
