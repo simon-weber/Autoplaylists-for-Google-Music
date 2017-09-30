@@ -379,7 +379,7 @@ function main() {
       chrome.notifications.clear(notificationId);
       Reporting.reportHit('plugListSignupButton');
     } else if (notificationId === 'upsell') {
-      chrome.tabs.create({url: 'https://chrome.google.com/webstore/detail/autoplaylists-for-google/blbompphddfibggfmmfcgjjoadebinem'});
+      chrome.tabs.create({url: 'https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki/Frequently-Asked-Questions#versions-and-upgrading'}); // eslint-disable-line max-len
       chrome.notifications.clear(notificationId);
       Reporting.reportHit('upsellButton');
     } else {
