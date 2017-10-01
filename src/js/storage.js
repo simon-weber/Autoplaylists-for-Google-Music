@@ -96,6 +96,22 @@ exports.setShouldNotPlugList = function setShouldNotPlugList(shouldNotPlugList, 
   chrome.storage.sync.set(storageItems, Utils.unlessError(callback));
 };
 
+// Callback a bool.
+exports.getShouldNotUpsell = function getShouldNotUpsell(callback) {
+  chrome.storage.sync.get('shouldNotUpsell', Utils.unlessError(items => {
+    callback(Boolean(items.shouldNotUpsell));
+  }));
+};
+
+// shouldNotUpsell is a bool.
+exports.setShouldNotUpsell = function setShouldNotUpsell(shouldNotUpsell, callback) {
+  const storageItems = {};
+  storageItems.shouldNotUpsell = shouldNotUpsell;
+
+  chrome.storage.sync.set(storageItems, Utils.unlessError(callback));
+};
+
+
 // Callback an int.
 exports.getSyncMs = function getSyncMs(callback) {
   chrome.storage.sync.get('syncMs', Utils.unlessError(items => {
