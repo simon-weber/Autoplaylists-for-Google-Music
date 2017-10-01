@@ -7,6 +7,7 @@
     "exorcist": "^0.4.0",
     "jquery-modal": "^0.7.0",
     "lovefield": "2.1.3",
+    "moment": "^2.18.1",
     "qs": "6.0.0",
     "raven-js": "^3.15.0",
     "sortablejs": "1.4.2",
@@ -24,7 +25,9 @@
     "analytics": "./src/js/vendor/google-analytics-bundle.js"
   },
   "browserify": {
-    "transform": [ "browserify-shim" ]
+    "transform": [
+      "browserify-shim"
+    ]
   },
   "browserify-shim": {
     "analytics": "analytics"
