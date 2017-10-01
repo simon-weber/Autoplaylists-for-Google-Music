@@ -1,3 +1,9 @@
+## 5.4.4 (October 1, 2017)
+
+Bugfixes:
+
+  - adapt to Google api change to fix remote playlists not being deleted along with their autoplaylist
+
 ## 5.4.3 (October 1, 2017)
 
 Misc:
