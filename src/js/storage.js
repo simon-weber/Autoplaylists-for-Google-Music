@@ -82,21 +82,6 @@ exports.setShouldNotWelcome = function setShouldNotWelcome(shouldNotWelcome, cal
 };
 
 // Callback a bool.
-exports.getShouldNotPlugList = function getShouldNotPlugList(callback) {
-  chrome.storage.sync.get('shouldNotPlugList', Utils.unlessError(items => {
-    callback(Boolean(items.shouldNotPlugList));
-  }));
-};
-
-// shouldNotPlugList is a bool.
-exports.setShouldNotPlugList = function setShouldNotPlugList(shouldNotPlugList, callback) {
-  const storageItems = {};
-  storageItems.shouldNotPlugList = shouldNotPlugList;
-
-  chrome.storage.sync.set(storageItems, Utils.unlessError(callback));
-};
-
-// Callback a bool.
 exports.getShouldNotUpsell = function getShouldNotUpsell(callback) {
   chrome.storage.sync.get('shouldNotUpsell', Utils.unlessError(items => {
     callback(Boolean(items.shouldNotUpsell));

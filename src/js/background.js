@@ -201,26 +201,6 @@ function showPageAction(request, tabId) {
 
   chrome.pageAction.show(tabId);
 
-  Storage.getShouldNotPlugList(shouldNotPlugList => {
-    if (shouldNotPlugList) {
-      return;
-    }
-
-    License.getLicense(false, cachedLicense => {
-      if (cachedLicense !== null && parseInt(cachedLicense.license.createdTime, 10) < LIST_CREATION_MS) {
-        chrome.notifications.create('plugList', {
-          type: 'basic',
-          title: 'Autoplaylists now has a mailing list!',
-          message: 'Subscribe for occasional announcements, usually about new features.',
-          iconUrl: 'icon-128.png',
-          buttons: [{title: 'Sign up', iconUrl: 'email.svg'}],
-        });
-        Reporting.reportHit('plugListNotification');
-        Storage.setShouldNotPlugList(true, () => {});
-      }
-    });
-  });
-
   Storage.getShouldNotUpsell(shouldNotUpsell => {
     if (shouldNotUpsell) {
       return;
@@ -374,10 +354,6 @@ function main() {
       chrome.tabs.create({url: 'https://autoplaylists.simon.codes/#usage'});
       chrome.notifications.clear(notificationId);
       Reporting.reportHit('zeroPlaylistsHelpButton');
-    } else if (notificationId === 'plugList') {
-      chrome.tabs.create({url: 'http://eepurl.com/cWe_bf'});
-      chrome.notifications.clear(notificationId);
-      Reporting.reportHit('plugListSignupButton');
     } else if (notificationId === 'upsell') {
       chrome.tabs.create({url: 'https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki/Frequently-Asked-Questions#versions-and-upgrading'}); // eslint-disable-line max-len
       chrome.notifications.clear(notificationId);
