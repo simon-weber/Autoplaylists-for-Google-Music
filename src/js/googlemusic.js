@@ -149,20 +149,3 @@ exports.getTrackChanges = function getTrackChanges(user, sinceTimestamp, callbac
     callback(result);
   });
 };
-
-exports.deleteRemotePlaylist = function deleteRemotePlaylist(user, remoteId) {
-  // Promise an api response after deleting a playlist.
-
-  const payload = {
-    id: remoteId,
-    requestCause: 1,
-    requestType: 1,
-    sessionId: '',
-  };
-
-  console.debug('deleteRemotePlaylist', remoteId);
-
-  return new Promise((resolve, reject) => {
-    authedGMRequest('deleteplaylist', payload, user, 'post', resolve, reject);
-  });
-};

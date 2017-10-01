@@ -166,7 +166,8 @@ function sync(details, batchingEnabled) {
       }
 
       // otherwise, delete
-      return Gm.deleteRemotePlaylist(globalState.users[userId], details.remoteId)
+      const deletes = Gmoauth.buildPlaylistDeletes([details.remoteId]);
+      return Gmoauth.runPlaylistMutations(globalState.users[userId], deletes)
       .then(response => {
         // TODO this should probably happen outside of syncing
         Playlist.deleteAllReferences(details.localId, playlists);

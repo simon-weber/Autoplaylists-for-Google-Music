@@ -81,6 +81,16 @@ exports.buildPlaylistUpdates = function buildPlaylistUpdates(updates) {
   return mutations;
 };
 
+exports.buildPlaylistDeletes = function buildPlaylistDeletes(playlistIds) {
+  const mutations = [];
+
+  for (let i = 0; i < playlistIds.length; i++) {
+    mutations.push({'delete': playlistIds[i]});
+  }
+
+  return mutations;
+};
+
 exports.runPlaylistMutations = function runPlaylistMutations(user, mutations) {
   // Promise an api response.
   Reporting.reportMutationBatch('playlist', mutations);
