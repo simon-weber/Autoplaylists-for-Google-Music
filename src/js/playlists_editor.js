@@ -1,6 +1,7 @@
 'use strict';
 
 const Qs = require('qs');
+const moment = require('moment');
 
 const Storage = require('./storage');
 const License = require('./license');
@@ -16,11 +17,11 @@ function initializeForm(userId, playlists) {
 
   $('#check-license').click(e => {
     e.preventDefault();
-    License.hasFullVersion(true, hasFullVersion => {
+    License.getLicenseStatus(true, licenseStatus => {
       let reportAction = 'invalid';
       let msg = 'Sorry, either the Chrome licensing api is unavailable' +
        " or it reported that you haven't purchased the full version.";
-      if (hasFullVersion) {
+      if (licenseStatus.state === 'FULL') {
         reportAction = 'valid';
         msg = "Thanks for purchasing the full version! You've been upgraded." +
           ' Please consider rating the extension if you like it.';
@@ -29,25 +30,28 @@ function initializeForm(userId, playlists) {
       Reporting.reportActivation(reportAction);
       alert(msg);
 
-      if (hasFullVersion) {
+      if (licenseStatus.state === 'FULL') {
         location.reload(true);
       }
     });
   });
 
-  License.hasFullVersion(false, hasFullVersion => {
+  License.getLicenseStatus(false, licenseStatus => {
     const $playlists = $('#playlists');
 
-    if (!hasFullVersion) {
-      $('#version-header').text('Version: free');
-    } else {
+    if (licenseStatus.state === 'FULL' || licenseStatus.state === 'FULL_FORCED') {
       $('#version-header').text('Version: full');
       $('#upgrade-wrapper').hide();
+    } else if (licenseStatus.state === 'FREE_TRIAL') {
+      const expiresRepr = moment().to(moment(licenseStatus.expiresMs));
+      $('#version-header').text(`Version: trial (expires ${expiresRepr})`);
+    } else {
+      $('#version-header').text('Version: free');
     }
 
     for (let i = 0; i < playlists.length; i++) {
       const playlist = playlists[i];
-      const isLocked = (!hasFullVersion && (i > (License.FREE_PLAYLIST_COUNT - 1)));
+      const isLocked = (!licenseStatus.hasFullVersion && (i > (License.FREE_PLAYLIST_COUNT - 1)));
       const qs = {
         userId,
         id: playlist.localId,
@@ -67,7 +71,7 @@ function initializeForm(userId, playlists) {
       $playlists.append($('<li>').append($link));
     }
 
-    if (!hasFullVersion && (playlists.length >= License.FREE_PLAYLIST_COUNT)) {
+    if (!licenseStatus.hasFullVersion && (playlists.length >= License.FREE_PLAYLIST_COUNT)) {
       $('#add-playlist')
       .addClass('locked')
       .addClass('disabled')

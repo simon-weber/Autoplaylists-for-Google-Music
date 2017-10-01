@@ -221,6 +221,26 @@ function showPageAction(request, tabId) {
     });
   });
 
+  Storage.getShouldNotUpsell(shouldNotUpsell => {
+    if (shouldNotUpsell) {
+      return;
+    }
+
+    License.getLicenseStatus(false, licenseStatus => {
+      if (licenseStatus.state === 'FREE_TRIAL_EXPIRED') {
+        chrome.notifications.create('upsell', {
+          type: 'basic',
+          title: 'Your Autoplaylists trial has expired!',
+          message: 'Buy the full version to continue using unlimited playlists.',
+          iconUrl: 'icon-128.png',
+          buttons: [{title: 'Buy now', iconUrl: 'key.svg'}],
+        });
+        Reporting.reportHit('upsellNotification');
+        Storage.setShouldNotUpsell(true, () => {});
+      }
+    });
+  });
+
   Storage.getPlaylistsForUser(request.userId, playlists => {
     if (playlists.length === 0) {
       chrome.notifications.create('zeroPlaylists', {
@@ -358,6 +378,10 @@ function main() {
       chrome.tabs.create({url: 'http://eepurl.com/cWe_bf'});
       chrome.notifications.clear(notificationId);
       Reporting.reportHit('plugListSignupButton');
+    } else if (notificationId === 'upsell') {
+      chrome.tabs.create({url: 'https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki/Frequently-Asked-Questions#versions-and-upgrading'}); // eslint-disable-line max-len
+      chrome.notifications.clear(notificationId);
+      Reporting.reportHit('upsellButton');
     } else {
       Reporting.Raven.captureMessage('unknown notificationId button click', {
         level: 'warning',

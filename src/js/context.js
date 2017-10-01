@@ -8,7 +8,7 @@ exports.get = function get(callback) {
   chrome.identity.getProfileUserInfo(userInfo => {
     chrome.management.getSelf(extensionInfo => {
       License.getDevStatus(devStatus => {
-        License.hasFullVersion(false, hasFullVersion => {
+        License.getLicenseStatus(false, licenseStatus => {
           Storage.getOrCreateReportingUUID(reportingUUID => {
             callback({
               reportingUUID,
@@ -16,8 +16,9 @@ exports.get = function get(callback) {
               tags: {
                 isDeveloper: devStatus.isDev,
                 isFullForced: devStatus.isFullForced,
-                hasFullVersion,
+                hasFullVersion: licenseStatus.hasFullVersion,
                 installType: extensionInfo.installType,
+                licenseState: licenseStatus.state,
               },
             });
           });

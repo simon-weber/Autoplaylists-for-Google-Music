@@ -1,5 +1,7 @@
 'use strict';
 
+const moment = require('moment');
+
 const Auth = require('./auth');
 const Utils = require('./utils');
 
@@ -10,8 +12,14 @@ const DEVELOPER_ID_WHITELIST = { // eslint-disable-line no-unused-vars
   '103350848301234480355': true,  // me
 };
 
+// TODO update this before release
+const TRIAL_MIN_ISSUE_MS = moment('2017-09-30').valueOf();
+const TRIAL_LENGTH_MS = 7 * 24 * 60 * 60 * 1000;
+
+
 exports.FREE_PLAYLIST_COUNT = 1;
 exports.FREE_PLAYLIST_REPR = 'one playlist';
+exports.FREE_TRIAL_DAYS = 7;
 
 exports.isLocked = function isLocked(playlistId, playlists) {
   // Promise a bool.
@@ -128,9 +136,40 @@ function cacheLicense(interactive, callback) {
   });
 }
 
-function checkCachedLicense(cachedLicense) {
-  const hasFull = cachedLicense !== null && cachedLicense.license.accessLevel === 'FULL';
-  return hasFull;
+// Return a license status with the current state and expiry date (if state is FREE_TRIAL).
+function createLicenseStatus(cachedLicense) {
+  const status = {state: 'NONE', expiresMs: null, hasFullVersion: false};
+  if (!cachedLicense) {
+    return status;
+  }
+
+  const license = cachedLicense.license;
+
+  if (license && license.accessLevel === 'FULL') {
+    status.state = 'FULL';
+    status.hasFullVersion = true;
+  } else if (license && license.accessLevel === 'FREE_TRIAL') {
+    let issueMs = parseInt(license.createdTime, 10);
+    if (issueMs < TRIAL_MIN_ISSUE_MS) {
+      // Give the free trial to existing unpaid users who missed it.
+      issueMs = TRIAL_MIN_ISSUE_MS;
+    }
+
+    const msSinceIssued = Date.now() - issueMs;
+    status.expiresMs = issueMs + TRIAL_LENGTH_MS;
+    if (msSinceIssued <= TRIAL_LENGTH_MS) {
+      status.state = 'FREE_TRIAL';
+      status.hasFullVersion = true;
+    } else {
+      status.state = 'FREE_TRIAL_EXPIRED';
+    }
+  } else {
+    // TODO report this
+    console.warn('No license ever issued!');
+  }
+
+  console.log('license status', status);
+  return status;
 }
 
 function getCachedLicense(callback) {
@@ -185,16 +224,29 @@ exports.getLicense = function getLicense(interactive, callback) {
   }
 };
 
-exports.hasFullVersion = function hasFullVersion(interactive, callback) {
-  // Callback a truthy value.
+exports.getLicenseStatus = function getLicenseStatus(interactive, callback) {
+  // Callback an object with keys:
+  //   * state: one of 'FULL', 'FULL_FORCED', 'FREE_TRIAL', 'FREE_TRIAL_EXPIRED', or 'NONE'.
+  //   * expiresMs: if state if FREE_TRIAL or FREE_TRIAL_EXPIRED, ms timestamp of trial expiration date.
+  //   * hasFullVersion: true if user has full access of some kind, false otherwise.
+  // Adapted from https://developer.chrome.com/webstore/one_time_payments#trial-limited-time.
 
   exports.getDevStatus(devStatus => {
     if (devStatus.isFullForced) {
-      return callback(true);
+      return callback({state: 'FULL_FORCED', expiresMs: null, hasFullVersion: true});
     }
 
     exports.getLicense(interactive, cachedLicense => {
-      callback(checkCachedLicense(cachedLicense));
+      callback(createLicenseStatus(cachedLicense));
     });
+  });
+};
+
+exports.hasFullVersion = function hasFullVersion(interactive, callback) {
+  // Callback a truthy value.
+  // Deprecated.
+
+  exports.getLicenseStatus(interactive, licenseStatus => {
+    callback(licenseStatus.hasFullVersion);
   });
 };
