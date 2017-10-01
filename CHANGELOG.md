@@ -1,3 +1,9 @@
+## 5.4.3 (October 1, 2017)
+
+Misc:
+
+  - add a one week free trial of the full version
+
 ## 5.4.2 (August 7, 2017)
 
 Misc:
