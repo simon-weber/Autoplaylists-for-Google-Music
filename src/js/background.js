@@ -211,7 +211,7 @@ function showPageAction(request, tabId) {
         chrome.notifications.create('upsell', {
           type: 'basic',
           title: 'Your Autoplaylists trial has expired!',
-          message: 'Buy the full version to continue using unlimited playlists.',
+          message: 'The free version is limited to one playlist. Buy the full version to continue using unlimited playlists.',
           iconUrl: 'icon-128.png',
           buttons: [{title: 'Buy now', iconUrl: 'key.svg'}],
         });
