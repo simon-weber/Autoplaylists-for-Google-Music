@@ -139,10 +139,6 @@ function createLicenseStatus(cachedLicense) {
   const status = {state: 'NONE', expiresMs: null, hasFullVersion: false};
   if (!cachedLicense) {
     console.warn('cached license unavailable');
-    Reporting.Raven.captureMessage('cached license unavailable', {
-      level: 'warning',
-      extra: {cachedLicense},
-    });
     return status;
   }
 
@@ -168,10 +164,6 @@ function createLicenseStatus(cachedLicense) {
     }
   } else {
     console.warn('no license ever issued');
-    Reporting.Raven.captureMessage('no license ever issued', {
-      level: 'warning',
-      extra: {cachedLicense},
-    });
   }
 
   console.log('license status', status);
