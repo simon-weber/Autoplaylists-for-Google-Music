@@ -1,3 +1,9 @@
+## 5.4.5 (October 7, 2017)
+
+Misc:
+
+  - error reporting tweaks
+
 ## 5.4.4 (October 1, 2017)
 
 Bugfixes:
