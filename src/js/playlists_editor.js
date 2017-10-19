@@ -31,7 +31,10 @@ function initializeForm(userId, playlists) {
       alert(msg);
 
       if (licenseStatus.state === 'FULL') {
-        location.reload(true);
+        // don't upsell users who downgrade later on
+        Storage.setShouldNotUpsell(true, () => {
+          location.reload(true);
+        });
       }
     });
   });
