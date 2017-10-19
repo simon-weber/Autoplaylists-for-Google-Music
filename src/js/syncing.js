@@ -210,6 +210,7 @@ function initLibrary(userId, callback) {
       if (diffResponse.success) {
         globalState.dbs[userId] = db;
       } else {
+        // TODO reloadXsrf can happen here: should it be handled?
         console.warn('failed to init library after diffupdate fallback');
         Reporting.Raven.captureMessage('failed to init library', {
           tags: {hadToFallback: true},
