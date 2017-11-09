@@ -10,6 +10,7 @@ const Reporting = require('./reporting');
 const CWS_LICENSE_API_URL = 'https://www.googleapis.com/chromewebstore/v1.1/userlicenses/';
 const DEVELOPER_ID_WHITELIST = { // eslint-disable-line no-unused-vars
   '103350848301234480355': true,  // me
+  '112866129132090615950': true, // @dasonk
 };
 
 const TRIAL_MIN_ISSUE_MS = moment('2017-10-01').valueOf();
