@@ -1,3 +1,9 @@
+## 5.4.6 (November 11, 2017)
+
+Misc:
+
+  - prevent trial expiration notification from showing to full users after downgrading
+
 ## 5.4.5 (October 7, 2017)
 
 Misc:
