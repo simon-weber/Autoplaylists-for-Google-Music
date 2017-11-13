@@ -305,6 +305,11 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache,
     e.preventDefault();
     Utils.goToPlaylistEditor(userId, playlistId, true);
   });
+  
+  $('#back').click(e => {
+    e.preventDefault();
+    Utils.goToManager(userId);
+  })
 
   if (isLocked) {
     $('#drag-explanation').remove();
