@@ -1,3 +1,9 @@
+## 5.5.0 (November 13, 2017)
+
+Features:
+
+  - add a link that discards changes when adding/creating an autoplaylist (Dasonk, [#175](https://github.com/simon-weber/Autoplaylists-for-Google-Music/pull/175))
+
 ## 5.4.6 (November 11, 2017)
 
 Misc:
