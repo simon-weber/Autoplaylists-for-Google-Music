@@ -24,7 +24,7 @@ const LIST_CREATION_MS = new Date(2017, 6, 16).getTime();  // July 17th
 // {userId: {userIndex: int, tabId: int, xt: string, tier: string, gaiaId: string}}
 const users = {};
 
-// handle tabs.onUpdated firing duplicate events.
+// handle tabs.onUpdated firing events for in-tab redirects.
 const TAB_COOLDOWN_MS = 10 * 1000;
 const tabIdsInCooldown = new Set();
 
@@ -157,6 +157,15 @@ function showPageAction(request, tabId) {
     return;
   }
 
+  if (tabIdsInCooldown.has(tabId)) {
+    console.info('tab in cooldown; not showing page action for', tabId);
+    return;
+  }
+
+  console.info('showing page action for', tabId);
+  tabIdsInCooldown.add(tabId);
+  setTimeout(() => tabIdsInCooldown.delete(tabId), TAB_COOLDOWN_MS);
+
   // In the case that an existing tab/index was changed to a new user,
   // remove the old entry.
   for (const userId in users) {
@@ -236,11 +245,6 @@ function showPageAction(request, tabId) {
 }
 
 function initTab(tabId) {
-  tabIdsInCooldown.add(tabId);
-  setTimeout(() => tabIdsInCooldown.delete(tabId), TAB_COOLDOWN_MS);
-
-  console.info('injecting getuser for', tabId);
-
   Page.getUserInfo().then(userInfo => {
     showPageAction(userInfo, tabId);
   });
@@ -254,12 +258,7 @@ function main() {
 
   chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete' && tab.url.startsWith(MUSIC_URL)) {
-      console.log('noticed music tab', tabId);
-      if (tabIdsInCooldown.has(tabId)) {
-        console.info('tab in cooldown; not injecting for', tabId);
-        return;
-      }
-
+      console.debug('noticed music tab', tabId);
       initTab(tabId);
     }
   });
