@@ -1,3 +1,9 @@
+## 5.5.1 (December 12, 2017)
+
+Bugfixes:
+
+  - improve reliability of tab detection
+
 ## 5.5.0 (November 13, 2017)
 
 Features:
