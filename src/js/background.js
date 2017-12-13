@@ -24,10 +24,6 @@ const LIST_CREATION_MS = new Date(2017, 6, 16).getTime();  // July 17th
 // {userId: {userIndex: int, tabId: int, xt: string, tier: string, gaiaId: string}}
 const users = {};
 
-// handle tabs.onUpdated firing events for in-tab redirects.
-const TAB_COOLDOWN_MS = 10 * 1000;
-const tabIdsInCooldown = new Set();
-
 // {userId: <lovefield db>}
 const dbs = {};
 
@@ -41,6 +37,8 @@ const pollTimestamps = {};
 let primaryGaiaId = null;
 
 let syncsHaveStarted = false;
+
+const STARTUP_TIME = new Date().getTime();
 
 const manager = new Syncing.Manager(users, dbs, splaylistcaches, pollTimestamps);
 
@@ -157,90 +155,91 @@ function showPageAction(request, tabId) {
     return;
   }
 
-  if (tabIdsInCooldown.has(tabId)) {
-    console.info('tab in cooldown; not showing page action for', tabId);
-    return;
-  }
-
-  console.info('showing page action for', tabId);
-  tabIdsInCooldown.add(tabId);
-  setTimeout(() => tabIdsInCooldown.delete(tabId), TAB_COOLDOWN_MS);
-
-  // In the case that an existing tab/index was changed to a new user,
-  // remove the old entry.
-  for (const userId in users) {
-    if (users[userId].tabId === tabId ||
-        users[userId].userIndex === request.userIndex) {
-      delete users[userId];
-    }
-  }
-
-  console.log('see user', request.userId, users);
-  if (request.gaiaId !== primaryGaiaId) {
-    console.warn('user is not the primary user');
-    chrome.pageAction.show(tabId);
-    return;
-  }
-
-  let tier = 'free';
-  if (request.tier === 2) {
-    tier = 'aa';
-  }
-
-  users[request.userId] = {userIndex: request.userIndex, tabId, xt: request.xt, tier};
-
-  License.hasFullVersion(false, hasFullVersion => { console.log('precached license status:', hasFullVersion); });
-
-  // FIXME store this in sync storage and include it in context?
-  // That'd mean we wouldn't get it immediately, though, so maybe this is better.
-  Reporting.Raven.setTagsContext({tier: request.tier});
-  Reporting.GATracker.set('dimension3', request.tier);
-  Reporting.reportHit('showPageAction');
-
-  Auth.getToken(false, 'userDetected', token => {
-    Auth.verifyToken(token, verifiedToken => {
-      if (verifiedToken) {
-        // Only start syncs if we already have auth.
-        // If we don't, they'll be forced to provide it when clicking the page action.
-        Track.resetRandomCache();
-        initSyncs(request.userId);
-      }
-    });
-  });
-
-  chrome.pageAction.show(tabId);
-
-  Storage.getShouldNotUpsell(shouldNotUpsell => {
-    if (shouldNotUpsell) {
+  Page.checkInit(tabId, STARTUP_TIME).then(isInit => {
+    if (isInit) {
+      console.info('tab already init', tabId);
       return;
     }
 
-    License.getLicenseStatus(false, licenseStatus => {
-      if (licenseStatus.state === 'FREE_TRIAL_EXPIRED') {
-        chrome.notifications.create('upsell', {
+    console.info('init tab', tabId);
+    Page.setInit(tabId, STARTUP_TIME);
+
+    // In the case that an existing tab/index was changed to a new user,
+    // remove the old entry.
+    for (const userId in users) {
+      if (users[userId].tabId === tabId ||
+          users[userId].userIndex === request.userIndex) {
+        delete users[userId];
+      }
+    }
+
+    console.log('see user', request.userId, users);
+    if (request.gaiaId !== primaryGaiaId) {
+      console.warn('user is not the primary user');
+      chrome.pageAction.show(tabId);
+      return;
+    }
+
+    let tier = 'free';
+    if (request.tier === 2) {
+      tier = 'aa';
+    }
+
+    users[request.userId] = {userIndex: request.userIndex, tabId, xt: request.xt, tier};
+
+    License.hasFullVersion(false, hasFullVersion => { console.log('precached license status:', hasFullVersion); });
+
+    // FIXME store this in sync storage and include it in context?
+    // That'd mean we wouldn't get it immediately, though, so maybe this is better.
+    Reporting.Raven.setTagsContext({tier: request.tier});
+    Reporting.GATracker.set('dimension3', request.tier);
+    Reporting.reportHit('showPageAction');
+
+    Auth.getToken(false, 'userDetected', token => {
+      Auth.verifyToken(token, verifiedToken => {
+        if (verifiedToken) {
+          // Only start syncs if we already have auth.
+          // If we don't, they'll be forced to provide it when clicking the page action.
+          Track.resetRandomCache();
+          initSyncs(request.userId);
+        }
+      });
+    });
+
+    chrome.pageAction.show(tabId);
+
+    Storage.getShouldNotUpsell(shouldNotUpsell => {
+      if (shouldNotUpsell) {
+        return;
+      }
+
+      License.getLicenseStatus(false, licenseStatus => {
+        if (licenseStatus.state === 'FREE_TRIAL_EXPIRED') {
+          chrome.notifications.create('upsell', {
+            type: 'basic',
+            title: 'Your Autoplaylists trial has expired!',
+            message: 'The free version is limited to one playlist. Buy the full version to continue using unlimited playlists.',
+            iconUrl: 'icon-128.png',
+            buttons: [{title: 'Buy now', iconUrl: 'key.svg'}],
+          });
+          Reporting.reportHit('upsellNotification');
+          Storage.setShouldNotUpsell(true, () => {});
+        }
+      });
+    });
+
+    Storage.getPlaylistsForUser(request.userId, playlists => {
+      if (playlists.length === 0) {
+        chrome.notifications.create('zeroPlaylists', {
           type: 'basic',
-          title: 'Your Autoplaylists trial has expired!',
-          message: 'The free version is limited to one playlist. Buy the full version to continue using unlimited playlists.',
+          title: 'Create your first autoplaylist!',
+          message: "To get started, click the extension's page action (to the right of the url bar).",
           iconUrl: 'icon-128.png',
-          buttons: [{title: 'Buy now', iconUrl: 'key.svg'}],
+          buttons: [{title: "Click here if you don't see the page action.", iconUrl: 'question_mark.svg'}],
         });
-        Reporting.reportHit('upsellNotification');
-        Storage.setShouldNotUpsell(true, () => {});
+        Reporting.reportHit('zeroPlaylistsNotification');
       }
     });
-  });
-
-  Storage.getPlaylistsForUser(request.userId, playlists => {
-    if (playlists.length === 0) {
-      chrome.notifications.create('zeroPlaylists', {
-        type: 'basic',
-        title: 'Create your first autoplaylist!',
-        message: "To get started, click the extension's page action (to the right of the url bar).",
-        iconUrl: 'icon-128.png',
-        buttons: [{title: "Click here if you don't see the page action.", iconUrl: 'question_mark.svg'}],
-      });
-      Reporting.reportHit('zeroPlaylistsNotification');
-    }
   });
 }
 
@@ -259,7 +258,11 @@ function main() {
   chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete' && tab.url.startsWith(MUSIC_URL)) {
       console.debug('noticed music tab', tabId);
-      initTab(tabId);
+      Page.checkInit(tabId, STARTUP_TIME).then(isInit => {
+        if (!isInit) {
+          initTab(tabId);
+        }
+      });
     }
   });
 

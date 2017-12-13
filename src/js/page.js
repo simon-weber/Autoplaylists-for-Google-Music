@@ -113,3 +113,29 @@ exports.getLocalTracks = function getLocalTracks() {
     timestamp: response.timestamp,
   }));
 };
+
+// This is a bit weird.
+// The problem is that we want to detect the first time Music tabs load,
+// but tabs.onUpdated will fire much more often than that.
+// This solves it by storing state on the tab (fixing first loads and refreshes)
+// that also distinguishes between executions of the extension (fixing startup tabs on extension reloads).
+
+// Promise a truthy value if the tab has been init before.
+// id must be an int.
+exports.checkInit = function checkInit(tabId, id) {
+  return new Promise(resolve => {
+    chrome.tabs.executeScript(tabId, {
+      code: `window._AUTOPLAYLISTS_INIT === ${id}`,
+    }, Utils.unlessError(frameResults => resolve(frameResults[0])));
+  });
+};
+
+// Promise nothing after marking the page as init.
+// id must be an int.
+exports.setInit = function checkInit(tabId, id) {
+  return new Promise(resolve => {
+    chrome.tabs.executeScript(tabId, {
+      code: `window._AUTOPLAYLISTS_INIT = ${id}`,
+    }, Utils.unlessError(resolve));
+  });
+};
