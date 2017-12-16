@@ -14,6 +14,7 @@ Everything relevant to users can be found at https://autoplaylists.simon.codes.
 The rest of this page is intended for developers.
 
 ## Development workflow
+* run `bundle install`
 * run `npm install`
 * run `./watch.sh` somewhere and leave it running -- this will build whenever files change
 * go to chrome://extensions/

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+jekyll build
+
 rm -f src/js-built/*.js
 
 for f in src/js/*.js; do

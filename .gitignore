@@ -4,6 +4,9 @@
 node_modules/
 src/js-built/*.js
 src/js-built/*.js.map
+src/site/.jekyll-metadata
+src/html/*.html
+src/html/assets/
 build
 sentry_api.key
 webstore_client.id
