@@ -12,6 +12,7 @@ source: src/site
 destination: src/html
 sass:
     cache: false
+plugins: [jekyll-tidy]
 
 # Site settings
 # These are used to personalize your new site. If you look in the HTML files,
