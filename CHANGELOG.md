@@ -1,3 +1,9 @@
+## 5.5.2 (December 16, 2017)
+
+Bugfixes:
+
+  - increase the default sync interval to 20m; add a note about low intervals being risky
+
 ## 5.5.1 (December 12, 2017)
 
 Bugfixes:
