@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{ page.title | default: 'Autoplaylists for Google Music'}}</title>
+        <script src="/js/vendor/jquery-1.9.1.min.js" type="text/javascript"></script>
+        {% for js in page.js %}
+            <script src="{{ js }}" type="text/javascript"></script>
+        {% endfor %}
+
+        {% comment %}
+            There's something weird with css ordering on some pages.
+            eg playlist.html needs its css included before these generic ones.
+        {% endcomment %}
+        {% for css in page.css %}
+            <link rel="stylesheet" href="{{ css }}" />
+        {% endfor %}
+        <link rel="stylesheet" href="/css/normalize.css" />
+        <link rel="stylesheet" href="/css/skeleton.css" />
+        <link rel="stylesheet" href="/css/base.css" />
+
+    </head>
+    <body>
+        <div class="container">
+            {{ content }}
+        </div>
+    </body>
+</html>

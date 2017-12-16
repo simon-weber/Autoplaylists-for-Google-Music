@@ -1,45 +1,31 @@
 ---
+layout: app
+title: Debugging Tools
+js:
+  - /js-built/debug.js
+  - /js/vendor/datatables.min.js
+css:
+  - /css/datatables.min.css
+  - /css/jquery.modal.css
+  - /css/hint.min.css
 ---
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Autoplaylist Definition</title>
-        <script src="/js/vendor/jquery-1.9.1.min.js" type="text/javascript"></script>
-        <script src="/js-built/debug.js" type="text/javascript"></script>
-
-        <script type="text/javascript" src="/js/vendor/datatables.min.js"></script>
-
-        <link rel="stylesheet" href="/css/datatables.min.css" />
-        <link rel="stylesheet" href="/css/jquery.modal.css" />
-        <link rel="stylesheet" href="/css/normalize.css" />
-        <link rel="stylesheet" href="/css/skeleton.css" />
-        <link rel="stylesheet" href="/css/base.css" />
-        <link rel="stylesheet" href="/css/hint.min.css" />
-
-    </head>
-    <body>
-        <div class="container">
-            <div id='query-modal' style='display: none'>
-                <div class="row">
-                    <div class="column">
-                        <table id="query-result" cellspacing="0" width="100%"></table>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="column">
-                    <h4>Debugging Tools</h4>
-                    <h5>run a query</h5>
-                    <textarea id='debugQuery'>const db = dbs[Object.keys(dbs)[0]];
+<div id='query-modal' style='display: none'>
+    <div class="row">
+        <div class="column">
+            <table id="query-result" cellspacing="0" width="100%"></table>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="column">
+        <h4>Debugging Tools</h4>
+        <h5>run a query</h5>
+        <textarea id='debugQuery'>const db = dbs[Object.keys(dbs)[0]];
 const Track = db.getSchema().table('Track');
 db.select().from(Track)
 .where()
 ;</textarea>
-                    <br/>
-                    <button id="submit" class="button-primary">run</button>
-                </div>
-            </div>
-        </div>
-
-    </body>
-</html>
+        <br/>
+        <button id="submit" class="button-primary">run</button>
+    </div>
+</div>

@@ -1,74 +1,62 @@
 ---
+layout: app
+js:
+  - /js-built/playlists_editor.js
+css:
+  - /css/hint.min.css
 ---
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Autoplaylists for Google Music</title>
-        <script src="/js/vendor/jquery-1.9.1.min.js" type="text/javascript"></script>
-        <script src="/js-built/playlists_editor.js" type="text/javascript"></script>
+<div class="row">
+    <div class="column">
+        <h2>Autoplaylists</h2>
+        New autoplaylists will be synced once you create them.
+        <br/>
+        Existing autoplaylists are synced periodically according to your sync period setting.
+        <br/>
+        See <a href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki/Frequently-Asked-Questions#syncing" target="_blank">
+            the syncing FAQ</a> for more details.
+        <br/>
+        <br/>
+        <b>Uninstalling the extension will irrecoverably delete your autoplaylists.</b>
+        <br/>
+        To reset the extension, prefer <a href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki/Debugging#reloading-the-extension" target="_blank">reloading</a> to uninstalling.
+        <br/>
+        <br/>
+        <ul id='playlists'></ul>
 
-        <link rel="stylesheet" href="/css/normalize.css" />
-        <link rel="stylesheet" href="/css/skeleton.css" />
-        <link rel="stylesheet" href="/css/base.css" />
-        <link rel="stylesheet" href="/css/hint.min.css" />
-    </head>
-    <body>
-        <div class="container">
-            <div class="row">
-                <div class="column">
-                    <h2>Autoplaylists</h2>
-                    New autoplaylists will be synced once you create them.
-                    <br/>
-                    Existing autoplaylists are synced periodically according to your sync period setting.
-                    <br/>
-                    See <a href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki/Frequently-Asked-Questions#syncing" target="_blank">
-                        the syncing FAQ</a> for more details.
-                    <br/>
-                    <br/>
-                    <b>Uninstalling the extension will irrecoverably delete your autoplaylists.</b>
-                    <br/>
-                    To reset the extension, prefer <a href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki/Debugging#reloading-the-extension" target="_blank">reloading</a> to uninstalling.
-                    <br/>
-                    <br/>
-                    <ul id='playlists'></ul>
-
-                    <a id="add-playlist" class="button button-primary menu-button">Add an autoplaylist</a>
-                    <br/>
-                    <div class="hint--right" data-hint="Manually triggers a periodic sync.">
-                        <a id="sync-now" class="button menu-button">Sync now</a>
-                    </div>
-                </div>
-            </div>
-
-            <br/>
-
-            <div class="row">
-                <div class="column">
-                    <h3 id="version-header">Version</h3>
-                    v5.5.2 released December 16, 2017.
-                    See the <a href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/blob/master/CHANGELOG.md" target="_blank" >changelog</a>.
-                    <br/>
-                    <br/>
-
-                    <div id="upgrade-wrapper">
-                        <a href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki/Frequently-Asked-Questions#versions-and-upgrading" target="_blank" class="button button-primary menu-button">
-                            Get the full version
-                        </a>
-                        <br/>
-                        <button id="check-license" class="menu-button">I bought the full version</button>
-                        <br/>
-                    </div>
-                    <a id="settings" href="#" class="button menu-button">Settings</a>
-                    <br/>
-                    <a href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki" target="_blank" class="button menu-button">Get help</a>
-                    <br/>
-                    <a href="http://us14.campaign-archive1.com/home/?u=cd59835a4c0a0f502ac0bc803&id=ddb2c21ff5" target="_blank" class="button menu-button">Announcements</a>
-                    <br/>
-                    <a href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki/Frequently-Asked-Questions#privacy-and-security" target="_blank" class="button menu-button">Privacy Info</a>
-                    <br/>
-                    <div id="dev-tools"></div>
-                </div>
-            </div>
+        <a id="add-playlist" class="button button-primary menu-button">Add an autoplaylist</a>
+        <br/>
+        <div class="hint--right" data-hint="Manually triggers a periodic sync.">
+            <a id="sync-now" class="button menu-button">Sync now</a>
         </div>
-    </body>
-</html>
+    </div>
+</div>
+
+<br/>
+
+<div class="row">
+    <div class="column">
+        <h3 id="version-header">Version</h3>
+        v5.5.2 released December 16, 2017.
+        See the <a href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/blob/master/CHANGELOG.md" target="_blank" >changelog</a>.
+        <br/>
+        <br/>
+
+        <div id="upgrade-wrapper">
+            <a href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki/Frequently-Asked-Questions#versions-and-upgrading" target="_blank" class="button button-primary menu-button">
+                Get the full version
+            </a>
+            <br/>
+            <button id="check-license" class="menu-button">I bought the full version</button>
+            <br/>
+        </div>
+        <a id="settings" href="#" class="button menu-button">Settings</a>
+        <br/>
+        <a href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki" target="_blank" class="button menu-button">Get help</a>
+        <br/>
+        <a href="http://us14.campaign-archive1.com/home/?u=cd59835a4c0a0f502ac0bc803&id=ddb2c21ff5" target="_blank" class="button menu-button">Announcements</a>
+        <br/>
+        <a href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki/Frequently-Asked-Questions#privacy-and-security" target="_blank" class="button menu-button">Privacy Info</a>
+        <br/>
+        <div id="dev-tools"></div>
+    </div>
+</div>

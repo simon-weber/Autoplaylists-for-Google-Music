@@ -1,69 +1,55 @@
 ---
+layout: app
+title: Autoplaylist Definition
+js:
+  - /js/vendor/business-rules/conditions-builder.js
+  - /js/vendor/business-rules/actions-builder.js
+  - /js-built/playlist_editor.js
+  - /js/vendor/datatables.min.js
+css:
+  - /css/datatables.min.css
+  - /css/jquery.modal.css
+  - /css/hint.min.css
 ---
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Autoplaylist Definition</title>
-        <script src="/js/vendor/jquery-1.9.1.min.js" type="text/javascript"></script>
-        <script src="/js/vendor/business-rules/conditions-builder.js" type="text/javascript"></script>
-        <script src="/js/vendor/business-rules/actions-builder.js" type="text/javascript"></script>
-        <script src="/js-built/playlist_editor.js" type="text/javascript"></script>
-
-        <script type="text/javascript" src="/js/vendor/datatables.min.js"></script>
-
-        <link rel="stylesheet" href="/css/datatables.min.css" />
-        <link rel="stylesheet" href="/css/jquery.modal.css" />
-        <link rel="stylesheet" href="/css/normalize.css" />
-        <link rel="stylesheet" href="/css/skeleton.css" />
-        <link rel="stylesheet" href="/css/base.css" />
-        <link rel="stylesheet" href="/css/hint.min.css" />
-
-    </head>
-    <body>
-        <div class="container">
-            <div id='query-modal' style='display: none'>
-                <div class="row">
-                    <div class="column">
-                        <table id="query-result" cellspacing="0" width="100%"></table>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="column">
-                    
-                    <h5>Playlist definition</h5>
-                    <label for="playlist-title">Title</label>
-                    <input type="text" id="playlist-title"/>
-
-
-                    <div id="conditions"></div>
-
-                    <!-- using a label will break the line -->
-                    <b>sort by</b>
-                    &nbsp; &nbsp;
-                    <a id="add-sort" href="javascript:void(0)">Add subsort</a>
-                    <span id='drag-explanation'>(drag bullet to rearrange)</span>
-                    <ul id="sorts"></ul>
-
-
-                    <label for="limit-to">limit to</label>
-                    <input type="text" id="limit-to" value="1000" />
-                    <span id="limit-explanation">
-                        (Google <a href="https://support.google.com/googleplay/answer/1250213?hl=en" target="_blank">limits playlists to 1000 tracks</a>)
-                    </span>
-
-                    <br/>
-                    <button id="submit" class="button-primary">save</button>
-                    <button id="test">test</button>
-                    <button id="delete">delete</button>
-                    <button id="duplicate">duplicate</button>
-                    <a id="back" class="remove" href="javascript:void(0)">Return without saving</a>
-
-                    <h5>Explanations of fields</h5>
-                    <ul id="explanations"></ul>
-                </div>
-            </div>
+<div id='query-modal' style='display: none'>
+    <div class="row">
+        <div class="column">
+            <table id="query-result" cellspacing="0" width="100%"></table>
         </div>
+    </div>
+</div>
+<div class="row">
+    <div class="column">
+        
+        <h5>Playlist definition</h5>
+        <label for="playlist-title">Title</label>
+        <input type="text" id="playlist-title"/>
 
-    </body>
-</html>
+
+        <div id="conditions"></div>
+
+        <!-- using a label will break the line -->
+        <b>sort by</b>
+        &nbsp; &nbsp;
+        <a id="add-sort" href="javascript:void(0)">Add subsort</a>
+        <span id='drag-explanation'>(drag bullet to rearrange)</span>
+        <ul id="sorts"></ul>
+
+
+        <label for="limit-to">limit to</label>
+        <input type="text" id="limit-to" value="1000" />
+        <span id="limit-explanation">
+            (Google <a href="https://support.google.com/googleplay/answer/1250213?hl=en" target="_blank">limits playlists to 1000 tracks</a>)
+        </span>
+
+        <br/>
+        <button id="submit" class="button-primary">save</button>
+        <button id="test">test</button>
+        <button id="delete">delete</button>
+        <button id="duplicate">duplicate</button>
+        <a id="back" class="remove" href="javascript:void(0)">Return without saving</a>
+
+        <h5>Explanations of fields</h5>
+        <ul id="explanations"></ul>
+    </div>
+</div>
