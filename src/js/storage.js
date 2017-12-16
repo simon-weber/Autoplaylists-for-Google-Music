@@ -103,7 +103,7 @@ exports.getSyncMs = function getSyncMs(callback) {
     let syncMs = items.syncMs;
 
     if (!Number.isInteger(syncMs)) {
-      syncMs = 60 * 1000 * 5;
+      syncMs = 1000 * 60 * 20;
       chrome.storage.sync.set({syncMs}, Utils.unlessError(() => {
         callback(syncMs);
       }));
