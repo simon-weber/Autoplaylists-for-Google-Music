@@ -9,3 +9,4 @@ for f in src/js/*.js; do
 done
 
 wait $!
+echo
