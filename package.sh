@@ -22,8 +22,9 @@ rm -f "${zip}"
 # zip up all tracked source
 git archive --format=zip --output="${zip}" "HEAD:${dir}"
 
-# add in built js
+# add in built js + html
 (cd src; zip "../${zip}" js-built/*.js)
+(cd src; zip "../${zip}" html/*.js)
 
 if [[ "$1" == '--just-zip' ]]; then
     echo "Wrote ${zip}"
