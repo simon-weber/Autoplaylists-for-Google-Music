@@ -1,3 +1,9 @@
+## 5.5.3 (December 19, 2017)
+
+Misc:
+
+  - switch to jekyll behind the scenes for html templating; should not have any noticeable affects
+
 ## 5.5.2 (December 16, 2017)
 
 Bugfixes:
