@@ -1,3 +1,9 @@
+## 5.5.4 (December 19, 2017)
+
+Misc:
+
+  - fix packaging of jekyll html
+
 ## 5.5.3 (December 19, 2017)
 
 Misc:
