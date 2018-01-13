@@ -1,3 +1,9 @@
+## 5.6.0 (January 13, 2018)
+
+Features:
+
+  - display autoplaylists in alphabetic order to match Google's presentation order
+
 ## 5.5.5 (December 19, 2017)
 
 Misc:
