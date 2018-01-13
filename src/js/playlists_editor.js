@@ -52,6 +52,7 @@ function initializeForm(userId, playlists) {
       $('#version-header').text('Version: free');
     }
 
+    const $links = [];
     for (let i = 0; i < playlists.length; i++) {
       const playlist = playlists[i];
       const isLocked = (!licenseStatus.hasFullVersion && (i > (License.FREE_PLAYLIST_COUNT - 1)));
@@ -71,7 +72,13 @@ function initializeForm(userId, playlists) {
       }
 
       console.log(playlist);
-      $playlists.append($('<li>').append($link));
+      $links.push($link);
+    }
+
+    // Present sorted playlists, but don't use that to determine which get locked.
+    $links.sort((a, b) => (a.text() < b.text() ? -1 : 1));
+    for (let i = 0; i < $links.length; i++) {
+      $playlists.append($('<li>').append($links[i]));
     }
 
     if (!licenseStatus.hasFullVersion && (playlists.length >= License.FREE_PLAYLIST_COUNT)) {
