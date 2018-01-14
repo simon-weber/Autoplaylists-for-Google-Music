@@ -1,3 +1,9 @@
+## 5.6.1 (January 14, 2018)
+
+Misc:
+
+  - temporarily link the user survey under the version blurb
+
 ## 5.6.0 (January 13, 2018)
 
 Features:
