@@ -24,7 +24,7 @@ git archive --format=zip --output="${zip}" "HEAD:${dir}"
 
 # add in built js + html
 (cd src; zip "../${zip}" js-built/*.js)
-(cd src; zip "../${zip}" html/*)
+(cd src; zip -r "../${zip}" html)
 
 if [[ "$1" == '--just-zip' ]]; then
     echo "Wrote ${zip}"
