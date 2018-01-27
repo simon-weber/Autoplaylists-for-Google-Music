@@ -8,6 +8,8 @@
         "64": "icon-64.png",
         "128": "icon-128.png"
     },
+    "homepage_url": "https://autoplaylists.simon.codes",
+
 
     "page_action": {
         "default_title": "Autoplaylists for Google Music™"
