@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-jekyll build -w --incremental &
+bundle exec jekyll build -w --incremental &
 
 PATH+=:node_modules/.bin
 

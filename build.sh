@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-jekyll build
+bundle exec jekyll build
 
 rm -f src/js-built/*.js
 
