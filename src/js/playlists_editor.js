@@ -98,7 +98,7 @@ function initializeForm(userId, playlists) {
       }
 
       $('#dev-tools').append(
-        $(`<button id="force-full-license" class="menu-button">${verb} full license</button>`)
+        $(`<button class="btn btn-default menu-button" id="force-full-license" class="">${verb} full license</button>`)
         .click(e => {
           e.preventDefault();
           License.setFullForced(!devStatus.isFullForced, () => {
