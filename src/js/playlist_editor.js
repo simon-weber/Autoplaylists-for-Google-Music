@@ -84,9 +84,9 @@ function getRulesData(playlists, playlistId, splaylistcache) {
 
 function createSort(fields, isLocked) {
   const $sort = $('<li>');
-  const $sortBy = $('<select class="sort-by">');
+  const $sortBy = $('<select class="sort-by form-control">');
   const $sortByOrder = $(
-    '<select class="sort-by-order">' +
+    '<select class="sort-by-order form-control">' +
     '   <option value="ASC">ascending</option>' +
     '   <option value="DESC">descending</option>' +
     '</select');
@@ -158,9 +158,6 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache,
 
     console.log('loading playlist', loadedPlaylist);
     initConditions.data = loadedPlaylist.rules;
-    if (isLocked) {
-      initConditions.disabled = true;
-    }
     $conditions.conditionsBuilder(initConditions);
 
     $('#limit-to').val(loadedPlaylist.limit);
@@ -209,7 +206,7 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache,
     $('#sorts').append(createSort(sortedFields, isLocked));
   });
 
-  $('#submit').click(e => {
+  $('#pl-submit').click(e => {
     e.preventDefault();
     const playlist = readForm();
 
@@ -315,9 +312,9 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache,
     $('#limit-explanation').remove();
     $('input').prop('disabled', true);
     $('select').prop('disabled', true);
-    $('a').remove();
+    $('#editor-row a').remove();
 
-    $('#submit, #test')
+    $('#pl-submit, #test')
     .addClass('locked')
     .addClass('disabled')
     .wrap(`<div class="hint--top" data-hint="The free version allows only ${License.FREE_PLAYLIST_REPR}.` +

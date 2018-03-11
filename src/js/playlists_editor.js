@@ -13,44 +13,11 @@ function initializeForm(userId, playlists) {
   $('#sync-now').click(e => {
     e.preventDefault();
     chrome.runtime.sendMessage({action: 'forceUpdate', userId});
-  });
-
-  $('#check-license').click(e => {
-    e.preventDefault();
-    License.getLicenseStatus(true, licenseStatus => {
-      let reportAction = 'invalid';
-      let msg = 'Sorry, either the Chrome licensing api is unavailable' +
-       " or it reported that you haven't purchased the full version.";
-      if (licenseStatus.state === 'FULL') {
-        reportAction = 'valid';
-        msg = "Thanks for purchasing the full version! You've been upgraded." +
-          ' Please consider rating the extension if you like it.';
-      }
-
-      Reporting.reportActivation(reportAction);
-      alert(msg);
-
-      if (licenseStatus.state === 'FULL') {
-        // don't upsell users who downgrade later on
-        Storage.setShouldNotUpsell(true, () => {
-          location.reload(true);
-        });
-      }
-    });
+    location.reload(true);
   });
 
   License.getLicenseStatus(false, licenseStatus => {
     const $playlists = $('#playlists');
-
-    if (licenseStatus.state === 'FULL' || licenseStatus.state === 'FULL_FORCED') {
-      $('#version-header').text('Version: full');
-      $('#upgrade-wrapper').hide();
-    } else if (licenseStatus.state === 'FREE_TRIAL') {
-      const expiresRepr = moment().to(moment(licenseStatus.expiresMs));
-      $('#version-header').text(`Version: trial (expires ${expiresRepr})`);
-    } else {
-      $('#version-header').text('Version: free');
-    }
 
     const $links = [];
     for (let i = 0; i < playlists.length; i++) {
@@ -87,25 +54,6 @@ function initializeForm(userId, playlists) {
       .addClass('disabled')
       .wrap(`<div class="hint--right" data-hint="The free version allows only ${License.FREE_PLAYLIST_REPR}.` +
            ' Upgrade to add more."/>');
-    }
-  });
-
-  License.getDevStatus(devStatus => {
-    if (devStatus.isDev) {
-      let verb = 'enable';
-      if (devStatus.isFullForced) {
-        verb = 'disable';
-      }
-
-      $('#dev-tools').append(
-        $(`<button class="btn btn-default menu-button" id="force-full-license" class="">${verb} full license</button>`)
-        .click(e => {
-          e.preventDefault();
-          License.setFullForced(!devStatus.isFullForced, () => {
-            document.location.reload(true);
-          });
-        })
-      );
     }
   });
 }

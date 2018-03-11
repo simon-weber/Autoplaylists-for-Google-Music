@@ -13,18 +13,15 @@ css:
   - /css/hint.min.css
 ---
 <div id='query-modal' style='display: none'>
-    <div class="row">
-        <div class="col-lg-12">
-            <table id="query-result" cellspacing="0" width="100%"></table>
-        </div>
-    </div>
+    <table id="query-result" cellspacing="0"></table>
 </div>
-<div class="row">
+
+<div id="editor-row" class="row">
     <div class="col-lg-12">
         
-        <h5>Playlist definition</h5>
+        <h2>Playlist definition</h2>
         <label for="playlist-title">Title</label>
-        <input type="text" id="playlist-title"/>
+        <input type="text" class="form-control" id="playlist-title"/>
 
 
         <div id="conditions"></div>
@@ -38,19 +35,20 @@ css:
 
 
         <label for="limit-to">limit to</label>
-        <input type="text" id="limit-to" value="1000" />
+        <input type="text" id="limit-to" class="form-control" value="1000" />
         <span id="limit-explanation">
             (Google <a href="https://support.google.com/googleplay/answer/1250213?hl=en" target="_blank">limits playlists to 1000 tracks</a>)
         </span>
 
         <br/>
-        <button id="submit" class="button-primary">save</button>
-        <button id="test">test</button>
-        <button id="delete">delete</button>
-        <button id="duplicate">duplicate</button>
+        <br/>
+        <button id="pl-submit" class="btn btn-primary">save</button>
+        <button id="test" class="btn btn-default">test</button>
+        <button id="delete" class="btn btn-default">delete</button>
+        <button id="duplicate" class="btn btn-default">duplicate</button>
         <a id="back" class="remove" href="javascript:void(0)">Return without saving</a>
 
-        <h5>Explanations of fields</h5>
+        <h3>Explanations of fields</h3>
         <ul id="explanations"></ul>
     </div>
 </div>
