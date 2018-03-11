@@ -1,6 +1,4 @@
 'use strict';
-require('jquery-modal');
-
 const Track = require('./track');
 const Reporting = require('./reporting');
 
@@ -54,7 +52,7 @@ function main() {
           },
         ],
       });
-      $('#query-modal').modal();
+      $('#query-modal').modal({modalClass: 'jqmodal'});
     });
   });
 }

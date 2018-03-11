@@ -7,8 +7,9 @@
     height: 256px;
 }
 
-.modal {
+.jqmodal {
     width: 90%;
+    max-width: unset;
 }
 
 .menu-button {

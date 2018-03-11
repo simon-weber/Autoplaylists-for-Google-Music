@@ -20,7 +20,7 @@
 .blocker.behind {
   background-color: transparent;
 }
-.modal {
+.jqmodal {
   display: none;
   vertical-align: middle;
   position: relative;
@@ -43,7 +43,7 @@
   text-align: left;
 }
 
-.modal a.close-modal {
+.jqmodal a.close-modal {
   position: absolute;
   top: -12.5px;
   right: -12.5px;

@@ -1,7 +1,6 @@
 'use strict';
 const Qs = require('qs');
 const Sortable = require('sortablejs');
-require('jquery-modal');
 
 const License = require('./license');
 const Playlist = require('./playlist');
@@ -290,7 +289,7 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache,
           },
         ],
       });
-      $('#query-modal').modal();
+      $('#query-modal').modal({modalClass: 'jqmodal'});
     });
   });
 
