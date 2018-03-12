@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>{{ page.title | default: 'Autoplaylists for Google Music'}}</title>
+        <script src="/js/vendor/jquery-1.9.1.min.js" type="text/javascript"></script>
+        <script src="/js/vendor/bootstrap.min.js" type="text/javascript"></script>
+        <script src="/js-built/navbar.js" type="text/javascript"></script>
+        {% for js in page.js %}
+            <script src="{{ js }}" type="text/javascript"></script>
+        {% endfor %}
+
+        {% comment %}
+            There's something weird with css ordering on some pages.
+            eg playlist.html needs its css included before these generic ones.
+        {% endcomment %}
+        {% for css in page.css %}
+            <link rel="stylesheet" href="{{ css }}" />
+        {% endfor %}
+        <link rel="stylesheet" href="/css/bootstrap.min.css" />
+        <link rel="stylesheet" href="/css/base.css" />
+
+    </head>
+    <body>
+        {{ content }}
+
+        <div id="footer" class="container">
+            <footer class="footer text-center">
+                <br/>
+                <br/>
+                <hr>
+                <div id="dev-tools"></div>
+
+                <a href="https://github.com/simon-weber/Autoplaylists-for-Google-Music">code</a>
+                |
+                <a href="https://simonmweber.com">author</a>
+                |
+                <a href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki/Frequently-Asked-Questions#privacy-and-security" target="_blank">privacy</a>
+                |
+                <a href="http://us14.campaign-archive1.com/home/?u=cd59835a4c0a0f502ac0bc803&id=ddb2c21ff5" target="_blank">announcements</a>
+
+                <br/>
+                For support, visit
+                <a href="https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki" target="_blank" >the help site</a>.
+            </footer>
+    </body>
+</html>

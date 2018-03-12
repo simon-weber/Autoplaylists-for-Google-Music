@@ -1,7 +1,8 @@
 ---
-layout: app
+layout: standalone
 title: Debugging Tools
 js:
+  - /js/vendor/jquery.modal.js
   - /js-built/debug.js
   - /js/vendor/datatables.min.js
 css:
@@ -11,13 +12,13 @@ css:
 ---
 <div id='query-modal' style='display: none'>
     <div class="row">
-        <div class="column">
+        <div class="col-lg-12">
             <table id="query-result" cellspacing="0" width="100%"></table>
         </div>
     </div>
 </div>
 <div class="row">
-    <div class="column">
+    <div class="col-lg-12">
         <h4>Debugging Tools</h4>
         <h5>run a query</h5>
         <textarea id='debugQuery'>const db = dbs[Object.keys(dbs)[0]];

@@ -15,11 +15,6 @@
     this.element = $(element);
     this.options = options || {};
     this.init();
-    if (this.options.disabled) {
-      $('input').prop('disabled', true);
-      $('select').prop('disabled', true);
-      $('a').remove();
-    }
   }
 
   ConditionsBuilder.prototype = {
@@ -83,7 +78,7 @@
 
       var div = $("<div>", {"class": "conditional " + kind});
       var selectWrapper = $("<div>", {"class": "all-any-wrapper"});
-      var select = $("<select>", {"class": "all-any"});
+      var select = $("<select>", {"class": "all-any form-control"});
       select.append($("<option>", {"value": "all", "text": "All", "selected": kind == "all"}));
       select.append($("<option>", {"value": "any", "text": "Any", "selected": kind == "any"}));
       selectWrapper.append(select);
@@ -150,7 +145,7 @@
   };
 
   function getFieldSelect(fields, ruleData) {
-    var select = $("<select>", {"class": "field"});
+    var select = $("<select>", {"class": "field form-control"});
     for(var i=0; i < fields.length; i++) {
       var field = fields[i];
       var option = $("<option>", {
@@ -165,7 +160,7 @@
   }
 
   function getOperatorSelect() {
-    var select = $("<select>", {"class": "operator"});
+    var select = $("<select>", {"class": "operator form-control"});
     select.change(onOperatorSelectChange);
     return select;
   }
@@ -219,14 +214,14 @@
         break;
       case "text":
         // $this.after($("<label class='errorMessage'></label>"));
-        $this.after($("<input>", {"type": "text", "class": "value textInput"}));
+        $this.after($("<input>", {"type": "text", "class": "value textInput form-control"}));
         break;
       case "numeric":
         // $this.after($("<label class='errorMessage'></label>"));
-        $this.after($("<input>", {"type": "text", "class": "value numberInput"}));
+        $this.after($("<input>", {"type": "text", "class": "value numberInput form-control"}));
         break;
       case "select":
-        var select = $("<select>", {"class": "value"});
+        var select = $("<select>", {"class": "value form-control"});
         var options = fieldSelect.find("> :selected").data("options");
         for(var i=0; i < options.length; i++) {
           var opt = options[i];
@@ -237,7 +232,7 @@
       case "select_multiple":
         var options = fieldSelect.find("> :selected").data("options");
         var selectLength = options.length > 10 ? 10 : options.length;
-        var select = $("<select class='value' multiple size='" + selectLength + "''></select>");
+        var select = $("<select class='value form-control' multiple size='" + selectLength + "''></select>");
         for(var i=0; i <options.length; i++) {
           var opt = options[i];
           select.append($("<option>", {"text": opt, "value": opt}));
