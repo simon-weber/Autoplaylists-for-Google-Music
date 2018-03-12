@@ -1,3 +1,9 @@
+## 5.7.0 (March 11, 2018)
+
+Misc:
+
+  - overhaul the UI
+
 ## 5.6.1 (January 14, 2018)
 
 Misc:
