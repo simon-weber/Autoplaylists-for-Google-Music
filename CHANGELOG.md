@@ -1,3 +1,9 @@
+## 5.8.0 (May 28, 2018)
+
+Misc:
+
+  - playlists are now sorted when presented for playlist equal/not-equal conditions
+
 ## 5.7.0 (March 11, 2018)
 
 Misc:
