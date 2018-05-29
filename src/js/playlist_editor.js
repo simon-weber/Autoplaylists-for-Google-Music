@@ -59,6 +59,8 @@ function getRulesData(playlists, playlistId, splaylistcache) {
       }
     }
 
+    playlistOptions.sort(compareByLabel);
+
     variables.push({
       name: 'playlist',
       label: 'playlist',
