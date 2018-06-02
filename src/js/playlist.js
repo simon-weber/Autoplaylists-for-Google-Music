@@ -9,6 +9,7 @@ const Track = require('./track');
 //   * userId: Google Music user id
 //   * sorts: [{sortBy, sortByOrder}]
 //   * limit
+//   * updatedAt: ms timestamp, used to trigger syncs of unchanged playlists when saved
 
 function ruleToString(rule, linkedNames) {
   // Return a string representation of a rule, parenthesised if necessary.

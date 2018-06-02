@@ -211,6 +211,7 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache,
   $('#pl-submit').click(e => {
     e.preventDefault();
     const playlist = readForm();
+    playlist.updatedAt = new Date().getTime();
 
     console.log('writing', playlist);
 
