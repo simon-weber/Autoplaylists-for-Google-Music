@@ -1,3 +1,9 @@
+## 5.8.1 (June 2, 2018)
+
+Misc:
+
+  - playlists are now always synced when hitting "save", even if their definition is unchanged
+
 ## 5.8.0 (May 28, 2018)
 
 Misc:
