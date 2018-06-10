@@ -118,10 +118,14 @@ function f(requiredItems, optionalItems) {
 // maps the first 8 characters of a track id to a random float.
 exports._randomCache = {};
 
+// When the cache was last flushed.
+exports.randomCacheTS = new Date().getTime();
+
 // After calling, upserted tracks will have new random fields.
 exports.resetRandomCache = function resetRandomCache() {
   console.info('reset random cache');
   exports._randomCache = {};
+  exports.randomCacheTS = new Date().getTime();
 };
 
 exports.getRandom = function getRandom(id) {
