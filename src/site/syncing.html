@@ -9,21 +9,23 @@ css:
     <div class="col-lg-12">
         <h2>Syncing</h2>
         The last full sync happened <span id="lastpsync-ago"></span>.
+        <br/>
         The next full sync is expected <span id="next-sync-in"></span>.
-
+        <br/>
         <button class="btn btn-default menu-button" id="sync-now">Sync now</button>
 
-        <h3>random orderings</h3>
-        The ordering applied by random sorts is shared across all playlists.
-        It will automatically reset and apply new orderings when:
+        <h3>random ordering</h3>
+        The ordering used by random sorts is shared across all playlists.
+        <br/>
+        It will automatically reset when:
         <ul>
             <li>a Google Music tab is refreshed</li>
             <li>a new Google Music tab is opened</li>
             <li>the extension or Chrome is reloaded</li>
         </ul>
-        <br/>
         You can also manually reset it here.
-        Random orderings were last reset <span id="random-ts-ago"></span>.
+        The random ordering was last reset <span id="random-ts-ago"></span>.
+        <br/>
         <button class="btn btn-default menu-button" id="reset-random">Reset now</button>
     </div>
 </div>
