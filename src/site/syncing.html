@@ -8,10 +8,21 @@ css:
 <div class="row">
     <div class="col-lg-12">
         <h2>Syncing</h2>
-        <br/>
-        <br/>
         <div class="hint--right" data-hint="Manually triggers a periodic sync.">
             <button class="btn btn-default menu-button" id="sync-now">Sync now</button>
         </div>
+
+        <h3>random orderings</h3>
+        The ordering applied by random sorts is shared across all playlists.
+        It will automatically reset and apply new orderings when:
+        <ul>
+            <li>a Google Music tab is refreshed</li>
+            <li>a new Google Music tab is opened</li>
+            <li>the extension or Chrome is reloaded</li>
+        </ul>
+        <br/>
+        You can also manually reset it here.
+        Random orderings were last reset <span id="random-ts-ago"></span>.
+        <button class="btn btn-default menu-button" id="reset-random">Reset now</button>
     </div>
 </div>

@@ -412,6 +412,24 @@ function main() {
       }
       sendResponse(cache);
       return;
+    } else if (request.action === 'getStatus') {
+      sendResponse({'randomCacheTS': Track.randomCacheTS});
+      return;
+    } else if (request.action === 'resetRandomCache') {
+      console.info('resetRandomCache request');
+      Track.resetRandomCache();
+
+      const db = dbs[request.userId];
+      if (db) {
+        Trackcache.syncRandom(db, () => {
+          console.log('done manually syncing random fields');
+          sendResponse();
+        });
+        return true;
+      }
+
+      sendResponse();
+      return;
     }
   });
 
