@@ -124,6 +124,17 @@ exports.resetRandomCache = function resetRandomCache() {
   exports._randomCache = {};
 };
 
+exports.getRandom = function getRandom(id) {
+  const prefix = id.substring(0, 8);
+  let val = exports._randomCache[prefix];
+  if (val === undefined) {
+    val = Math.random();
+    exports._randomCache[prefix] = val;
+  }
+
+  return val;
+};
+
 exports.fields = [
   f([0, 'id', Lf.Type.STRING]),
   f([0, 'random', Lf.Type.INTEGER], {
@@ -131,16 +142,7 @@ exports.fields = [
     // It's used to make random shuffling easier.
     // It will not change after being set unless resetRandomCache is called.
     hidden: true,
-    transformation: id => {
-      const prefix = id.substring(0, 8);
-      let val = exports._randomCache[prefix];
-      if (val === undefined) {
-        val = Math.random();
-        exports._randomCache[prefix] = val;
-      }
-
-      return val;
-    },
+    transformation: exports.getRandom,
   }),
   f([1, 'title', Lf.Type.STRING]),
   f([2, 'hasAlbumArt', Lf.Type.STRING], {

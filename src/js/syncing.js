@@ -231,7 +231,7 @@ function initLibrary(userId, callback) {
       } else {
         console.log('got idb gtracks:', response.gtracks.length);
         const tracks = response.gtracks.map(Track.fromJsproto);
-        Trackcache.upsertTracks(db, userId, tracks, () => {
+        Trackcache.upsertTracks(db, tracks, () => {
           diffUpdateTrackcache(userId, db, diffResponse => {
             if (diffResponse.success) {
               globalState.dbs[userId] = db;
@@ -292,7 +292,7 @@ function diffUpdateTrackcache(userId, db, callback, timestamp) {
       return callback({success: false});
     }
 
-    Trackcache.upsertTracks(db, userId, changes.upsertedTracks, () => {
+    Trackcache.upsertTracks(db, changes.upsertedTracks, () => {
       Trackcache.deleteTracks(db, userId, changes.deletedIds, () => {
         if (changes.newTimestamp) {
           globalState.pollTimestamps[userId] = changes.newTimestamp;

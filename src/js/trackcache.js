@@ -53,7 +53,7 @@ exports.openDb = function openDb(userId, callback) {
   });
 };
 
-exports.upsertTracks = function upsertTracks(db, userId, tracks, callback) {
+exports.upsertTracks = function upsertTracks(db, tracks, callback) {
   console.log('cache: upserting', tracks.length, 'tracks');
   const track = db.getSchema().table('Track');
 
@@ -326,4 +326,19 @@ exports.orderTracks = function orderTracks(db, playlist, trackIds, callback, onE
   const whereClause = track.id.in(trackIds);
 
   execQuery(db, track, whereClause, playlist, callback, onError);
+};
+
+exports.syncRandom = function syncRandom(db, callback) {
+  // Write out the random field to all tracks according to the cache.
+  console.log('syncing random fields');
+
+  const track = db.getSchema().table('Track');
+  db.select().from(track).exec().then(rows => {
+    for (let i = 0; i < rows.length; i++) {
+      // lovefield explicitly says not to modify rows, but I figure this will only cause the update to potentially apply a little bit
+      // early (and should be much faster than cloning every row).
+      rows[i].random = Track.getRandom(rows[i].id);  // eslint-disable-line no-param-reassign
+    }
+    exports.upsertTracks(db, rows, callback);
+  });
 };

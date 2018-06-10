@@ -48,6 +48,11 @@ function initSyncs(userId) {
   // now >= last-sync + sync-period: sync immediately. Next sync at now + sync-period.
   // now < last-sync + sync-period: don't sync. Next sync at last-sync + sync-period
 
+  const db = dbs[userId];
+  if (db) {
+    Trackcache.syncRandom(db, () => console.log('done syncing random fields'));
+  }
+
   if (syncsHaveStarted) {
     console.log("request to init syncs, but they're already started");
     return;
