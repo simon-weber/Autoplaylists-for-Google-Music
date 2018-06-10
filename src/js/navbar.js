@@ -35,6 +35,7 @@ function main() {
 
   $('#brand-nav').attr('href', `/html/playlists.html?${Qs.stringify({userId})}`);
   $('#settings-nav').attr('href', `/html/settings.html?${Qs.stringify({userId})}`);
+  $('#syncing-nav').attr('href', `/html/syncing.html?${Qs.stringify({userId})}`);
 
   $('#check-license').click(e => {
     e.preventDefault();
