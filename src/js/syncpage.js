@@ -11,6 +11,8 @@ function onReady() {
   chrome.runtime.sendMessage({action: 'getStatus'}, status => {
     console.log('got status', status);
     $('#random-ts-ago').text(moment(new Date(status.randomCacheTS)).fromNow());
+    $('#lastpsync-ago').text(moment(new Date(status.lastPSync)).fromNow());
+    $('#next-sync-in').text(moment(new Date(status.nextExpectedSync)).fromNow());
   });
 
   $('#sync-now').click(e => {

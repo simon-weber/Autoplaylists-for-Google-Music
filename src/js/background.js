@@ -413,8 +413,17 @@ function main() {
       sendResponse(cache);
       return;
     } else if (request.action === 'getStatus') {
-      sendResponse({'randomCacheTS': Track.randomCacheTS});
-      return;
+      Storage.getLastPSync(lastPSync => {
+        Storage.getSyncMs(initSyncMs => {
+          const nextExpectedSync = lastPSync + initSyncMs;
+          sendResponse({
+            lastPSync,
+            nextExpectedSync,
+            'randomCacheTS': Track.randomCacheTS,
+          });
+        });
+      });
+      return true;
     } else if (request.action === 'resetRandomCache') {
       console.info('resetRandomCache request');
       Track.resetRandomCache();
