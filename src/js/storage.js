@@ -43,11 +43,22 @@ function migrateToTwo(items) {
   return items;
 }
 
-const SCHEMA_VERSION = 2;
+function migrateToThree(items) {
+  // Copy the lastPSync to lastSyncInfo.
+  if (items.lastPSync) {
+    /* eslint-disable no-param-reassign */
+    items.lastSyncInfo = {syncType: 'periodic', 'ts': items.lastPSync};
+    /* eslint-enable no-param-reassign */
+  }
+  return items;
+}
+
+const SCHEMA_VERSION = 3;
 const MIGRATIONS = [
   // Migrations receive all items and transform them.
   migrateToOne,
   migrateToTwo,
+  migrateToThree,
 ];
 
 // Callback a bool.
@@ -157,6 +168,29 @@ exports.setLastPSync = function setLastPSync(lastPSync, callback) {
   chrome.storage.sync.set(storageItems, Utils.unlessError(callback));
 };
 
+// Callback {syncType: 'manual|periodic', ts: <ms timestamp>}
+exports.getLastSyncInfo = function getLastSyncInfo(callback) {
+  chrome.storage.sync.get('lastSyncInfo', Utils.unlessError(items => {
+    let lastSyncInfo = items.lastSyncInfo;
+
+    if (!lastSyncInfo) {
+      lastSyncInfo = {syncType: 'periodic', 'ts': 0};
+      chrome.storage.sync.set({lastSyncInfo}, Utils.unlessError(() => {
+        console.warn('init lastSyncInfo to time 0');
+        callback(lastSyncInfo);
+      }));
+    } else {
+      callback(lastSyncInfo);
+    }
+  }));
+};
+
+exports.setLastSyncInfo = function setLastSyncInfo(lastSyncInfo, callback) {
+  const storageItems = {};
+  storageItems.lastSyncInfo = lastSyncInfo;
+
+  chrome.storage.sync.set(storageItems, Utils.unlessError(callback));
+};
 
 exports.getOrCreateReportingUUID = function getOrCreateReportingUUID(callback) {
   chrome.storage.sync.get('reportingUUID', Utils.unlessError(items => {
