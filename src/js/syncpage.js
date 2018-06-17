@@ -5,6 +5,7 @@ const moment = require('moment');
 
 const Reporting = require('./reporting');
 
+/* eslint-disable */
 // https://gist.github.com/kerimdzhanov/f6f0d2b2a57720426211
 function poll(fn, callback, timeout, interval) {
   var endTime = Number(new Date()) + (timeout || 2000);
@@ -24,6 +25,7 @@ function poll(fn, callback, timeout, interval) {
     });
   })();
 }
+/* eslint-enable */
 
 function onReady() {
   const userId = Qs.parse(location.search.substring(1)).userId;
