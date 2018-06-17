@@ -36,7 +36,7 @@ function onReady() {
 
     let nextSyncInfo = 'Periodic syncs are disabled.';
     if (status.nextExpectedSync) {
-      nextSyncInfo = `The next full sync is expected in ${moment(new Date(status.nextExpectedSync)).fromNow()}.`;
+      nextSyncInfo = `The next full sync is expected ${moment(new Date(status.nextExpectedSync)).fromNow()}.`;
     }
     $('#next-sync-info').text(nextSyncInfo);
   });
