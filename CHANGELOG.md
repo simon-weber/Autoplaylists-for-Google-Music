@@ -1,3 +1,13 @@
+## 5.9.0 (June 17, 2018)
+
+Features:
+
+  - a syncing page has been added, which contains information on past syncs and buttons to manually trigger them
+
+Bugfixes:
+
+  - properly reset random orderings on tab refreshes
+
 ## 5.8.1 (June 2, 2018)
 
 Misc:
