@@ -169,6 +169,7 @@ exports.setLastPSync = function setLastPSync(lastPSync, callback) {
 };
 
 // Callback {syncType: 'manual|periodic', ts: <ms timestamp>}
+// Note that this only tracks the last full sync; it's not updated when individual playlists are synced.
 exports.getLastSyncInfo = function getLastSyncInfo(callback) {
   chrome.storage.sync.get('lastSyncInfo', Utils.unlessError(items => {
     let lastSyncInfo = items.lastSyncInfo;

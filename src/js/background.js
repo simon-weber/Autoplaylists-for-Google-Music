@@ -377,8 +377,7 @@ function main() {
     // respond to manager / content script requests.
 
     if (request.action === 'forceUpdate') {
-      // TODO this should probably be distinguished from normal periodic syncs.
-      manager.requestSync({userId: request.userId, action: 'update-all'});
+      manager.requestSync({userId: request.userId, action: 'update-all', syncType: 'manual'});
     } else if (request.action === 'query') {
       const db = dbs[request.playlist.userId];
       const splaylistcache = splaylistcaches[request.playlist.userId];
@@ -414,12 +413,18 @@ function main() {
       return;
     } else if (request.action === 'getStatus') {
       Storage.getLastPSync(lastPSync => {
-        Storage.getSyncMs(initSyncMs => {
-          const nextExpectedSync = lastPSync + initSyncMs;
-          sendResponse({
-            lastPSync,
-            nextExpectedSync,
-            'randomCacheTS': Track.randomCacheTS,
+        Storage.getSyncMs(syncMs => {
+          Storage.getLastSyncInfo(lastSyncInfo => {
+            let nextExpectedSync = lastPSync + syncMs;
+            if (!syncMs) {
+              nextExpectedSync = null;
+            }
+            sendResponse({
+              lastPSync,
+              nextExpectedSync,
+              lastSyncInfo,
+              'randomCacheTS': Track.randomCacheTS,
+            });
           });
         });
       });

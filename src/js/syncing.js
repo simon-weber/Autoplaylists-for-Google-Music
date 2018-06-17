@@ -45,6 +45,8 @@ class Manager {
     // {action: 'update', localId} to add+sync a (new) playlist
     // {action: 'delete', localId, remoteId} to delete a remote playlist (assumed to already be deleted locally)
     // userId must also be passed during the global state transition.
+    // syncType may be set to 'manual' if the sync was user-initiated. Otherwise it's assumed to be periodic.
+    // This only controls what's persisted in lastSyncInfo.
 
     if (Object.values(details).includes(undefined)) {
       // This can happen if playlists are operated on at weird times, like a delete before the create happens.
@@ -148,9 +150,14 @@ exports.Manager = Manager;
 function sync(details, batchingEnabled) {
   // Promise a list of api responses.
   const userId = details.userId;
+  const syncType = details.syncType || 'periodic';
 
   if (details.action === 'update-all') {
-    return syncPlaylists(userId, batchingEnabled);
+    return syncPlaylists(userId, batchingEnabled).then(apiResponses => {
+      const lastSyncInfo = {syncType, ts: new Date().getTime()};
+      Storage.setLastSyncInfo(lastSyncInfo, () => console.log('setLastSyncInfo to', lastSyncInfo));
+      return apiResponses;
+    });
   }
 
   if (details.action === 'update' || details.action === 'delete') {

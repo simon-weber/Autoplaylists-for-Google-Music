@@ -4,15 +4,23 @@ js:
   - /js-built/syncpage.js
 css:
   - /css/hint.min.css
+  - /css/spinner.css
 ---
 <div class="row">
     <div class="col-lg-12">
         <h2>Syncing</h2>
-        The last full sync happened <span id="lastpsync-ago"></span>.
+        The last full sync was <span id="lastsync-type"></span> and happened <span id="lastsync-ago"></span>.
         <br/>
-        The next full sync is expected <span id="next-sync-in"></span>.
+        <span id="next-sync-info"></span>
         <br/>
         <button class="btn btn-default menu-button" id="sync-now">Sync now</button>
+        <div id="sync-spinner" class="spinner menu-button" style="display:none; margin:unset;">
+            <div class="rect1"></div>
+            <div class="rect2"></div>
+            <div class="rect3"></div>
+            <div class="rect4"></div>
+            <div class="rect5"></div>
+        </div>
 
         <h3>random ordering</h3>
         The ordering used by random sorts is shared across all playlists.
