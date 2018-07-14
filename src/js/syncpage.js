@@ -5,6 +5,8 @@ const moment = require('moment');
 
 const Reporting = require('./reporting');
 
+const SUPPORT_LINK = 'https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki';
+
 /* eslint-disable */
 // https://gist.github.com/kerimdzhanov/f6f0d2b2a57720426211
 function poll(fn, callback, timeout, interval) {
@@ -33,8 +35,11 @@ function onReady() {
   chrome.runtime.sendMessage({action: 'getStatus'}, status => {
     console.log('got status', status);
     $('#random-ts-ago').text(moment(new Date(status.randomCacheTS)).fromNow());
-    $('#lastsync-type').text(status.lastSyncInfo.syncType);
-    $('#lastsync-ago').text(moment(new Date(status.lastSyncInfo.ts)).fromNow());
+
+    const lastType = status.lastSyncInfo.syncType;
+    const lastAgo = moment(new Date(status.lastSyncInfo.ts)).fromNow();
+    const lastSyncInfo = `The last full sync was ${lastType} and happened ${lastAgo}.`;
+    $('#last-sync-info').text(lastSyncInfo);
 
     let nextSyncInfo = 'Periodic syncing is disabled.';
     if (status.inBackoff) {
@@ -60,6 +65,14 @@ function onReady() {
     }, err => {
       if (err) {
         console.error(err);
+        Reporting.Raven.captureException(err);
+
+        $('#sync-now').attr('disabled', true);
+        $('#sync-now').show();
+        $('#sync-spinner').hide();
+        $('#last-sync-info').html(
+          "The last sync failed, likely due to problems on Google's end. Try again later."
+          + ` If this persists, <a href="${SUPPORT_LINK}">visit the support site</a> to get help.`);
       } else {
         location.reload(true);
       }
