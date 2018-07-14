@@ -103,6 +103,22 @@ function getMutationCounts(mutations) {
   return counts;
 }
 
+// codeCounts is {'code': int}
+exports.reportSyncResponseCodes = function reportSyncResponseCodes(codeCounts) {
+  if (!cachedContext) {
+    setTimeout(reportSyncResponseCodes, 1000, codeCounts);
+  } else {
+    for (const code in codeCounts) {
+      const count = Analytics.EventBuilder.builder()
+      .category('responseCode')
+      .action(code)
+      .value(codeCounts[code]);
+
+      GATracker.send(count);
+    }
+  }
+};
+
 // num is the number of mixed reorders present in the sync.
 exports.reportMixedReorders = function reportMixedReorders(num) {
   if (!cachedContext) {

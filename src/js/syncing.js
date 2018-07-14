@@ -134,8 +134,39 @@ class Manager {
         console.warn('entering backoff');
         this.backoffStart = new Date();
       }
-    }).then(responses => {
-      console.log('finished sync', details, '. responses', responses);
+    }).then(responseBatches => {
+      console.log('finished sync', details, '. responseBatches', responseBatches);
+      const codeCounts = {};
+      for (let i = 0; i < responseBatches.length; i++) {
+        const responseBatch = responseBatches[i];
+        const response = responseBatch.mutate_response;
+        if (response) {
+          for (let j = 0; j < response.length; j++) {
+            const code = response[j].response_code;
+            if (codeCounts[code] === undefined) {
+              codeCounts[code] = 1;
+            } else {
+              codeCounts[code]++;
+            }
+          }
+        } else {
+          console.warn('response batch without mutate_response');
+          Reporting.Raven.captureMessage('response batch without mutate_response', {
+            level: 'warning',
+            extra: {responseBatch},
+          });
+        }
+      }
+
+      console.log(`codeCounts: ${JSON.stringify(codeCounts)}`);
+      for (const code in codeCounts) {
+        if (code !== 'OK') {
+          console.warn('received non-ok codes in response');
+          break;
+        }
+      }
+      Reporting.reportSyncResponseCodes(codeCounts);
+
       this.syncing = false;
       if (this.queue.length) {
         // Yield to other callbacks.
@@ -543,7 +574,7 @@ function syncPlaylist(playlist, playlists) {
       // Otherwise, syncs could be called on a playlist without a remoteId.
       return new Promise(resolve => {
         Storage.savePlaylist(playlistToSave, resolve);
-      }).then(() => response);
+      }).then(() => [response]);
     });
   }
 
