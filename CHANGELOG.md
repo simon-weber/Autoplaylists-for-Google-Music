@@ -1,3 +1,17 @@
+## 5.10.0 (July 14, 2018)
+
+Features:
+
+  - the syncing page now surfaces backoff status
+
+Bugfixes:
+
+  - the syncing page properly handles timeouts
+
+Misc:
+
+  - mutation response codes are logged and reported, which should help with sync debugging
+
 ## 5.9.0 (June 17, 2018)
 
 Features:
