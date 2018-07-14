@@ -1,3 +1,10 @@
+## 5.10.1 (July 14, 2018)
+
+Misc:
+
+  - improve the timing of sync page polling
+  - remove some unneeded error reporting
+
 ## 5.10.0 (July 14, 2018)
 
 Features:
