@@ -61,7 +61,7 @@ function onReady() {
     // The manager doesn't tell us when (or if) our sync happened, so poll lastSyncInfo to see if the last sync was recent.
     // This isn't perfect, but it's good enough for now.
     poll(callback => {
-      chrome.runtime.sendMessage({action: 'getStatus'}, status => callback(new Date().getTime() - status.lastSyncInfo.ts < 60000));
+      chrome.runtime.sendMessage({action: 'getStatus'}, status => callback(new Date().getTime() - status.lastSyncInfo.ts < 30000));
     }, err => {
       if (err) {
         console.error(err);
@@ -76,7 +76,7 @@ function onReady() {
       } else {
         location.reload(true);
       }
-    }, 15000, 2000);
+    }, 30000, 2000);
   });
 
   $('#reset-random').click(e => {
