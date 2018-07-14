@@ -36,8 +36,12 @@ function onReady() {
     $('#lastsync-type').text(status.lastSyncInfo.syncType);
     $('#lastsync-ago').text(moment(new Date(status.lastSyncInfo.ts)).fromNow());
 
-    let nextSyncInfo = 'Periodic syncs are disabled.';
-    if (status.nextExpectedSync) {
+    let nextSyncInfo = 'Periodic syncing is disabled.';
+    if (status.inBackoff) {
+      nextSyncInfo = 'Periodic syncing has been temporarily disabled since your account is showing signs of being overloaded.'
+      + ' Syncing will resume in 30 minutes.';
+      $('#sync-now').attr('disabled', true);
+    } else if (status.nextExpectedSync) {
       nextSyncInfo = `The next full sync is expected ${moment(new Date(status.nextExpectedSync)).fromNow()}.`;
     }
     $('#next-sync-info').text(nextSyncInfo);

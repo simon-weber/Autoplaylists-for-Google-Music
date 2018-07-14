@@ -424,6 +424,7 @@ function main() {
               nextExpectedSync,
               lastSyncInfo,
               'randomCacheTS': Track.randomCacheTS,
+              inBackoff: manager.inBackoff(),
             });
           });
         });
