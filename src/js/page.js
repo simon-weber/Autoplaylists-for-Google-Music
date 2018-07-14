@@ -37,10 +37,6 @@ function makePageQuery(action) {
     return tabs[0].id;
   }).catch(e => {
     console.warn('tab query failed', e);
-    Reporting.Raven.captureMessage('tab query failed', {
-      level: 'warning',
-      extra: {action, e},
-    });
     Reporting.reportTabQuery('failure');
     throw e;
   }).then(tabId => _makePageQuery(action, tabId));

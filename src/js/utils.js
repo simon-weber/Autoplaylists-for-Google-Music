@@ -18,20 +18,23 @@ function unlessError(func, onError) {
   return function unlessErrorWrapper() {
     // can't use an arrow function here because we need our own `this`.
     if (chrome.extension.lastError) {
-      console.error('unlessError:', chrome.extension.lastError.message);
-      Reporting.Raven.captureMessage(chrome.extension.lastError.message, {
-        tags: {
-          funcName: func.name,
-        },
-        extra: {
-          func,
-          location: 'Utils.unlessError',
-          error: chrome.extension.lastError,
-          this: this,
-          arguments: arguments,  // eslint-disable-line object-shorthand
-        },
-        stacktrace: true,
-      });
+      const message = chrome.extension.lastError.message;
+      console.error('unlessError:', message);
+      if (message !== 'The tab was closed.') {
+        Reporting.Raven.captureMessage(message, {
+          tags: {
+            funcName: func.name,
+          },
+          extra: {
+            func,
+            location: 'Utils.unlessError',
+            error: chrome.extension.lastError,
+            this: this,
+            arguments: arguments,  // eslint-disable-line object-shorthand
+          },
+          stacktrace: true,
+        });
+      }
       if (typeof onError !== 'undefined') {
         onError(chrome.extension.lastError);
       }

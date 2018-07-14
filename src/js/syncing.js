@@ -610,10 +610,7 @@ function syncEntryMutations(hasFullVersion, splaylistcache, user, playlists, bat
     if (!playlist || !playlist.remoteId) {
       // This can happen if playlists are operated on at weird times, like a delete before the create happens.
       console.warn('rejecting from syncEntryMutations', playlist);
-      Reporting.Raven.captureMessage('rejected from syncEntryMutations', {
-        level: 'warning',
-        extra: {playlist},
-      });
+      Reporting.reportGAError({'message': 'rejecting from syncEntryMutations'});
       continue;
     }
 
@@ -659,10 +656,7 @@ function syncPlaylistMutations(hasFullVersion, splaylistcache, user, playlists) 
     if (!playlist || !playlist.remoteId) {
       // This can happen if playlists are operated on at weird times, like a delete before the create happens.
       console.warn('rejecting from syncPlaylistMutations', playlist);
-      Reporting.Raven.captureMessage('rejected from syncPlaylistMutations', {
-        level: 'warning',
-        extra: {playlist},
-      });
+      Reporting.reportGAError({'message': 'rejecting from syncPlaylistMutations'});
       continue;
     }
 
