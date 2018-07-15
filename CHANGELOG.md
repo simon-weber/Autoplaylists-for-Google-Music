@@ -1,3 +1,13 @@
+## 5.10.2 (July 15, 2018)
+
+Bugfixes:
+
+  - add an additional validation step to prevent unauthed tokens reported as valid
+
+Misc:
+
+  - update to the latest android protocol
+
 ## 5.10.1 (July 14, 2018)
 
 Misc:
