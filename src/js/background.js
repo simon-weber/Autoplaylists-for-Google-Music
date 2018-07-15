@@ -185,7 +185,7 @@ function showPageAction(request, tabId) {
       return;
     }
 
-    let tier = 'free';
+    let tier = 'fr';
     if (request.tier === 2) {
       tier = 'aa';
     }
