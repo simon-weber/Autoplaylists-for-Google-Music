@@ -2,6 +2,8 @@
 
 const Reporting = require('./reporting');
 
+const Gmoauth = require('./googlemusic_oauth');
+
 const TOKEN_VERIFY_URL = 'https://www.googleapis.com/oauth2/v3/tokeninfo';
 const EXPECTED_SCOPE = 'https://www.googleapis.com/auth/chromewebstore.readonly https://www.googleapis.com/auth/skyjam';
 
@@ -70,7 +72,28 @@ exports.verifyToken = function verifyToken(token, callback) {
 
       console.info('got verifyToken response:', response);
       if (response.scope === EXPECTED_SCOPE) {
-        callback(token);
+        // Try a GM request.
+        // TODO get a user here?
+        Gmoauth.getConfig({'tier': 'fr'}).then(res => {
+          console.log('token is authed, got config', res);
+          Reporting.reportAuth('valid', 'configN');
+          callback(token);
+        }).catch(err => {
+          if (err && (err.status === 401 || err.status === 403)) {
+            console.error('valid token not authed for GM; revoking', err);
+            chrome.identity.removeCachedAuthToken({token});
+            Reporting.reportAuth('invalid', 'configN');
+            callback(null);
+          } else {
+            console.warn('non-4xx config error response; treating as valid', err);
+            Reporting.Raven.captureMessage('non-4xx config error response', {
+              level: 'warning',
+              extra: {err, response},
+            });
+            Reporting.reportAuth('unknown', 'configN');
+            callback(token);
+          }
+        });
       } else {
         console.warn('invalid token detected; revoking');
         chrome.identity.removeCachedAuthToken({token});

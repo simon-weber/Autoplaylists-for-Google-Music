@@ -308,3 +308,24 @@ exports.runEntryMutations = function runEntryMutations(user, mutations) {
     });
   });
 };
+
+exports.getConfig = function getConfig(user) {
+  // Promise an api response.
+  const details = {
+    endpoint: 'config',
+    method: 'get',
+    params: {
+      'dv': 0,
+      'hl': 'en-US',
+      'tier': user.tier,
+    },
+  };
+  return new Promise((resolve, reject) => {
+    authedGMRequest(details, response => {
+      resolve(response);
+    }, err => {
+      console.error('config failed', err);
+      reject(err);
+    });
+  });
+};
