@@ -124,49 +124,57 @@ class Manager {
     }).then(res => {
       console.log('cache update res', res);
       return sync(details, this.batchingEnabled);
+    }).then(responseBatches => {
+      console.log('finished sync', details, '. responseBatches', responseBatches);
+      try {
+        const codeCounts = {};
+        for (let i = 0; i < responseBatches.length; i++) {
+          const responseBatch = responseBatches[i];
+          const response = responseBatch.mutate_response;
+          if (response) {
+            for (let j = 0; j < response.length; j++) {
+              const code = response[j].response_code;
+              if (codeCounts[code] === undefined) {
+                codeCounts[code] = 1;
+              } else {
+                codeCounts[code]++;
+              }
+            }
+          } else {
+            console.warn('response batch without mutate_response');
+            Reporting.Raven.captureMessage('response batch without mutate_response', {
+              level: 'warning',
+              extra: {responseBatch},
+            });
+          }
+        }
+
+        console.log(`codeCounts: ${JSON.stringify(codeCounts)}`);
+        for (const code in codeCounts) {
+          if (code !== 'OK') {
+            console.warn('received non-ok codes in response');
+            break;
+          }
+        }
+        Reporting.reportSyncResponseCodes(codeCounts);
+      } catch (e) {
+        console.warn('failed to process responseBatches');
+        Reporting.Raven.captureMessage('failed to process responseBatches', {
+          level: 'warning',
+          extra: {responseBatches},
+        });
+      }
     }).catch(e => {
       console.error('sync for', details, 'failed:', e);
       Reporting.Raven.captureMessage('sync failed', {
         level: 'error',
         extra: {details, e},
       });
-      if (e.status === 500 && !this.inBackoff()) {
+      if (e && e.status === 500 && !this.inBackoff()) {
         console.warn('entering backoff');
         this.backoffStart = new Date();
       }
-    }).then(responseBatches => {
-      console.log('finished sync', details, '. responseBatches', responseBatches);
-      const codeCounts = {};
-      for (let i = 0; i < responseBatches.length; i++) {
-        const responseBatch = responseBatches[i];
-        const response = responseBatch.mutate_response;
-        if (response) {
-          for (let j = 0; j < response.length; j++) {
-            const code = response[j].response_code;
-            if (codeCounts[code] === undefined) {
-              codeCounts[code] = 1;
-            } else {
-              codeCounts[code]++;
-            }
-          }
-        } else {
-          console.warn('response batch without mutate_response');
-          Reporting.Raven.captureMessage('response batch without mutate_response', {
-            level: 'warning',
-            extra: {responseBatch},
-          });
-        }
-      }
-
-      console.log(`codeCounts: ${JSON.stringify(codeCounts)}`);
-      for (const code in codeCounts) {
-        if (code !== 'OK') {
-          console.warn('received non-ok codes in response');
-          break;
-        }
-      }
-      Reporting.reportSyncResponseCodes(codeCounts);
-
+    }).then(() => {
       this.syncing = false;
       if (this.queue.length) {
         // Yield to other callbacks.
