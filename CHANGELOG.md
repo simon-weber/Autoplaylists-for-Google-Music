@@ -1,3 +1,9 @@
+## 5.10.3 (July 16, 2018)
+
+Bugfixes:
+
+  - prevent error responses from stopping the sync queue
+
 ## 5.10.2 (July 15, 2018)
 
 Bugfixes:
