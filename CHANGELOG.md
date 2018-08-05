@@ -1,3 +1,10 @@
+## 5.10.4 (August 5, 2018)
+
+Misc:
+
+  - turn on change batching for everyone to improve sync success rates
+  - improve the presentation of the backoff status
+
 ## 5.10.3 (July 16, 2018)
 
 Bugfixes:
