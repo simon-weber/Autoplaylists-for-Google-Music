@@ -53,12 +53,23 @@ function migrateToThree(items) {
   return items;
 }
 
-const SCHEMA_VERSION = 3;
+function migrateToFour(items) {
+  // Back up the old batching setting and enable it.
+  /* eslint-disable no-param-reassign */
+  items.oldBatchingEnabled = items.batchingEnabled;
+  items.batchingEnabled = true;
+  /* eslint-enable no-param-reassign */
+
+  return items;
+}
+
+const SCHEMA_VERSION = 4;
 const MIGRATIONS = [
-  // Migrations receive all items and transform them.
+  // Migrations receive all *sync storage* items and transform them.
   migrateToOne,
   migrateToTwo,
   migrateToThree,
+  migrateToFour,
 ];
 
 // Callback a bool.
