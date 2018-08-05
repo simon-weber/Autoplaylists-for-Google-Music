@@ -419,12 +419,16 @@ function main() {
             if (!syncMs) {
               nextExpectedSync = null;
             }
+            // This can mutate backoffStart, so it needs to be explicitly run before accessing it.
+            const inBackoff = manager.inBackoff();
             sendResponse({
               lastPSync,
               nextExpectedSync,
               lastSyncInfo,
               'randomCacheTS': Track.randomCacheTS,
-              inBackoff: manager.inBackoff(),
+              inBackoff,
+              backoffStartMs: manager.backoffStart ? manager.backoffStart.valueOf() : null,
+              backoffMins: Syncing.BACKOFF_MINS,
             });
           });
         });

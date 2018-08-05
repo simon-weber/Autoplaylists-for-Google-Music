@@ -6,6 +6,7 @@ const moment = require('moment');
 const Reporting = require('./reporting');
 
 const SUPPORT_LINK = 'https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki';
+const SYNCING_GUIDE_LINK = 'https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki/Debugging#handling-syncing-failures-or-an-overloaded-account';
 
 /* eslint-disable */
 // https://gist.github.com/kerimdzhanov/f6f0d2b2a57720426211
@@ -43,13 +44,15 @@ function onReady() {
 
     let nextSyncInfo = 'Periodic syncing is disabled.';
     if (status.inBackoff) {
-      nextSyncInfo = 'Periodic syncing has been temporarily disabled since your account is showing signs of being overloaded.'
-      + ' Syncing will resume in 30 minutes.';
+      const backoffEndsIn = moment(new Date(status.backoffStartMs + (status.backoffMins * 60 * 1000))).fromNow();
+      nextSyncInfo = 'Periodic syncing is temporarily disabled since Google'
+      + ` is <a href="${SYNCING_GUIDE_LINK}">showing signs of being overloaded</a>.`
+      + `<br/>Syncing will be enabled again ${backoffEndsIn}.`;
       $('#sync-now').attr('disabled', true);
     } else if (status.nextExpectedSync) {
       nextSyncInfo = `The next full sync is expected ${moment(new Date(status.nextExpectedSync)).fromNow()}.`;
     }
-    $('#next-sync-info').text(nextSyncInfo);
+    $('#next-sync-info').html(nextSyncInfo);
   });
 
   $('#sync-now').click(e => {

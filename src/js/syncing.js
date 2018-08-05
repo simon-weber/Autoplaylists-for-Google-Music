@@ -20,7 +20,7 @@ const Reporting = require('./reporting');
 // This is being used to hold the old global state moving out of background.
 const globalState = {};
 
-const BACKOFF_MINS = 15;
+const BACKOFF_MINS = 30;
 
 class Manager {
   // A sync manager serializes access to both remote and local (cached) Music resources.
@@ -185,6 +185,7 @@ class Manager {
 }
 
 exports.Manager = Manager;
+exports.BACKOFF_MINS = BACKOFF_MINS;
 
 function sync(details, batchingEnabled) {
   // Promise a list of api responses.
