@@ -6,7 +6,7 @@ const moment = require('moment');
 const Reporting = require('./reporting');
 
 const SUPPORT_LINK = 'https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki';
-const SYNCING_GUIDE_LINK = 'https://github.com/simon-weber/Autoplaylists-for-Google-Music/wiki/Debugging#handling-syncing-failures-or-an-overloaded-account';
+const SYNCING_GUIDE_LINK = SUPPORT_LINK + '/Debugging#handling-syncing-failures-or-an-overloaded-account';
 
 /* eslint-disable */
 // https://gist.github.com/kerimdzhanov/f6f0d2b2a57720426211
