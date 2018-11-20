@@ -260,7 +260,7 @@ function main() {
   });
 
   chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status === 'complete' && tab.url.startsWith(MUSIC_URL)) {
+    if (changeInfo.status === 'complete' && tab.url && tab.url.startsWith(MUSIC_URL)) {
       console.debug('noticed music tab', tabId);
       Page.checkInit(tabId, STARTUP_TIME).then(isInit => {
         if (!isInit) {

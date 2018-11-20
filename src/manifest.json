@@ -35,8 +35,7 @@
         "notifications",
         "identity",
         "identity.email",
-        "storage",
-        "tabs"
+        "storage"
     ],
     "short_name": "Autoplaylists"
 }
