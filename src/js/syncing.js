@@ -129,6 +129,9 @@ class Manager {
         const codeCounts = {};
         for (let i = 0; i < responseBatches.length; i++) {
           const responseBatch = responseBatches[i];
+          if (!responseBatch) {
+            continue;
+          }
           const response = responseBatch.mutate_response;
           if (response) {
             for (let j = 0; j < response.length; j++) {
