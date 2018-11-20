@@ -30,8 +30,8 @@
     },
     "permissions": [
         "*://play.google.com/music/*",
-        "https://www.googleapis.com/",
-        "https://www.google-analytics.com/",
+        "https://www.googleapis.com/chromewebstore/*",
+        "https://www.googleapis.com/sj/*",
         "notifications",
         "identity",
         "identity.email",
