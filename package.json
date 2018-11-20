@@ -1,7 +1,8 @@
 {
   "private": true,
   "dependencies": {
-    "browserify": "11.2.0",
+    "acorn": "^6.0.4",
+    "browserify": "^16.2.3",
     "browserify-shim": "^3.8.14",
     "collections": "simon-weber/collections#fix_sorted_array_incomparable",
     "exorcist": "^0.4.0",
@@ -11,14 +12,14 @@
     "raven-js": "^3.15.0",
     "sortablejs": "1.4.2",
     "sugar": "1.4.1",
-    "watchify": "^3.7.0"
+    "watchify": "^3.11.0"
   },
   "devDependencies": {
-    "eslint": "^3.4.0",
-    "eslint-config-airbnb": "^10.0.1",
-    "eslint-plugin-import": "^1.14.0",
-    "eslint-plugin-jsx-a11y": "^2.2.1",
-    "eslint-plugin-react": "^6.2.1"
+    "eslint": "^5.9.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-jsx-a11y": "^6.1.2",
+    "eslint-plugin-react": "^7.11.1"
   },
   "browser": {
     "analytics": "./src/js/vendor/google-analytics-bundle.js"
