@@ -1,4 +1,5 @@
 'use strict';
+
 const Track = require('./track');
 
 // playlist fields:
@@ -18,22 +19,22 @@ function ruleToString(rule, linkedNames) {
     const operators = Track.operators.select;
     const operator = operators.filter(o => o.name === rule.operator)[0];
     return `playlist ${operator.label} "${linkedNames[rule.value]}"`;
-  } else if (rule.name === 'playlistTitle') {
+  } if (rule.name === 'playlistTitle') {
     const operators = Track.operators.string;
     const operator = operators.filter(o => o.name === rule.operator)[0];
     return `playlist title ${operator.label} "${rule.value}"`;
-  } else if (rule.name) {
+  } if (rule.name) {
     const field = Track.fieldsByName[rule.name];
     // FIXME this is duplicated in playlist_editor
     const type = field.is_datetime ? 'datetime' : Track.lfToBusinessTypes[field.type];
     const operators = Track.operators[type];
     const operator = operators.filter(o => o.name === rule.operator)[0];
     return `${field.label} ${operator.label} ${JSON.stringify(rule.value)}`;
-  } else if (rule.all || rule.any) {
+  } if (rule.all || rule.any) {
     const subRules = rule.all || rule.any;
     if (subRules.length === 1) {
       return ruleToString(subRules[0], linkedNames);
-    } else if (subRules.length > 1) {
+    } if (subRules.length > 1) {
       const subRulesStr = subRules.map(r => ruleToString(r, linkedNames)).filter(s => s.length).join(rule.any ? ' or ' : ' and ');
       return `(${subRulesStr})`;
     }

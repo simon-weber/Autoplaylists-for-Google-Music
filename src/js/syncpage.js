@@ -75,7 +75,8 @@ function onReady() {
         $('#sync-spinner').hide();
         $('#last-sync-info').html(
           "The last sync failed, likely due to problems on Google's end. Try again later."
-          + ` If this persists, <a href="${SUPPORT_LINK}">visit the support site</a> to get help.`);
+          + ` If this persists, <a href="${SUPPORT_LINK}">visit the support site</a> to get help.`,
+        );
       } else {
         window.location.reload(true);
       }

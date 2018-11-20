@@ -1,4 +1,5 @@
 'use strict';
+
 const Qs = require('qs');
 const Sortable = require('sortablejs');
 
@@ -88,10 +89,11 @@ function createSort(fields, isLocked) {
   const $sort = $('<li>');
   const $sortBy = $('<select class="sort-by form-control">');
   const $sortByOrder = $(
-    '<select class="sort-by-order form-control">' +
-    '   <option value="ASC">ascending</option>' +
-    '   <option value="DESC">descending</option>' +
-    '</select');
+    '<select class="sort-by-order form-control">'
+    + '   <option value="ASC">ascending</option>'
+    + '   <option value="DESC">descending</option>'
+    + '</select',
+  );
   const $remove = $('<a class="remove" href="javascript:void(0)">Remove</a>');
   $remove.click(e => {
     e.preventDefault();
@@ -146,12 +148,12 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache,
       $('<li>').text(`${field.label}: ${field.explanation}`).appendTo($explanations);
     }
   });
-  $('<li>').text('playlist: a playlist whose contents will be included or excluded.' +
-                ' Hidden if no other playlists are available.').appendTo($explanations);
-  $('<li>').html('random sort: a random total ordering, different on each refresh of the Music tab.' +
-                ' See <a target="_blank" href="https://github.com/simon-weber/' +
-                'Autoplaylists-for-Google-Music/wiki/Tips-and-Tricks#random-sorting">' +
-                ' the wiki</a> for more details.').appendTo($explanations);
+  $('<li>').text('playlist: a playlist whose contents will be included or excluded.'
+                + ' Hidden if no other playlists are available.').appendTo($explanations);
+  $('<li>').html('random sort: a random total ordering, different on each refresh of the Music tab.'
+                + ' See <a target="_blank" href="https://github.com/simon-weber/'
+                + 'Autoplaylists-for-Google-Music/wiki/Tips-and-Tricks#random-sorting">'
+                + ' the wiki</a> for more details.').appendTo($explanations);
 
   if (playlistId) {
     const loadedPlaylist = playlists.filter(p => p.localId === playlistId)[0];
@@ -320,8 +322,8 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache,
     $('#pl-submit, #test')
     .addClass('locked')
     .addClass('disabled')
-    .wrap(`<div class="hint--top" data-hint="The free version allows only ${License.FREE_PLAYLIST_REPR}.` +
-         ' This one is locked to editing."/>');
+    .wrap(`<div class="hint--top" data-hint="The free version allows only ${License.FREE_PLAYLIST_REPR}.`
+         + ' This one is locked to editing."/>');
   }
 
   License.hasFullVersion(false, hasFullVersion => {
@@ -329,8 +331,8 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache,
       $('#duplicate')
       .addClass('locked')
       .addClass('disabled')
-      .wrap(`<div class="hint--right" data-hint="The free version allows only ${License.FREE_PLAYLIST_REPR}.` +
-           ' Upgrade to add more."/>');
+      .wrap(`<div class="hint--right" data-hint="The free version allows only ${License.FREE_PLAYLIST_REPR}.`
+           + ' Upgrade to add more."/>');
     }
   });
 }

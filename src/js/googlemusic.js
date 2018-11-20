@@ -46,7 +46,7 @@ function authedGMRequest(endpoint, data, user, method, callback, onError) {
       callback(res);
     },
 
-    dataType
+    dataType,
   )
   .fail(ajaxOnError);
 }

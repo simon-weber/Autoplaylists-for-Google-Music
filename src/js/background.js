@@ -3,8 +3,8 @@
 const Qs = require('qs');
 const SortedMap = require('collections/sorted-map');
 
-const Auth = require('./auth');
 const Lf = require('lovefield');  // made available for debugQuery eval
+const Auth = require('./auth');
 const License = require('./license');
 const Page = require('./page');
 const Splaylistcache = require('./splaylistcache');
@@ -172,8 +172,8 @@ function showPageAction(request, tabId) {
     // In the case that an existing tab/index was changed to a new user,
     // remove the old entry.
     for (const userId in users) {
-      if (users[userId].tabId === tabId ||
-          users[userId].userIndex === request.userIndex) {
+      if (users[userId].tabId === tabId
+          || users[userId].userIndex === request.userIndex) {
         delete users[userId];
       }
     }
@@ -410,7 +410,6 @@ function main() {
         });
       }
       sendResponse(cache);
-      return;
     } else if (request.action === 'getStatus') {
       Storage.getLastPSync(lastPSync => {
         Storage.getSyncMs(syncMs => {
@@ -448,7 +447,6 @@ function main() {
       }
 
       sendResponse();
-      return;
     }
   });
 

@@ -271,8 +271,8 @@ function initLibrary(userId, callback) {
   // Callback nothing when finished.
   Trackcache.openDb(userId, db => {
     Page.getLocalTracks().then(response => {
-      if (chrome.extension.lastError || response === null || response.gtracks === null ||
-          response.gtracks.length === 0 || response.timestamp === null) {
+      if (chrome.extension.lastError || response === null || response.gtracks === null
+          || response.gtracks.length === 0 || response.timestamp === null) {
         console.warn('local idb not helpful; falling back to diffUpdate(0).', response, chrome.extension.lastError);
         fallback(db);
       } else {
@@ -714,11 +714,9 @@ function syncSplaylistcache(userId) {
     Storage.getPlaylistsForUser(userId, resolve);
   });
 
-  const deletedIdsP = playlistsP.then(playlists =>
-    new Promise(resolve => {
-      Splaylistcache.sync(splaylistcache, globalState.users[userId], playlists, resolve);
-    })
-  );
+  const deletedIdsP = playlistsP.then(playlists => new Promise(resolve => {
+    Splaylistcache.sync(splaylistcache, globalState.users[userId], playlists, resolve);
+  }));
 
   return Promise.all([playlistsP, deletedIdsP])
   .then(params => {

@@ -41,12 +41,12 @@ function main() {
     e.preventDefault();
     License.getLicenseStatus(true, licenseStatus => {
       let reportAction = 'invalid';
-      let msg = 'Sorry, either the Chrome licensing api is unavailable' +
-       " or it reported that you haven't purchased the full version.";
+      let msg = 'Sorry, either the Chrome licensing api is unavailable'
+       + " or it reported that you haven't purchased the full version.";
       if (licenseStatus.state === 'FULL') {
         reportAction = 'valid';
-        msg = "Thanks for purchasing the full version! You've been upgraded." +
-          ' Please consider rating the extension if you like it.';
+        msg = "Thanks for purchasing the full version! You've been upgraded."
+          + ' Please consider rating the extension if you like it.';
       }
 
       Reporting.reportActivation(reportAction);
@@ -75,7 +75,7 @@ function main() {
           License.setFullForced(!devStatus.isFullForced, () => {
             window.location.reload(true);
           });
-        })
+        }),
       );
     }
   });

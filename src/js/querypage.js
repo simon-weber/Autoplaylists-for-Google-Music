@@ -34,7 +34,8 @@ function getInjectCode(id) {
           tier: window.USER_CONTEXT[13],
           gaiaId: window.USER_CONTEXT[32],
           xt: window._GU_getCookie('xt')},
-        '*');
+        '*',
+      );
     }
   } + ')()';
   /* eslint-enable prefer-template,no-undef */

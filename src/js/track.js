@@ -1,4 +1,5 @@
 'use strict';
+
 const Lf = require('lovefield');
 
 const Reporting = require('./reporting');

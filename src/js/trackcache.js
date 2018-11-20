@@ -234,7 +234,7 @@ function buildWhereClause(playlistId, track, playlistsById, splaylistcache, resu
         console.debug(`found ${trackIdList.length} linked tracks`);
         clause = Lf.op.or(
           track.id.in(trackIdList),
-          track.storeId.in(trackIdList)
+          track.storeId.in(trackIdList),
         );
         if (Track.isExcludingOperator(rule.operator)) {
           clause = Lf.op.not(clause);

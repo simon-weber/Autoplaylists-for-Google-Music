@@ -1,4 +1,5 @@
 'use strict';
+
 const Track = require('./track');
 const Reporting = require('./reporting');
 

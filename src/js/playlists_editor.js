@@ -27,8 +27,8 @@ function initializeForm(userId, playlists) {
       if (isLocked) {
         $link
         .addClass('locked')
-        .wrap(`<div class="hint--right" data-hint="The free version allows only ${License.FREE_PLAYLIST_REPR}.` +
-              ' This playlist is not being synced."/>');
+        .wrap(`<div class="hint--right" data-hint="The free version allows only ${License.FREE_PLAYLIST_REPR}.`
+              + ' This playlist is not being synced."/>');
         $link = $link.parent();
       }
 
@@ -46,8 +46,8 @@ function initializeForm(userId, playlists) {
       $('#add-playlist')
       .addClass('locked')
       .addClass('disabled')
-      .wrap(`<div class="hint--right" data-hint="The free version allows only ${License.FREE_PLAYLIST_REPR}.` +
-           ' Upgrade to add more."/>');
+      .wrap(`<div class="hint--right" data-hint="The free version allows only ${License.FREE_PLAYLIST_REPR}.`
+           + ' Upgrade to add more."/>');
     }
   });
 }

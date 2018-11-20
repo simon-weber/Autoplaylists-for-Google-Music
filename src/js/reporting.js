@@ -1,4 +1,5 @@
 'use strict';
+
 const Raven = require('raven-js');
 const Analytics = require('analytics'); // eslint-disable-line import/no-unresolved,import/no-extraneous-dependencies
 
