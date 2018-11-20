@@ -1,3 +1,9 @@
+## 5.10.5 (November 20, 2018)
+
+Misc:
+
+  - various dependency upgrades; no user-facing changes
+
 ## 5.10.4 (August 5, 2018)
 
 Misc:
