@@ -20,7 +20,7 @@ function onDrop(event) {
   const playlistNames = playlists.map(p => p.title).join('\n');
   const msg = `Overwrite current playlists with these ${playlists.length}?\n${playlistNames}`;
 
-  if (confirm(msg)) {  // eslint-disable-line no-alert
+  if (window.confirm(msg)) {  // eslint-disable-line no-alert
     // Convert the playlists for this user.
     for (let i = 0; i < playlists.length; i++) {
       const playlist = playlists[i];

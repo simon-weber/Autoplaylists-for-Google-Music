@@ -5,7 +5,7 @@ const SortedArray = require('collections/sorted-array');
 const Gmoauth = require('./googlemusic_oauth');
 const Splaylist = require('./splaylist');
 
-const Reporting = require('./reporting');
+require('./reporting');
 
 // splaylists are cached locally to enable playlist linking.
 // cache fields:

@@ -1,6 +1,5 @@
 'use strict';
 
-const Qs = require('qs');
 const SortedArray = require('collections/sorted-array');
 
 const Gm = require('./googlemusic');
@@ -120,7 +119,7 @@ class Manager {
       });
       return new Promise(resolve => {
         initLibrary(userId, resolve);
-      }).then(() => Promise.reject('db not init at periodic sync'));
+      }).then(() => Promise.reject(new Error('db not init at periodic sync')));
     }).then(res => {
       console.log('cache update res', res);
       return sync(details, this.batchingEnabled);
@@ -207,7 +206,7 @@ function sync(details, batchingEnabled) {
       if (details.action === 'update') {
         const playlist = playlists.filter(p => p.localId === details.localId)[0];
         if (!playlist) {
-          return Promise.reject(`update sync for ${details.localId} refers to a nonexistent playlist`);
+          return Promise.reject(new Error(`update sync for ${details.localId} refers to a nonexistent playlist`));
         }
         return syncPlaylist(playlist, playlists);
       }
@@ -239,7 +238,7 @@ function sync(details, batchingEnabled) {
     });
   }
 
-  return Promise.reject(`unrecognized action "${details.action}"`);
+  return Promise.reject(new Error(`unrecognized action "${details.action}"`));
 }
 
 function deauthUser(userId) {
@@ -691,7 +690,7 @@ function syncPlaylists(userId, batchingEnabled) {
       level: 'warning',
       extra: {users: globalState.users},
     });
-    return Promise.reject('refusing syncPlaylists because db is not init');
+    return Promise.reject(new Error('refusing syncPlaylists because db is not init'));
   }
 
   return new Promise((resolve, reject) => {

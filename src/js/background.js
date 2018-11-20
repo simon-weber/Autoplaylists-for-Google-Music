@@ -1,9 +1,10 @@
 'use strict';
 
 const Qs = require('qs');
-const SortedMap = require('collections/sorted-map');
 
-const Lf = require('lovefield');  // made available for debugQuery eval
+// made available for debugQuery eval
+const Lf = require('lovefield'); // eslint-disable-line no-unused-vars
+
 const Auth = require('./auth');
 const License = require('./license');
 const Page = require('./page');
@@ -18,8 +19,6 @@ const Context = require('./context');
 const Reporting = require('./reporting');
 
 const MUSIC_URL = 'https://play.google.com/music/listen';
-
-const LIST_CREATION_MS = new Date(2017, 6, 16).getTime();  // July 17th
 
 // {userId: {userIndex: int, tabId: int, xt: string, tier: string, gaiaId: string}}
 const users = {};
