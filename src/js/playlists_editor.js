@@ -53,7 +53,7 @@ function initializeForm(userId, playlists) {
 }
 
 function onReady() {
-  const userId = Qs.parse(location.search.substring(1)).userId;
+  const userId = Qs.parse(window.location.search.substring(1)).userId;
 
   $('#add-playlist').attr('href', `/html/playlist.html?${Qs.stringify({userId})}`);
   $('#import-export').attr('href', `/html/port.html?${Qs.stringify({userId})}`);

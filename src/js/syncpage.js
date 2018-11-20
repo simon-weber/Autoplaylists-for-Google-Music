@@ -31,7 +31,7 @@ function poll(fn, callback, timeout, interval) {
 /* eslint-enable */
 
 function onReady() {
-  const userId = Qs.parse(location.search.substring(1)).userId;
+  const userId = Qs.parse(window.location.search.substring(1)).userId;
 
   chrome.runtime.sendMessage({action: 'getStatus'}, status => {
     console.log('got status', status);
@@ -77,7 +77,7 @@ function onReady() {
           "The last sync failed, likely due to problems on Google's end. Try again later."
           + ` If this persists, <a href="${SUPPORT_LINK}">visit the support site</a> to get help.`);
       } else {
-        location.reload(true);
+        window.location.reload(true);
       }
     }, 30000, 2000);
   });
@@ -85,7 +85,7 @@ function onReady() {
   $('#reset-random').click(e => {
     e.preventDefault();
     chrome.runtime.sendMessage({action: 'resetRandomCache', userId}, () => {
-      location.reload(true);
+      window.location.reload(true);
     });
   });
 }

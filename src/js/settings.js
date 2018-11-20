@@ -8,7 +8,7 @@ const Reporting = require('./reporting');
 
 function main() {
   Reporting.reportHit('settings.js');
-  const userId = Qs.parse(location.search.substring(1)).userId;
+  const userId = Qs.parse(window.location.search.substring(1)).userId;
 
   Storage.getSyncMs(syncMs => {
     $('#sync-minutes').val(syncMs / 1000 / 60);

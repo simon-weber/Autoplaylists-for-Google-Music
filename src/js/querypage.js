@@ -12,7 +12,7 @@ const ACTION = config.action; // eslint-disable-line no-undef
 console.log('querypage', ID, ACTION);
 
 // This only exists in a multi-login session.
-const USER_INDEX = Qs.parse(location.search.substring(1)).u || '0';
+const USER_INDEX = Qs.parse(window.location.search.substring(1)).u || '0';
 
 // Inject some javascript (as a string) into the DOM.
 function injectCode(code) {

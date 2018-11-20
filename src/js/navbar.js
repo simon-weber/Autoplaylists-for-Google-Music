@@ -7,7 +7,7 @@ const License = require('./license');
 const Reporting = require('./reporting');
 
 function main() {
-  const userId = Qs.parse(location.search.substring(1)).userId;
+  const userId = Qs.parse(window.location.search.substring(1)).userId;
   const manifest = chrome.runtime.getManifest();
 
   const $version = $('#version');
@@ -55,7 +55,7 @@ function main() {
       if (licenseStatus.state === 'FULL') {
         // don't upsell users who downgrade later on
         Storage.setShouldNotUpsell(true, () => {
-          location.reload(true);
+          window.location.reload(true);
         });
       }
     });
@@ -73,7 +73,7 @@ function main() {
         .click(e => {
           e.preventDefault();
           License.setFullForced(!devStatus.isFullForced, () => {
-            document.location.reload(true);
+            window.location.reload(true);
           });
         })
       );

@@ -41,7 +41,7 @@ function onDrop(event) {
 
 function main() {
   Reporting.reportHit('port.js');
-  userId = Qs.parse(location.search.substring(1)).userId;
+  userId = Qs.parse(window.location.search.substring(1)).userId;
   const $target = $('#drag-target')[0];
 
   Storage.getPlaylistsForUser(userId, playlists => {

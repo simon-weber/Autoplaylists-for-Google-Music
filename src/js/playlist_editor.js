@@ -337,7 +337,7 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache,
 
 function main() {
   Reporting.reportHit('playlist_editor.js');
-  const qstring = Qs.parse(location.search.substring(1));
+  const qstring = Qs.parse(window.location.search.substring(1));
 
   Storage.getPlaylistsForUser(qstring.userId, playlists => {
     chrome.runtime.sendMessage({action: 'getSplaylistcache', userId: qstring.userId}, splaylistcache => {

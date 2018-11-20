@@ -13,9 +13,6 @@
        "node": false,
        "es6": true
     },
-    "ecmaFeatures": {
-       "modules": false
-    },
     parserOptions: {
         sourceType: "script"
     },
@@ -40,6 +37,12 @@
         "newline-per-chained-call": 0,
         "no-continue": 0,
         "prefer-template": 0,
-        "quote-props": 0
+        "quote-props": 0,
+        "indent": [2, 2, {"MemberExpression": 0}],
+        "arrow-parens": [2, "as-needed", {"requireForBlockBody": false}],
+        "no-plusplus": 0,
+        "prefer-destructuring": 0,
+        "object-curly-newline": 0,
+        "no-multi-spaces": [2, {ignoreEOLComments: true}]
     }
 }
