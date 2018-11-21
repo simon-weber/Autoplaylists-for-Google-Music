@@ -1,3 +1,9 @@
+## 5.10.6 (November 20, 2018)
+
+Misc:
+
+  - reduce required permissions
+
 ## 5.10.5 (November 20, 2018)
 
 Misc:
