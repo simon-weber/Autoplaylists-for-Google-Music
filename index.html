@@ -137,6 +137,15 @@
             <footer class="inner">
                 <p class="copyright">Autoplaylists for Google Music™ maintained by <a onclick="trackOutboundLink('https://www.simonmweber.com'); return false;" href="https://www.simonmweber.com">Simon Weber</a></p>
                 <p>Google Music is a trademark of Google Inc. Use of this trademark is subject to Google Permissions.</p>
+                <p id="plugserv-plug"></p>
+              
+                <script>
+                  window.plugserv_config = {
+                    elementId: 'plugserv-plug',
+                    endpoint: 'https://www.plugserv.com/serve/eb7e777e-9ec5-4323-acba-4e05f881cf42'
+                  };
+                </script>
+                <script async src="https://www.plugserv.com/assets/core/plugserv.js"></script>
             </footer>
         </div>
     </body>
