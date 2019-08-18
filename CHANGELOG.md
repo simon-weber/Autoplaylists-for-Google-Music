@@ -1,3 +1,9 @@
+## 5.10.7 (August 18, 2019)
+
+Bugfixes:
+
+  - fix initialization of large libraries from Google's local store
+
 ## 5.10.6 (November 20, 2018)
 
 Misc:
