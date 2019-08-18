@@ -9,6 +9,4 @@ src/html/*.html
 src/html/assets/
 build
 sentry_api.key
-webstore_client.id
-webstore_client.secret
-webstore_client.refresh_token
+webstore_client.*
