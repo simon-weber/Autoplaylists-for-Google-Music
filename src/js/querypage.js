@@ -13,6 +13,7 @@ console.log('querypage', ID, ACTION);
 
 // This only exists in a multi-login session.
 const USER_INDEX = Qs.parse(window.location.search.substring(1)).u || '0';
+const BATCH_SIZE = 1000;
 
 // Inject some javascript (as a string) into the DOM.
 function injectCode(code) {
@@ -41,7 +42,7 @@ function getInjectCode(id) {
   /* eslint-enable prefer-template,no-undef */
 
   // We need to actually get the value of our variable into the string, not a reference to it.
-  return code.replace('contentScriptIdRepr', `${id}`);
+  return code.replace('contentScriptIdRepr', `'${id}'`);
 }
 
 /*
@@ -155,12 +156,30 @@ function eventListener(event) {
       queryIDB(userId, resolve);
     }
   }).then(result => {
-    /* eslint-disable no-param-reassign */
-    result.action = 'postPageResponse';
-    result.contentScriptId = ID;
-    /* eslint-enable no-param-reassign */
-    console.info('sending result', result);
-    chrome.runtime.sendMessage(result);
+    console.info('prepping result', result);
+
+    const port = chrome.runtime.connect(undefined, {name: ID});
+    if (ACTION === 'getLocalTracks' && result.gtracks !== null && result.gtracks.length > BATCH_SIZE) {
+      console.info('sending batched response');
+
+      port.postMessage({timestamp: result.timestamp});
+
+      const gtracks = result.gtracks;
+      for (let i = 0; i < gtracks.length; i += BATCH_SIZE) {
+        const trackBatch = gtracks.slice(i, i + BATCH_SIZE);
+        const isFinal = i + BATCH_SIZE >= gtracks.length;
+        console.debug('batch', i, trackBatch);
+        port.postMessage({isFinal, gtracks: trackBatch});
+      }
+    } else {
+      /* eslint-disable no-param-reassign */
+      result.isFinal = true;
+      /* eslint-enable no-param-reassign */
+      console.info('sending singleton response', result);
+      port.postMessage(result);
+    }
+    console.info('disconnecting');
+    port.disconnect();
   });
 }
 

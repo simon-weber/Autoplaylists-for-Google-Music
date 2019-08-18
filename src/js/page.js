@@ -20,9 +20,9 @@ exports.getTabs = function getTabs() {
   });
 };
 
-// Promise the full response from the page.
+// Promise a list of messages from the page.
 // Rejections are typically a failure to communicate with the tab.
-function makePageQuery(action) {
+function makePageQuery(action, expectSingleton) {
   return exports.getTabs().then(tabs => {
     Reporting.reportTabQuery('success', tabs.length);
 
@@ -39,24 +39,60 @@ function makePageQuery(action) {
     console.warn('tab query failed', e);
     Reporting.reportTabQuery('failure');
     throw e;
-  }).then(tabId => _makePageQuery(action, tabId));
+  }).then(tabId => _makePageQuery(action, tabId))
+  .then(messages => {
+    if (expectSingleton && messages.length !== 1) {
+      throw new Error(`expected one message from ${action}, got ${messages.length}`);
+    }
+    return messages;
+  });
 }
 
 function _makePageQuery(action, tabId) {
-  const scriptId = Date.now();
+  // Run a script that looks at the page (through another script, see
+  //  https://www.simonmweber.com/2013/06/05/chrome-extension-hacks.html).
+  // Promise a list of messages received over the port.
+  const scriptId = `${Date.now()}-${Math.random()}`;
 
   return new Promise((resolve, reject) => {
-    const listener = response => {
-      if (response.action !== 'postPageResponse' || response.contentScriptId !== scriptId) {
-        console.debug('page query listener ignoring', response, response.contentScriptID, scriptId);
+    const portListener = port => {
+      if (port.name !== scriptId) {
+        console.debug('page query portListener ignoring connect for', port, scriptId);
         return;
       }
 
-      chrome.runtime.onMessage.removeListener(listener);
-      resolve(response);
+      chrome.runtime.onConnect.removeListener(portListener);
+
+      const messages = [];
+      let sawFinalMessage = false;
+
+      port.onMessage.addListener(message => {
+        messages.push(message);
+        if (message.isFinal) {
+          sawFinalMessage = true;
+        }
+      });
+      port.onDisconnect.addListener(() => {
+        if (chrome.runtime.lastError || !sawFinalMessage) {
+          console.error('unexpected port disconnect:', action, chrome.runtime.lastError, sawFinalMessage, messages);
+          Reporting.Raven.captureMessage('unexpected port disconnect', {
+            extra: {
+              action,
+              messages,
+              sawFinalMessage,
+              error: chrome.runtime.lastError,
+            },
+            stacktrace: true,
+          });
+          reject(new Error('unexpected port disconnection'));
+        } else {
+          console.info(`resolving ${action} with`, messages);
+          resolve(messages);
+        }
+      });
     };
 
-    chrome.runtime.onMessage.addListener(listener);
+    chrome.runtime.onConnect.addListener(portListener);
 
     const config = {
       action,
@@ -64,7 +100,7 @@ function _makePageQuery(action, tabId) {
     };
 
     const handleError = error => {
-      chrome.runtime.onMessage.removeListener(listener);
+      chrome.runtime.onConnect.removeListener(portListener);
       reject(error);
     };
 
@@ -83,19 +119,19 @@ function _makePageQuery(action, tabId) {
 
 // Promise the value of the xt cookie.
 exports.getXsrf = function getXsrf() {
-  return makePageQuery('getUserInfo')
-  .then(response => response.xt);
+  return makePageQuery('getUserInfo', true)
+  .then(messages => messages[0].xt);
 };
 
 // Promise an object with keys: tier, xt, gaiaId, userid, userIndex.
 exports.getUserInfo = function getUserInfo() {
-  return makePageQuery('getUserInfo')
-  .then(response => ({
-    tier: response.tier,
-    xt: response.xt,
-    gaiaId: response.gaiaId,
-    userId: response.userId,
-    userIndex: response.userIndex,
+  return makePageQuery('getUserInfo', true)
+  .then(messages => ({
+    tier: messages[0].tier,
+    xt: messages[0].xt,
+    gaiaId: messages[0].gaiaId,
+    userId: messages[0].userId,
+    userIndex: messages[0].userIndex,
   }));
 };
 
@@ -103,11 +139,29 @@ exports.getUserInfo = function getUserInfo() {
 // and timestamp keys from the local indexedDb.
 // Either may be null.
 exports.getLocalTracks = function getLocalTracks() {
-  return makePageQuery('getLocalTracks')
-  .then(response => ({
-    gtracks: response.gtracks,
-    timestamp: response.timestamp,
-  }));
+  return makePageQuery('getLocalTracks', false)
+  .then(messages => {
+    let gtracks = [];
+    let sawTracks = false;
+    let timestamp = null;
+    for (let i = 0; i < messages.length; i++) {
+      const message = messages[i];
+      if ('timestamp' in message) {
+        timestamp = message.timestamp;
+      }
+      if (message.gtracks) {
+        sawTracks = true;
+        for (let j = 0; j < message.gtracks.length; j++) {
+          gtracks.push(message.gtracks[j]);
+        }
+      }
+    }
+
+    if (!sawTracks) {
+      gtracks = null;
+    }
+    return {gtracks, timestamp};
+  });
 };
 
 // This is a bit weird.
