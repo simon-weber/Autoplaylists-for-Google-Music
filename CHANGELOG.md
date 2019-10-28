@@ -1,3 +1,9 @@
+## 5.10.8 (October 28, 2019)
+
+Misc:
+
+  - suggest turning on sync in multi-user error message
+
 ## 5.10.7 (August 18, 2019)
 
 Bugfixes:
