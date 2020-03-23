@@ -1,3 +1,9 @@
+## 5.10.9 (March 23, 2020)
+
+Misc:
+
+  - further clarify the multi-user error message
+
 ## 5.10.8 (October 28, 2019)
 
 Misc:
