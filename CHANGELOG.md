@@ -1,3 +1,9 @@
+## 5.10.10 (May 5, 2020)
+
+Misc:
+
+  - add a confirmation check when deleting autoplaylists
+
 ## 5.10.9 (March 23, 2020)
 
 Misc:
