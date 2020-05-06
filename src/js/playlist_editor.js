@@ -297,9 +297,11 @@ function initializeForm(userId, playlistId, isLocked, playlists, splaylistcache,
 
   $('#delete').click(e => {
     e.preventDefault();
-    Storage.deletePlaylist(userId, playlistId, () => {
-      Utils.goToManager(userId);
-    });
+    if (window.confirm('Are you sure you want to delete this autoplaylist? This cannot be undone.')) {  // eslint-disable-line no-alert
+      Storage.deletePlaylist(userId, playlistId, () => {
+        Utils.goToManager(userId);
+      });
+    }
   });
 
   $('#duplicate').click(e => {
