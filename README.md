@@ -1,6 +1,7 @@
 # Autoplaylists for Google Music™
 
-![Repominder](https://img.shields.io/badge/dynamic/json.svg?label=release&query=%24.status&maxAge=43200&uri=https%3A%2F%2Fwww.repominder.com%2Fbadge%2FeyJ1c2VyX2lkIjogMiwgInJlcG9faWQiOiAxOH0%3D%2F&link=https%3A%2F%2Fwww.repominder.com%2F "Repominder")
+![Repominder](https://img.shields.io/badge/dynamic/json.svg?label=release&query=%24.status&maxAge=43200&uri=https%3A%2F%2Fwww.repominder.com%2Fbadge%2FeyJmdWxsX25hbWUiOiAic2ltb24td2ViZXIvQXV0b3BsYXlsaXN0cy1mb3ItR29vZ2xlLU11c2ljIn0%3D%2F&link=https%3A%2F%2Fwww.repominder.com%2F "Repominder")
+
 
 This is a Chrome extension to add user-defined autoplaylists in Google Music (iTunes calls these "Smart Playlists").
 
